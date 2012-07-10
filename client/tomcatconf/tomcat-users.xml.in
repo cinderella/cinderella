@@ -24,8 +24,9 @@
   <user username="role1" password="tomcat" roles="role1"/>
 -->
 
+<role rolename="manager-gui"/>
 <!-- The host manager webapp is restricted to users with role "admin" -->
-<!--<user name="tomcat" password="password" roles="admin" />-->
+<user name="admin" password="tomcat" roles="admin,manager-gui" />
 <!-- The manager webapp is restricted to users with role "manager" -->
 <!--<user name="tomcat" password="password" roles="manager" />-->
 </tomcat-users>
