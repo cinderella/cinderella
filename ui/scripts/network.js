@@ -2014,6 +2014,9 @@
                         addButton: true
                       }
                     },
+
+                    tags: cloudStack.api.tags({ resourceType: 'LoadBalancer', contextId: 'multiRule' }),
+
                     add: {
                       label: 'label.add.vms',
                       action: function(args) {
@@ -2411,6 +2414,9 @@
                         addButton: true
                       }
                     },
+
+                    tags: cloudStack.api.tags({ resourceType: 'PortForwardingRule', contextId: 'multiRule' }),
+
                     add: {
                       label: 'label.add.vm',
                       action: function(args) {
@@ -2444,6 +2450,19 @@
                       }
                     },
                     actions: {
+                      edit: {
+                        label: 'label.edit',
+
+                        // Blank -- edit is just for tags right now
+                        action: function(args) {
+                          args.response.success({
+                            notification: {
+                              label: 'label.edit.pf',
+                              poll: function(args) { args.complete(); }
+                            }
+                          });
+                        }
+                      },
                       destroy: {
                         label: 'label.remove.pf',
                         action: function(args) {
