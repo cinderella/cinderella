@@ -3173,7 +3173,7 @@ public class StorageManagerImpl implements StorageManager, Manager, ClusterManag
     }
 
     @Override
-    public void prepare(VirtualMachineProfile<? extends VirtualMachine> vm, DeployDestination dest) throws StorageUnavailableException, InsufficientStorageCapacityException {
+    public void prepare(VirtualMachineProfile<? extends VirtualMachine> vm, DeployDestination dest, boolean recreate) throws StorageUnavailableException, InsufficientStorageCapacityException {
 
         if (dest == null) {
             if (s_logger.isDebugEnabled()) {
@@ -3193,7 +3193,11 @@ public class StorageManagerImpl implements StorageManager, Manager, ClusterManag
             if (dest.getStorageForDisks() != null) {
                 assignedPool = dest.getStorageForDisks().get(vol);
             }
-            if (assignedPool != null) {
+            if (assignedPool == null && recreate) {
+            	assignedPool = _storagePoolDao.findById(vol.getPoolId());
+            	
+            }
+            if (assignedPool != null || recreate) {
                 Volume.State state = vol.getState();
                 if (state == Volume.State.Allocated || state == Volume.State.Creating) {
                     recreateVols.add(vol);
@@ -3206,10 +3210,25 @@ public class StorageManagerImpl implements StorageManager, Manager, ClusterManag
                     } else {
                         if (assignedPool.getId() != vol.getPoolId()) {
                             if (s_logger.isDebugEnabled()) {
-                                s_logger.debug("Volume " + vol + " is not recreatable! Cannot recreate on storagepool: " + assignedPool);
+                                s_logger.debug("Mismatch in storage pool " + assignedPool + " assigned by deploymentPlanner and the one associated with volume " + vol);
                             }
-                            throw new StorageUnavailableException("Volume is not recreatable, Unable to create " + vol, Volume.class, vol.getId());
-                            // copy volume usecase - not yet developed.
+                            if (vm.getServiceOffering().getUseLocalStorage())
+                            {
+                                if (s_logger.isDebugEnabled()) {
+                                    s_logger.debug("Local volume " + vol + " will be recreated on storage pool " + assignedPool + " assigned by deploymentPlanner");
+                                }
+                                recreateVols.add(vol);
+                            } else {
+                                if (s_logger.isDebugEnabled()) {
+                                    s_logger.debug("Shared volume " + vol + " will be migrated on storage pool " + assignedPool + " assigned by deploymentPlanner");
+                                }
+                                try {
+                                    Volume migratedVol = migrateVolume(vol.getId(), assignedPool.getId());
+                                    vm.addDisk(new VolumeTO(migratedVol, assignedPool));
+                                } catch (ConcurrentOperationException e) {
+                                    throw new StorageUnavailableException("Volume migration failed for " + vol, Volume.class, vol.getId());
+                                }
+                            }
                         } else {
                             StoragePoolVO pool = _storagePoolDao.findById(vol.getPoolId());
                             vm.addDisk(new VolumeTO(vol, pool));
@@ -3231,6 +3250,12 @@ public class StorageManagerImpl implements StorageManager, Manager, ClusterManag
 
         for (VolumeVO vol : recreateVols) {
             VolumeVO newVol;
+            StoragePool existingPool = null;
+            if (recreate && (dest.getStorageForDisks() == null || dest.getStorageForDisks().get(vol) == null)) {
+            	existingPool = _storagePoolDao.findById(vol.getPoolId());
+            	s_logger.debug("existing pool: " + existingPool.getId());
+            }
+            
             if (vol.getState() == Volume.State.Allocated || vol.getState() == Volume.State.Creating) {
                 newVol = vol;
             } else {
@@ -3251,7 +3276,9 @@ public class StorageManagerImpl implements StorageManager, Manager, ClusterManag
             } catch (NoTransitionException e) {
                 throw new CloudRuntimeException("Unable to create " + e.toString());
             }
-            Pair<VolumeTO, StoragePool> created = createVolume(newVol, _diskOfferingDao.findById(newVol.getDiskOfferingId()), vm, vols, dest);
+
+            Pair<VolumeTO, StoragePool> created = createVolume(newVol, _diskOfferingDao.findById(newVol.getDiskOfferingId()), vm, vols, dest, existingPool);
+
             if (created == null) {
                 Long poolId = newVol.getPoolId();
                 newVol.setPoolId(null);
@@ -3307,7 +3334,7 @@ public class StorageManagerImpl implements StorageManager, Manager, ClusterManag
     }
 
     public Pair<VolumeTO, StoragePool> createVolume(VolumeVO toBeCreated, DiskOfferingVO offering, VirtualMachineProfile<? extends VirtualMachine> vm, List<? extends Volume> alreadyCreated,
-            DeployDestination dest) throws StorageUnavailableException {
+            DeployDestination dest, StoragePool sPool) throws StorageUnavailableException {
         if (s_logger.isDebugEnabled()) {
             s_logger.debug("Creating volume: " + toBeCreated);
         }
@@ -3317,9 +3344,15 @@ public class StorageManagerImpl implements StorageManager, Manager, ClusterManag
         if (toBeCreated.getTemplateId() != null) {
             template = _templateDao.findById(toBeCreated.getTemplateId());
         }
+        
+        StoragePool pool = null;
+        if (sPool != null) {
+        	pool = sPool;
+        } else {
+        	pool = dest.getStorageForDisks().get(toBeCreated);
+        }
 
-        if (dest.getStorageForDisks() != null) {
-            StoragePool pool = dest.getStorageForDisks().get(toBeCreated);
+        if (pool != null) {
             if (s_logger.isDebugEnabled()) {
                 s_logger.debug("Trying to create in " + pool);
             }

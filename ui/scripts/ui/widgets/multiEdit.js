@@ -15,6 +15,10 @@
 // specific language governing permissions and limitations
 // under the License.
 (function($, cloudStack) {
+  var getMultiData = function($multi) {
+    return cloudStack.serializeForm($multi.find('form'));
+  };
+
   var _medit = cloudStack.ui.widgets.multiEdit = {
     /**
      * Append item to list
@@ -328,10 +332,16 @@
                   after: function(args) {
                     var $loading = $('<div>').addClass('loading-overlay').prependTo($dataItem);
                     performAction({ data: args.data, complete: function() {
-                      $multi.multiEdit('refresh');
+                      $multi.trigger('refresh');
                     } });
                   }
                 });
+
+                if (options.tags) {
+                  $(':ui-dialog').append(
+                    $('<div>').addClass('multi-edit-tags').tagger(options.tags)
+                  );
+                }
               }
             })
         );
@@ -362,6 +372,7 @@
       var $listView;
       var instances = $.extend(true, {}, listView, {
         context: $.extend(true, {}, context, {
+          multiData: getMultiData($multi),
           multiRule: options.multiRule ? [options.multiRule] : null
         }),
         uiCustom: true
@@ -647,6 +658,7 @@
   $.fn.multiEdit = function(args) {
     var dataProvider = args.dataProvider;
     var multipleAdd = args.multipleAdd;
+    var tags = args.tags;
     var $multi = $('<div>').addClass('multi-edit').appendTo(this);
     var $multiForm = $('<form>').appendTo($multi);
     var $inputTable = $('<table>').addClass('multi-edit').appendTo($multiForm);
@@ -755,6 +767,25 @@
       }
     });
 
+    // Setup header fields
+    var showHeaderFields = args.headerFields ? true : false;
+    var headerForm = showHeaderFields ? cloudStack.dialog.createForm({
+      context: context,
+      noDialog: true,
+      form: {
+        fields: args.headerFields
+      },
+      after: function(args) {
+        // Form fields are handled by main 'add' action
+      }
+    }) : null;
+    var $headerFields = $('<div>').addClass('header-fields');
+
+    if (headerForm) {
+      $headerFields.append(headerForm.$formContainer)
+        .prependTo($multi);
+    }
+
     if (args.actions && !args.noHeaderActionsColumn) {
       $thead.append($('<th></th>').html(_l('label.actions')).addClass('multi-actions'));
       $inputForm.append($('<td></td>').addClass('multi-actions'));
@@ -772,7 +803,7 @@
       var addItem = function(itemData) {
         var data = {};
 
-        $.each(cloudStack.serializeForm($multiForm), function(key, value) {
+        $.each(getMultiData($multi), function(key, value) {
           if (value != '') {
             data[key] = value;
           }
@@ -873,6 +904,7 @@
     var getData = function() {
       dataProvider({
         context: context,
+        $multi: $multi,
         response: {
           success: function(args) {
             $multi.find('.data-item').remove();
@@ -893,7 +925,8 @@
                   context: $.extend(true, {}, context, this._context),
                   ignoreEmptyFields: ignoreEmptyFields,
                   preFilter: actionPreFilter,
-                  listView: listView
+                  listView: listView,
+                  tags: tags
                 }
               ).appendTo($dataBody);
             });

@@ -177,7 +177,7 @@
           }
         });
 
-        var sectionsToShow = ['networks', 'vpc'];
+        var sectionsToShow = ['networks'];
         if(havingSecurityGroupNetwork == true)
           sectionsToShow.push('securityGroups');
 
@@ -197,7 +197,7 @@
               label: 'label.add.guest.network',
 
               preFilter: function(args) {
-                var basicZoneExists = false;
+                var basicZoneExists = true; //Modifying the logic behind displaying the tabs depending on the networktype
                 $.ajax({
                   url: createURL("listZones"),
                   dataType: "json",
@@ -206,8 +206,8 @@
                     if(json.listzonesresponse.zone != null && json.listzonesresponse.zone.length > 0) {
                       zoneObjs = json.listzonesresponse.zone;
                       $(zoneObjs).each(function() {
-                        if(this.networktype == "Basic") {
-                          basicZoneExists = true;
+                        if(this.networktype == "Advanced") {
+                          basicZoneExists = false; // For any occurence of an Advanced zone with any combination of basic zone , the add guest network tab will be displayed
                           return false; //break each loop
                         }
                       });
@@ -1230,9 +1230,28 @@
               },
               enableStaticNAT: {
                 label: 'label.action.enable.static.NAT',
+                
                 action: {
                   noAdd: true,
                   custom: cloudStack.uiCustom.enableStaticNAT({
+                    // VPC
+                    tierSelect: function(args) {
+                      args.$tierSelect.hide(); // Hidden by default
+                      
+                      // Determine if tiers are supported here
+                      var enableTiers = false;
+
+                      if (enableTiers) {
+                        args.$tierSelect.show();
+                        args.response.success({
+                          data: [
+                            { id: '1', description: 'VPC 1' },
+                            { id: '2', description: 'VPC 2' }
+                          ]
+                        });
+                      }
+                    },
+
                     listView: $.extend(true, {}, cloudStack.sections.instances, {
                       listView: {
                         dataProvider: function(args) {
@@ -1949,6 +1968,21 @@
                         }
                       }
                     }),
+                    headerFields: {
+                      tier: {
+                        label: 'Tier',
+                        select: function(args) {
+                          args.response.success({
+                            data: [
+                              { id: '', name: '', description: 'None' },
+                              { id: '1', name: 'tier1', description: 'tier1' },
+                              { id: '2', name: 'tier2', description: 'tier2' },
+                              { id: '3', name: 'tier3', description: 'tier3' }
+                            ]
+                          });
+                        }
+                      }
+                    },
                     multipleAdd: true,
                     fields: {
                       'name': { edit: true, label: 'label.name', isEditable: true },
@@ -1967,6 +2001,7 @@
                           });
                         }
                       },
+
                       'sticky': {
                         label: 'label.stickiness',
                         custom: {
@@ -2178,7 +2213,9 @@
                         }
                       }
                     },
-                    dataProvider: function(args) {   
+                    dataProvider: function(args) {
+                      var $multi = args.$multi;
+
                       $.ajax({
                         url: createURL('listLoadBalancerRules'),
 												data: {
@@ -2273,11 +2310,36 @@
                           });
                         }
                       });
+
+                      // Check if tiers are present; hide/show header drop-down
+                      var hasTiers = false;
+                      var $headerFields = $multi.find('.header-fields');
+
+                      if (hasTiers) {
+                        $headerFields.hide();
+                      } else {
+                        $headerFields.show();
+                      }
                     }
                   },
 
                   // Port forwarding rules
                   portForwarding: {
+                    headerFields: {
+                      tier: {
+                        label: 'Tier',
+                        select: function(args) {
+                          args.response.success({
+                            data: [
+                              { id: '', name: '', description: 'None' },
+                              { id: '1', name: 'tier1', description: 'tier1' },
+                              { id: '2', name: 'tier2', description: 'tier2' },
+                              { id: '3', name: 'tier3', description: 'tier3' }
+                            ]
+                          });
+                        }
+                      }
+                    },
                     listView: $.extend(true, {}, cloudStack.sections.instances, {
                       listView: {
                         dataProvider: function(args) {
@@ -2413,6 +2475,8 @@
                       }
                     },
                     dataProvider: function(args) {
+                      var $multi = args.$multi;
+                      
                       $.ajax({
                         url: createURL('listPortForwardingRules'),
                         data: {
@@ -2464,6 +2528,16 @@
                               }
                             });
                           });
+
+                          // Check if tiers are present; hide/show header drop-down
+                          var hasTiers = false;
+                          var $headerFields = $multi.find('.header-fields');
+
+                          if (hasTiers) {
+                            $headerFields.hide();
+                          } else {
+                            $headerFields.show();
+                          }
                         },
                         error: function(data) {
                           args.response.error(parseXMLHttpResponse(data));
@@ -3101,91 +3175,6 @@
                     });
                   }
                 }
-              }
-            }
-          }
-        }
-      },
-      vpc: {
-        type: 'select',
-        title: 'VPC',
-        id: 'vpc',
-        listView: {
-          id: 'vpc',
-          label: 'VPC',
-          fields: {
-            name: { label: 'Name' },
-            zone: { label: 'Zone' },
-            cidr: { label: 'CIDR' }
-          },
-          dataProvider: function(args) {
-            args.response.success({
-              data: [
-                {
-                  name: 'VPC 1',
-                  zone: 'San Jose',
-                  cidr: '0.0.0.0/0',
-                  networkdomain: 'testdomain',
-                  accountdomain: 'testdomain'
-                },
-                {
-                  name: 'VPC 2',
-                  zone: 'San Jose',
-                  cidr: '0.0.0.0/0',
-                  networkdomain: 'testdomain',
-                  accountdomain: 'testdomain'
-                },
-                {
-                  name: 'VPC 3',
-                  zone: 'Cupertino',
-                  cidr: '0.0.0.0/0',
-                  networkdomain: 'testdomain',
-                  accountdomain: 'testdomain'
-                },
-                {
-                  name: 'VPC 4',
-                  zone: 'San Jose',
-                  cidr: '0.0.0.0/0',
-                  networkdomain: 'testdomain',
-                  accountdomain: 'testdomain'
-                }
-              ]
-            });
-          },
-          actions: {
-            add: {
-              label: 'Add VPC',
-              createForm: {
-                title: 'Add new VPC',
-                fields: {
-                  name: { label: 'Name', validation: { required: true } },
-                  zone: {
-                    label: 'Zone',
-                    validation: { required: true },
-                    select: function(args) {
-                      args.response.success({
-                        data: [
-                          { id: 'zone1', description: 'Zone 1' },
-                          { id: 'zone2', description: 'Zone 2' },
-                          { id: 'zone3', description: 'Zone 3' }
-                        ]
-                      });
-                    }
-                  }
-                }
-              },
-              messages: {
-                notification: function(args) { return 'Add new VPC'; }
-              },
-              action: function(args) {
-                args.response.success();
-              },
-              notification: { poll: function(args) { args.complete(); } }
-            },
-            editVpc: {
-              label: 'Edit VPC',
-              action: {
-                custom: cloudStack.uiCustom.vpc(cloudStack.vpc)
               }
             }
           }

@@ -16,7 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-fileSvr="http://nfs1.lab.vmops.com/templates/devcloud/"
+fileSvr="http://download.cloud.com/templates/devcloud/"
 install_xen() {
     aptitude update
     echo "install xen"
@@ -49,6 +49,8 @@ iface xenbr0 inet dhcp
 
 auto eth0
 iface eth0 inet dhcp
+pre-up iptables-save < /etc/iptables.save
+pre-up /etc/init.d/ebtables load
 EOF
 
     echo TOOLSTACK=xapi > /etc/default/xen
@@ -68,6 +70,14 @@ postsetup() {
         print "xen dom0 is not running, make sure dom0 is installed"
         exit 1
     fi
+  
+    #disable virtualbox dhcp server for Vms created by cloudstack
+    apt-get install ebtables
+    iptables -A POSTROUTING -t mangle -p udp --dport bootpc -j CHECKSUM --checksum-fill
+    mac=`ifconfig xenbr0 |grep HWaddr |awk '{print $5}'`
+    ebtables -I FORWARD -d ! $mac -i eth0 -p IPV4 --ip-prot udp --ip-dport 67:68 -j DROP
+    iptables-save > /etc/iptables.save
+    /etc/init.d/ebtables save
 
     echo "configure NFS server"
     aptitude -y install nfs-server
@@ -77,10 +87,10 @@ postsetup() {
         mkdir -p /opt/storage/secondary/template/tmpl/1/5
 
         echo "/opt/storage/secondary *(rw,no_subtree_check,no_root_squash,fsid=0)" > /etc/exports
-        wget $fileSvr/vmtemplates/1/dc68eb4c-228c-4a78-84fa-b80ae178fbfd.vhd  -P /opt/storage/secondary/template/tmpl/1/1/
-        wget $fileSvr/vmtemplates/1/template.properties  -P /opt/storage/secondary/template/tmpl/1/1/
-        wget $fileSvr/vmtemplates/5/ce5b212e-215a-3461-94fb-814a635b2215.vhd  -P /opt/storage/secondary/template/tmpl/1/5/
-        wget $fileSvr/vmtemplates/5/template.properties  -P /opt/storage/secondary/template/tmpl/1/5/
+        wget $fileSvr/defaulttemplates/1/dc68eb4c-228c-4a78-84fa-b80ae178fbfd.vhd  -P /opt/storage/secondary/template/tmpl/1/1/
+        wget $fileSvr/defaulttemplates/1/template.properties  -P /opt/storage/secondary/template/tmpl/1/1/
+        wget $fileSvr/defaulttemplates/5/ce5b212e-215a-3461-94fb-814a635b2215.vhd  -P /opt/storage/secondary/template/tmpl/1/5/
+        wget $fileSvr/defaulttemplates/5/template.properties  -P /opt/storage/secondary/template/tmpl/1/5/
         /etc/init.d/nfs-kernel-server restart
     fi
 
