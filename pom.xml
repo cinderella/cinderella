@@ -1,0 +1,16 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>io.cinderella</groupId>
+  <artifactId>project</artifactId>
+  <packaging>pom</packaging>
+  <version>1.0-SNAPSHOT</version>
+  <name>Cinderella :: Project Build Pom</name>
+  <url>http://cinderella.github.com</url>
+
+  <modules>
+    <module>parent</module>
+    <module>awsapi</module>
+    <module>cinderella-webapp</module>
+  </modules>
+</project>
