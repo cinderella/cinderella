@@ -15,10 +15,6 @@
   <name>Cinderella :: Install AWSAPI Into Maven Repo</name>
   <url>http://cinderella.github.org</url>
 
-  <properties>
-    <awsapi.base>${project.basedir}/../cloudbridge</awsapi.base>
-  </properties>
-
   <build>
     <plugins>
       <plugin>
