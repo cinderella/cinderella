@@ -16,7 +16,7 @@
   <url>http://cinderella.github.org</url>
 
   <properties>
-    <awsapi.base>${project.basedir}/../incubator-cloudstack</awsapi.base>
+    <awsapi.base>${project.basedir}/../cloudbridge</awsapi.base>
   </properties>
 
   <build>
