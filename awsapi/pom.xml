@@ -18,24 +18,33 @@
   <build>
     <plugins>
       <plugin>
-        <dependencies>
-          <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-ant-tasks</artifactId>
-            <version>2.1.3</version>
-          </dependency>
-        </dependencies>
         <artifactId>maven-antrun-plugin</artifactId>
-        <version>1.7</version>
         <executions>
+          <!-- Clean artifacts the ant way -->
           <execution>
+            <id>clean-awsapi</id>
+            <phase>clean</phase>
+            <configuration>
+              <target>
+                <ant antfile="${awsapi.base}/build.xml">
+                  <target name="clean-awsapi" />
+                </ant>
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+          <!-- Build the cloudbridge artifacts via the native ant build -->
+          <execution>
+            <id>build-awsapi</id>
             <phase>generate-sources</phase>
             <configuration>
               <target>
                 <ant antfile="${awsapi.base}/build.xml">
-                  <!--<target name="clean-all" />-->
                   <target name="build-awsapi" />
                 </ant>
+                <jar jarfile="${project.build.directory}/cloud-awsapi.jar" basedir="${awsapi.base}/target/classes/cloud-awsapi.jar" excludes="/com/amazon/**" />
               </target>
             </configuration>
             <goals>
@@ -44,6 +53,7 @@
           </execution>
         </executions>
       </plugin>
+      <!-- Install the cloudbridge artifacts into local Maven repo -->
       <plugin>
         <artifactId>maven-install-plugin</artifactId>
         <version>2.3.1</version>
@@ -59,7 +69,8 @@
               <artifactId>awsapi</artifactId>
               <version>4.0-SNAPSHOT</version>
               <packaging>jar</packaging>
-              <file>${awsapi.base}/target/dist-files/cloud-awsapi.jar</file>
+              <file>${project.build.directory}/cloud-awsapi.jar</file>
+              <!--<file>${awsapi.base}/target/dist-files/cloud-awsapi.jar</file>-->
             </configuration>
           </execution>
           <execution>
@@ -88,6 +99,34 @@
               <version>4.0-SNAPSHOT</version>
               <packaging>mar</packaging>
               <file>${awsapi.base}/target/dist-files/cloud-auth-ec2.mar</file>
+            </configuration>
+          </execution>
+          <execution>
+            <id>install-cloud-s3</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>install-file</goal>
+            </goals>
+            <configuration>
+              <groupId>io.cinderella.cloudbridge</groupId>
+              <artifactId>s3</artifactId>
+              <version>4.0-SNAPSHOT</version>
+              <packaging>aar</packaging>
+              <file>${awsapi.base}/target/dist-files/cloud-s3.aar</file>
+            </configuration>
+          </execution>
+          <execution>
+            <id>install-cloud-auth-s3</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>install-file</goal>
+            </goals>
+            <configuration>
+              <groupId>io.cinderella.cloudbridge</groupId>
+              <artifactId>auth-s3</artifactId>
+              <version>4.0-SNAPSHOT</version>
+              <packaging>mar</packaging>
+              <file>${awsapi.base}/target/dist-files/cloud-auth-s3.mar</file>
             </configuration>
           </execution>
         </executions>
