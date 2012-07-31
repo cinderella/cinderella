@@ -9,7 +9,7 @@
   </parent>
 
   <groupId>io.cinderella</groupId>
-  <artifactId>awsapi</artifactId>
+  <artifactId>awsapi-build</artifactId>
   <packaging>pom</packaging>
   <version>1.0-SNAPSHOT</version>
   <name>Cinderella :: Install AWSAPI Into Maven Repo</name>

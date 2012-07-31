@@ -1,0 +1,3 @@
+[submodule "cloudbridge"]
+	path = cloudbridge
+	url = https://github.com/cinderella/incubator-cloudstack.git

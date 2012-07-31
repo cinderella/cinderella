@@ -10,7 +10,7 @@
 
   <modules>
     <module>parent</module>
-    <module>awsapi</module>
-    <module>cinderella-webapp</module>
+    <module>awsapi-build</module>
+    <module>webapp</module>
   </modules>
 </project>
