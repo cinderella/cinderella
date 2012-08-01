@@ -21,9 +21,10 @@ $ mvn clean install
 ## Test and run ##
 
 The build is configured to run Jetty via the maven Jetty plugin. Some changes
-such s config files and static resources will trigger a redeploy so that changes
+such as config files and static resources will trigger a redeploy so that changes
 can be tested immediately.
 ```
+$ cd cinderella-webapp
 $ mvn jetty:run
 ```
 Application will be available at http://localhost:8080/
