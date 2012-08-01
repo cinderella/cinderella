@@ -57,9 +57,16 @@
     </dependency>
     <dependency>
       <groupId>org.apache.axis2</groupId>
+      <artifactId>axis2-adb</artifactId>
+      <version>${axis2.version}</version>
+    </dependency>
+<!--
+    <dependency>
+      <groupId>org.apache.axis2</groupId>
       <artifactId>axis2-transport-http</artifactId>
       <version>${axis2.version}</version>
     </dependency>
+-->
 <!--
     <dependency>
       <groupId>org.apache.axis2</groupId>
@@ -345,6 +352,23 @@
           </execution>
         </executions>
       </plugin>
+<!--
+      <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>build-helper-maven-plugin</artifactId>
+          <executions>
+              <execution>
+                  <phase>generate-sources</phase>
+                  <goals><goal>add-source</goal></goals>
+                  <configuration>
+                      <sources>
+                          <source>${awsapi.base}/awsapi/src</source>
+                      </sources>
+                  </configuration>
+              </execution>
+          </executions>
+      </plugin>
+-->
     </plugins>
   </build>
 </project>

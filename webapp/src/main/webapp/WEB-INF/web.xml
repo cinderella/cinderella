@@ -6,7 +6,7 @@
   <servlet>
     <servlet-name>EC2MainServlet</servlet-name>
     <display-name>EC2 Main Servlet</display-name>
-    <servlet-class>io.cinderella.awsapi.CinderellaEC2Servlet</servlet-class>
+    <servlet-class>com.cloud.bridge.service.EC2MainServlet</servlet-class>
     <load-on-startup>1</load-on-startup>
   </servlet>
   <!--
@@ -39,7 +39,7 @@
   <servlet>
     <servlet-name>CloudBridgeEC2Servlet</servlet-name>
     <display-name>Cloud.com Bridge EC2 Service REST Servlet</display-name>
-    <servlet-class>io.cinderella.awsapi.CinderellaEC2RestServlet</servlet-class>
+    <servlet-class>com.cloud.bridge.service.EC2RestServlet</servlet-class>
   </servlet>
 
   <!--
