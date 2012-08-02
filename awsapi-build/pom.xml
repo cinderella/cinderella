@@ -73,6 +73,7 @@
               <!--<file>${awsapi.base}/target/dist-files/cloud-awsapi.jar</file>-->
             </configuration>
           </execution>
+<!--
           <execution>
             <id>install-cloud-ec2</id>
             <phase>process-resources</phase>
@@ -129,6 +130,7 @@
               <file>${awsapi.base}/target/dist-files/cloud-auth-s3.mar</file>
             </configuration>
           </execution>
+-->
         </executions>
       </plugin>
     </plugins>
