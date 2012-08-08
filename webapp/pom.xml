@@ -93,84 +93,6 @@
       <artifactId>jasypt</artifactId>
       <version>1.9.0</version>
     </dependency>
-<!--
-    <dependency>
-      <groupId>org.apache.rampart</groupId>
-      <artifactId>rampart-core</artifactId>
-      <version>1.6.2</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.apache.xalan</groupId>
-          <artifactId>xalan</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.rampart</groupId>
-      <artifactId>rahas</artifactId>
-      <version>1.6.2</version>
-      <type>mar</type>
-      &lt;!&ndash;<scope>runtime</scope>&ndash;&gt;
-      <exclusions>
-        <exclusion>
-          <groupId>org.apache.xalan</groupId>
-          <artifactId>xalan</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.rampart</groupId>
-      <artifactId>rampart</artifactId>
-      <version>1.6.2</version>
-      <type>mar</type>
-      <exclusions>
-        <exclusion>
-          <groupId>org.apache.xalan</groupId>
-          <artifactId>xalan</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.rampart</groupId>
-      <artifactId>rampart-policy</artifactId>
-      <version>1.6.2</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.apache.xalan</groupId>
-          <artifactId>xalan</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.opensaml</groupId>
-          <artifactId>opensaml</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.rampart</groupId>
-      <artifactId>rampart-trust</artifactId>
-      <version>1.6.2</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.apache.xalan</groupId>
-          <artifactId>xalan</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.opensaml</groupId>
-          <artifactId>opensaml</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
--->
-<!--
-    <dependency>
-      <groupId>xalan</groupId>
-      <artifactId>xalan</artifactId>
-      <version>2.7.1</version>
-    </dependency>
--->
-
-
-
     <!-- jclouds Dependencies -->
     <dependency>
       <groupId>org.jclouds.api</groupId>
@@ -220,96 +142,16 @@
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <version>1.0.6</version>
-      <!--<scope>test</scope>-->
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>log4j-over-slf4j</artifactId>
       <version>1.6.6</version>
-      <!--<scope>test</scope>-->
     </dependency>
   </dependencies>
   <build>
     <finalName>cinderella</finalName>
     <plugins>
-<!--
-      <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-dependency-plugin</artifactId>
-          <version>2.4</version>
-          <executions>
-            <execution>
-              <id>unpack</id>
-              <phase>generate-resources</phase>
-              <goals>
-                <goal>unpack</goal>
-              </goals>
-              <configuration>
-                <artifactItems>
-                  <artifactItem>
-                    <groupId>org.test</groupId>
-                    <artifactId>test-war1</artifactId>
-                    <version>0.0.1-SNAPSHOT</version>
-                    <type>war</type>
-                  </artifactItem>
-                </artifactItems>
-                <outputDirectory>${project.build.directory}/wars</outputDirectory>
-              </configuration>
-            </execution>
-          </executions>
-      </plugin>
--->
-<!--
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-war-plugin</artifactId>
-        <configuration>
-          &lt;!&ndash;<warName>FinalProject</warName>&ndash;&gt;
-          <overlays>
-            &lt;!&ndash; Cloudbridge artifacts &ndash;&gt;
-&lt;!&ndash;
-            <overlay>
-              <groupId>io.cinderella.cloudbridge</groupId>
-              <artifactId>ec2</artifactId>
-              <type>aar</type>
-              <targetPath>WEB-INF/services</targetPath>
-            </overlay>
-            <overlay>
-              <groupId>io.cinderella.cloudbridge</groupId>
-              <artifactId>auth-ec2</artifactId>
-              <type>mar</type>
-              <targetPath>WEB-INF/modules</targetPath>
-            </overlay>
-            <overlay>
-              <groupId>io.cinderella.cloudbridge</groupId>
-              <artifactId>auth-s3</artifactId>
-              <type>mar</type>
-              <targetPath>WEB-INF/modules</targetPath>
-            </overlay>
-            <overlay>
-              <groupId>org.apache.rampart</groupId>
-              <artifactId>rahas</artifactId>
-              <type>mar</type>
-              <targetPath>WEB-INF/modules</targetPath>
-            </overlay>
-            <overlay>
-              <groupId>org.apache.rampart</groupId>
-              <artifactId>rampart</artifactId>
-              <type>mar</type>
-              <targetPath>WEB-INF/modules</targetPath>
-            </overlay>
-&ndash;&gt;
-            &lt;!&ndash; Axis2 war file &ndash;&gt;
-&lt;!&ndash;
-            <overlay>
-              <groupId>org.apache.axis2</groupId>
-              <artifactId>axis2-webapp</artifactId>
-            </overlay>
-&ndash;&gt;
-          </overlays>
-        </configuration>
-      </plugin>
--->
       <plugin>
         <groupId>org.mortbay.jetty</groupId>
         <artifactId>jetty-maven-plugin</artifactId>
@@ -349,29 +191,12 @@
                   <packageName>com.amazon.ec2</packageName>
                 </namespaceURI>
               </namespaceURIs>
-              <wsdlFile>${project.basedir}/../cloudbridge/awsapi/wsdl/AmazonEC2.wsdl</wsdlFile>
+              <wsdlFile>${project.basedir}/../cloudbridge/awsapi/resource/AmazonEC2/AmazonEC2.wsdl</wsdlFile>
               <databindingName>adb</databindingName>
             </configuration>
           </execution>
         </executions>
       </plugin>
-<!--
-      <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>build-helper-maven-plugin</artifactId>
-          <executions>
-              <execution>
-                  <phase>generate-sources</phase>
-                  <goals><goal>add-source</goal></goals>
-                  <configuration>
-                      <sources>
-                          <source>${awsapi.base}/awsapi/src</source>
-                      </sources>
-                  </configuration>
-              </execution>
-          </executions>
-      </plugin>
--->
     </plugins>
   </build>
 </project>
