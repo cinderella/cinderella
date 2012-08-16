@@ -25,29 +25,6 @@
       <artifactId>awsapi</artifactId>
       <version>4.0-SNAPSHOT</version>
     </dependency>
-<!-- These are only used for SOAP
-    <dependency>
-      <groupId>io.cinderella.cloudbridge</groupId>
-      <artifactId>ec2</artifactId>
-      <version>4.0-SNAPSHOT</version>
-      <type>aar</type>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.cinderella.cloudbridge</groupId>
-      <artifactId>auth-ec2</artifactId>
-      <version>4.0-SNAPSHOT</version>
-      <type>mar</type>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.cinderella.cloudbridge</groupId>
-      <artifactId>auth-s3</artifactId>
-      <version>4.0-SNAPSHOT</version>
-      <type>mar</type>
-      <scope>runtime</scope>
-    </dependency>
--->
 
     <!-- Transient Cloudbridge Dependencies -->
     <dependency>
@@ -60,34 +37,6 @@
       <artifactId>axis2-adb</artifactId>
       <version>${axis2.version}</version>
     </dependency>
-<!--
-    <dependency>
-      <groupId>org.apache.axis2</groupId>
-      <artifactId>axis2-transport-http</artifactId>
-      <version>${axis2.version}</version>
-    </dependency>
--->
-<!--
-    <dependency>
-      <groupId>org.apache.axis2</groupId>
-      <artifactId>axis2-transport-local</artifactId>
-      <version>${axis2.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.axis2</groupId>
-      <artifactId>axis2-kernel</artifactId>
-      <version>${axis2.version}</version>
-    </dependency>
--->
-<!--
-    <dependency>
-      <groupId>org.apache.axis2</groupId>
-      <artifactId>axis2-webapp</artifactId>
-      <version>${axis2.version}</version>
-      <type>war</type>
-      <scope>runtime</scope>
-    </dependency>
--->
     <dependency>
       <groupId>org.jasypt</groupId>
       <artifactId>jasypt</artifactId>
@@ -95,8 +44,8 @@
     </dependency>
     <!-- jclouds Dependencies -->
     <dependency>
-      <groupId>org.jclouds.api</groupId>
-      <artifactId>vcloud</artifactId>
+      <groupId>org.jclouds.labs</groupId>
+      <artifactId>vcloud-director</artifactId>
       <version>${jclouds.version}</version>
     </dependency>
     <dependency>
@@ -199,4 +148,35 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>jrebel</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.zeroturnaround</groupId>
+            <artifactId>jrebel-maven-plugin</artifactId>
+            <version>1.1.3</version>
+            <configuration>
+              <alwaysGenerate>true</alwaysGenerate>
+              <addResourcesDirToRebelXml>true</addResourcesDirToRebelXml>
+              <showGenerated>true</showGenerated>
+              <packaging>war</packaging>
+            </configuration>
+            <executions>
+              <execution>
+                <id>generate-rebel-xml</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>generate</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
 </project>
