@@ -9,7 +9,7 @@
   </parent>
 
   <groupId>io.cinderella</groupId>
-  <artifactId>webapp</artifactId>
+  <artifactId>cinderella-web</artifactId>
   <packaging>war</packaging>
   <version>1.0-SNAPSHOT</version>
   <name>Cinderella :: Main Webapp</name>

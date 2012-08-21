@@ -24,9 +24,9 @@ The build is configured to run Jetty via the maven Jetty plugin. Some changes
 such as config files and static resources will trigger a redeploy so that changes
 can be tested immediately.
 ```
-$ mvn jetty:run -pl :webapp
+$ mvn jetty:run -pl :cinderella-web
 or
-$ cd webapp
+$ cd cinderella-web
 $ mvn jetty:run
 ```
 Application will be available at http://localhost:8080/
@@ -38,5 +38,5 @@ From the project root
 $ mvn clean install
 ```
 This builds and installs all dependencies, and then packages the war file 
-as ```webapp/target/cinderella.war```
+as ```cinderella-web/target/cinderella.war```
 
