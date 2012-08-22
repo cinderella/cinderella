@@ -136,7 +136,7 @@
               <outputDirectory>${project.build.directory}/generated-sources/wsdl2code</outputDirectory>
               <namespaceURIs>
                 <namespaceURI>
-                  <uri>http://ec2.amazonaws.com/doc/2010-11-15/</uri>
+                  <uri>http://ec2.amazonaws.com/doc/2009-10-31/</uri>
                   <packageName>com.amazon.ec2</packageName>
                 </namespaceURI>
               </namespaceURIs>
