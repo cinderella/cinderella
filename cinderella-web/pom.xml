@@ -19,13 +19,6 @@
   </properties>
 
   <dependencies>
-    <!-- Cloudbridge Dependencies -->
-    <dependency>
-      <groupId>io.cinderella.cloudbridge</groupId>
-      <artifactId>awsapi</artifactId>
-      <version>4.0-SNAPSHOT</version>
-    </dependency>
-
     <!-- Transient Cloudbridge Dependencies -->
     <dependency>
       <groupId>org.apache.axis2</groupId>
@@ -140,7 +133,8 @@
                   <packageName>com.amazon.ec2</packageName>
                 </namespaceURI>
               </namespaceURIs>
-              <wsdlFile>${project.basedir}/../cloudbridge/awsapi/resource/AmazonEC2/AmazonEC2.wsdl</wsdlFile>
+              <wsdlFile>${project.basedir}/src/main/resources/2009-10-31.ec2.wsdl</wsdlFile>
+              <!--<wsdlFile>${project.basedir}/../cloudbridge/awsapi/resource/AmazonEC2/AmazonEC2.wsdl</wsdlFile>-->
               <databindingName>adb</databindingName>
             </configuration>
           </execution>
@@ -148,7 +142,6 @@
       </plugin>
     </plugins>
   </build>
-
   <profiles>
     <profile>
       <id>jrebel</id>
