@@ -16,13 +16,41 @@
 // under the License.
 package com.cloud.bridge.service;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 
+import org.jclouds.util.Strings2;
+
 import com.amazon.ec2.*;
-import com.cloud.bridge.service.core.ec2.*;
+import com.cloud.bridge.service.core.ec2.EC2Address;
+import com.cloud.bridge.service.core.ec2.EC2CreateImageResponse;
+import com.cloud.bridge.service.core.ec2.EC2DescribeAddressesResponse;
+import com.cloud.bridge.service.core.ec2.EC2DescribeAvailabilityZonesResponse;
+import com.cloud.bridge.service.core.ec2.EC2DescribeImagesResponse;
+import com.cloud.bridge.service.core.ec2.EC2DescribeInstancesResponse;
+import com.cloud.bridge.service.core.ec2.EC2DescribeKeyPairsResponse;
+import com.cloud.bridge.service.core.ec2.EC2DescribeRegionsResponse;
+import com.cloud.bridge.service.core.ec2.EC2DescribeSecurityGroupsResponse;
+import com.cloud.bridge.service.core.ec2.EC2DescribeSnapshotsResponse;
+import com.cloud.bridge.service.core.ec2.EC2DescribeVolumesResponse;
+import com.cloud.bridge.service.core.ec2.EC2Image;
+import com.cloud.bridge.service.core.ec2.EC2ImageAttributes;
+import com.cloud.bridge.service.core.ec2.EC2Instance;
+import com.cloud.bridge.service.core.ec2.EC2IpPermission;
+import com.cloud.bridge.service.core.ec2.EC2PasswordData;
+import com.cloud.bridge.service.core.ec2.EC2RunInstancesResponse;
+import com.cloud.bridge.service.core.ec2.EC2SSHKeyPair;
+import com.cloud.bridge.service.core.ec2.EC2SecurityGroup;
+import com.cloud.bridge.service.core.ec2.EC2Snapshot;
+import com.cloud.bridge.service.core.ec2.EC2StartInstancesResponse;
+import com.cloud.bridge.service.core.ec2.EC2StopInstancesResponse;
+import com.cloud.bridge.service.core.ec2.EC2TagKeyValue;
+import com.cloud.bridge.service.core.ec2.EC2Volume;
 import com.cloud.bridge.util.EC2RestAuth;
 
 public class GeneratedCode {
@@ -836,12 +864,14 @@ public class GeneratedCode {
       DescribeRegionsResponse response = new DescribeRegionsResponse();
       DescribeRegionsResponseType param1 = new DescribeRegionsResponseType();
       RegionSetType param2 = new RegionSetType();
+      
+      String endpoint = getEndpoint();
 
       String[] regions = engineResponse.getRegionSet();
       for (String region : regions) {
          RegionItemType param3 = new RegionItemType();
          param3.setRegionName(region);
-         param3.setRegionEndpoint("http://fixme:8080"); //TODO: Get the actual url for the endpoint from a servlet context
+         param3.setRegionEndpoint(endpoint);
          param2.addItem(param3);
       }
 
@@ -849,6 +879,23 @@ public class GeneratedCode {
       param1.setRegionInfo(param2);
       response.setDescribeRegionsResponse(param1);
       return response;
+   }
+
+   private static String getEndpoint() {
+      String endpoint = "http://localhost:8080";
+      HttpURLConnection connection = null;
+      try {
+         URL url = new URL("http://checkip.amazonaws.com/");
+         connection = (HttpURLConnection) url.openConnection();
+         connection.connect();
+         endpoint = String.format("http://%s:8080", Strings2.toStringAndClose(connection.getInputStream()).trim());
+      } catch (IOException e) {
+         // TODO: log
+      } finally {
+         if (connection != null)
+            connection.disconnect();
+      }
+      return endpoint;
    }
 
    public static AttachVolumeResponse toAttachVolumeResponse(EC2Volume engineResponse) {
