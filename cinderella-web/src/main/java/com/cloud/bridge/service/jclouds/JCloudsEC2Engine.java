@@ -16,6 +16,9 @@
 // under the License.
 package com.cloud.bridge.service.jclouds;
 
+import static org.jclouds.vcloud.director.v1_5.predicates.ReferencePredicates.nameEquals;
+import static org.jclouds.vcloud.director.v1_5.predicates.ReferencePredicates.typeEquals;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -37,18 +40,16 @@ import org.jclouds.vcloud.director.v1_5.admin.VCloudDirectorAdminApi;
 import org.jclouds.vcloud.director.v1_5.domain.Link;
 import org.jclouds.vcloud.director.v1_5.domain.Reference;
 import org.jclouds.vcloud.director.v1_5.domain.VAppTemplate;
+import org.jclouds.vcloud.director.v1_5.domain.Vdc;
+import org.jclouds.vcloud.director.v1_5.domain.Vm;
 import org.jclouds.vcloud.director.v1_5.domain.network.FirewallRule;
 import org.jclouds.vcloud.director.v1_5.domain.network.FirewallService;
-import org.jclouds.vcloud.director.v1_5.domain.org.Org;
-import org.jclouds.vcloud.director.v1_5.predicates.LinkPredicates;
-import org.jclouds.vcloud.director.v1_5.predicates.ReferencePredicates;
 import org.jclouds.vcloud.director.v1_5.user.VCloudDirectorApi;
 
 import com.cloud.bridge.service.EC2Engine;
 import com.cloud.bridge.service.core.ec2.EC2Address;
 import com.cloud.bridge.service.core.ec2.EC2AssociateAddress;
 import com.cloud.bridge.service.core.ec2.EC2AuthorizeRevokeSecurityGroup;
-import com.cloud.bridge.service.core.ec2.EC2AvailabilityZonesFilterSet;
 import com.cloud.bridge.service.core.ec2.EC2CreateImage;
 import com.cloud.bridge.service.core.ec2.EC2CreateImageResponse;
 import com.cloud.bridge.service.core.ec2.EC2CreateKeyPair;
@@ -107,6 +108,8 @@ import com.cloud.bridge.service.exception.EC2ServiceException.ClientError;
 import com.cloud.bridge.service.exception.EC2ServiceException.ServerError;
 import com.cloud.bridge.util.ConfigurationHelper;
 import com.google.common.base.Function;
+import com.google.common.base.Optional;
+import com.google.common.base.Predicates;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableMultimap.Builder;
@@ -168,7 +171,7 @@ public class JCloudsEC2Engine implements EC2Engine {
     *
     * @return
     */
-   private VCloudDirectorApi getApi() {
+   public VCloudDirectorApi getApi() {
       if (vcloudApi == null) {
          Properties overrides = new Properties();
          overrides.setProperty(Constants.PROPERTY_TRUST_ALL_CERTS, "true");
@@ -964,13 +967,13 @@ public class JCloudsEC2Engine implements EC2Engine {
     * @see com.cloud.bridge.service.core.ec2.EC2Engine1#describeImages(EC2DescribeImages)
     */
    @Override
-   public EC2DescribeImagesResponse describeImages(EC2DescribeImages request)
+   public EC2DescribeImagesResponse describeImages(String region, EC2DescribeImages request)
    {
       EC2DescribeImagesResponse images = new EC2DescribeImagesResponse();
 
       try {
          String[] templateIds = request.getImageSet();
-         return listTemplates(Arrays.asList(templateIds), images);
+         return listTemplatesInVDC(Arrays.asList(templateIds), region, images);
          // TODO: This should work but does not, need to fix this
          // return listTemplates(ImmutableSet.<String>copyOf(templateIds), images);
       } catch( Exception e ) {
@@ -1117,20 +1120,14 @@ public class JCloudsEC2Engine implements EC2Engine {
     * @see com.cloud.bridge.service.core.ec2.EC2Engine1#handleRequest(EC2DescribeAvailabilityZones)
     */
    @Override
-   public EC2DescribeAvailabilityZonesResponse handleRequest(EC2DescribeAvailabilityZones request) {
+   public EC2DescribeAvailabilityZonesResponse handleRequest(String region, EC2DescribeAvailabilityZones request) {
       try {
-         EC2DescribeAvailabilityZonesResponse availableZones = listZones(Arrays.asList(request.getZoneSet()));
-         // TODO: This should work but does not, need to fix this
-         // EC2DescribeAvailabilityZonesResponse availableZones = listZones(ImmutableSet.<String>copyOf(request.getZoneSet()));
-         EC2AvailabilityZonesFilterSet azfs = request.getFilterSet();
-         if ( null == azfs )
-            return availableZones;
-         else {
-            List<String> matchedAvailableZones = azfs.evaluate(availableZones);
-            if (matchedAvailableZones.isEmpty())
-               return new EC2DescribeAvailabilityZonesResponse();
-            return listZones(matchedAvailableZones);
+         
+         EC2DescribeAvailabilityZonesResponse zones = new EC2DescribeAvailabilityZonesResponse();
+         if (request.getZoneSet().length == 0 || Arrays.asList(request.getZoneSet()).contains(region+"a")) {
+            zones.addZone(region+"a", region+"a");
          }
+         return zones;
       } catch( EC2ServiceException error ) {
          logger.error( "EC2 DescribeAvailabilityZones - ", error);
          throw error;
@@ -1778,28 +1775,24 @@ public class JCloudsEC2Engine implements EC2Engine {
     *
     * @return EC2DescribeAvailabilityZonesResponse
     */
-   private EC2DescribeAvailabilityZonesResponse listZones(Iterable<String> interestedZones) throws Exception {
-      EC2DescribeAvailabilityZonesResponse zones = new EC2DescribeAvailabilityZonesResponse();
-      if (Iterables.size(interestedZones) == 0 || Iterables.contains(interestedZones, "default")) {
-         zones.addZone("default", "default");
-      }
-      return zones;
-   }
-
-   /**
-    * More than one place we need to access the defined list of zones.  If given a specific
-    * list of zones of interest, then only values from those zones are returned.
-    *
-    * @param interestedZones - can be null, should be a subset of all zones
-    *
-    * @return EC2DescribeAvailabilityZonesResponse
-    */
    private EC2DescribeRegionsResponse listRegions(Iterable<String> interestedRegions) throws Exception {
       EC2DescribeRegionsResponse regions = new EC2DescribeRegionsResponse();
-      for (Reference orgRef : getApi().getOrgApi().list()) {
-         Org org = getApi().getOrgApi().get(orgRef.getHref());
-         if (Iterables.size(interestedRegions) == 0 || Iterables.contains(interestedRegions, org.getId()))
-            regions.addRegion(org.getId(), org.getName());
+      FluentIterable<Vdc> vdcs = FluentIterable.from(getApi().getOrgApi().list())
+      .transformAndConcat(new Function<Reference, Iterable<Link>>() {
+         @Override
+         public Iterable<Link> apply(Reference in) {
+            return getApi().getOrgApi().get(in.getHref()).getLinks();
+         }
+      }).filter(typeEquals(VCloudDirectorMediaType.VDC))
+      .transform(new Function<Link, Vdc>(){
+         @Override
+         public Vdc apply(Link in) {
+            return getApi().getVdcApi().get(in.getHref());
+         }
+      });
+      for (Vdc vdc : vdcs) {
+         if (Iterables.size(interestedRegions) == 0 || Iterables.contains(interestedRegions, vdc.getName()))
+            regions.addRegion(vdc.getName(), vdc.getName());
       }
       return regions;
    }
@@ -1883,6 +1876,7 @@ public class JCloudsEC2Engine implements EC2Engine {
 
    /**
     * Get one or more templates depending on the templateId parameter.
+    * @param vdc 
     *
     * @param immutableSet - if null then return information on all existing templates, otherwise
     *                     just return information on the matching template.
@@ -1891,38 +1885,32 @@ public class JCloudsEC2Engine implements EC2Engine {
     * @return the same object passed in as the "images" parameter modified with one or more
     *         EC2Image objects loaded.
     */
-   private EC2DescribeImagesResponse listTemplates(Iterable<String> imageIds, EC2DescribeImagesResponse images) throws EC2ServiceException {
-      ImmutableSet<VAppTemplate> templates = FluentIterable.from(getApi().getOrgApi().list())
-                                                           .transformAndConcat(new Function<Reference, Iterable<Link>>(){
-                                                              @Override
-                                                              public Iterable<Link> apply(Reference in) {
-                                                                 return getApi().getOrgApi().get(in.getHref()).getLinks();
-                                                              }
-                                                           })
-                                                           .filter(LinkPredicates.typeEquals(VCloudDirectorMediaType.VDC))
-                                                           .transformAndConcat(new Function<Link, Iterable<Reference>>(){
-                                                              @Override
-                                                              public Iterable<Reference> apply(Link in) {
-                                                                 return getApi().getVdcApi().get(in.getHref()).getResourceEntities();
-                                                              }
-                                                           })
-                                                           .filter(ReferencePredicates.typeEquals(VCloudDirectorMediaType.VAPP_TEMPLATE))
+   private EC2DescribeImagesResponse listTemplatesInVDC(Iterable<String> imageIds, String vdcName, EC2DescribeImagesResponse images) throws EC2ServiceException {
+      Vdc vdc = getVDC(vdcName);
+
+      ImmutableSet<Vm> vms = FluentIterable.from(vdc.getResourceEntities())
+                                                           .filter(typeEquals(VCloudDirectorMediaType.VAPP_TEMPLATE))
                                                            .transform(new Function<Reference, VAppTemplate>(){
                                                               @Override
                                                               public VAppTemplate apply(Reference in) {
                                                                  return getApi().getVAppTemplateApi().get(in.getHref());
                                                               }
+                                                           }).transformAndConcat(new Function<VAppTemplate, Iterable<Vm>>(){
+                                                              @Override
+                                                              public Iterable<Vm> apply(VAppTemplate in) {
+                                                                 return in.getChildren();
+                                                              }
                                                            }).toImmutableSet();
-      for (VAppTemplate template : templates) {
+      for (Vm template : vms) {
          EC2Image ec2Image = new EC2Image();
-         ec2Image.setId(template.getId());
+         ec2Image.setId(template.getId().replace("urn:vcloud:vm", "ami-"));
          ec2Image.setAccountName(getApi().getCurrentSession().getUser());
          ec2Image.setName(template.getName());
          ec2Image.setDescription(template.getDescription());
          // ec2Image.setOsTypeId(temp.getOsTypeId().toString());
          //TODO use the catalog api to determine if this template is published
          // ec2Image.setIsPublic(temp.getIsPublic());
-         ec2Image.setIsReady(template.isOvfDescriptorUploaded());
+//         ec2Image.setIsReady(template.isOvfDescriptorUploaded());
          // TODO: domain is not an EC2 Concept.. probably this should be looked at.
          // ec2Image.setDomainId(temp.getDomainId());
          for (Entry<String, String> resourceTag : getApi().getVAppTemplateApi().getMetadataApi(template.getId()).get()
@@ -1937,6 +1925,19 @@ public class JCloudsEC2Engine implements EC2Engine {
 
       }
       return images;
+   }
+
+   private Vdc getVDC(String vdcName) {
+      Optional<Link> vdcPresent = FluentIterable.from(getApi().getOrgApi().list())
+            .transformAndConcat(new Function<Reference, Iterable<Link>>() {
+               @Override
+               public Iterable<Link> apply(Reference in) {
+                  return getApi().getOrgApi().get(in.getHref()).getLinks();
+               }
+            }).firstMatch(Predicates.<Link> and(typeEquals(VCloudDirectorMediaType.VDC), nameEquals(vdcName)));
+      if (!vdcPresent.isPresent())
+         throw new IllegalStateException("No VDC: "+vdcName);
+      return getApi().getVdcApi().get(vdcPresent.get().getHref());
    }
 
    /* (non-Javadoc)

@@ -175,7 +175,7 @@ public interface EC2Engine {
     * @param request
     * @return
     */
-   EC2DescribeImagesResponse describeImages(EC2DescribeImages request);
+   EC2DescribeImagesResponse describeImages(String region, EC2DescribeImages request);
 
    /**
     * Create a template
@@ -226,7 +226,7 @@ public interface EC2Engine {
     * @param request
     * @return
     */
-   EC2DescribeAvailabilityZonesResponse handleRequest(EC2DescribeAvailabilityZones request);
+   EC2DescribeAvailabilityZonesResponse handleRequest(String region, EC2DescribeAvailabilityZones request);
 
    /**
     * list Zones

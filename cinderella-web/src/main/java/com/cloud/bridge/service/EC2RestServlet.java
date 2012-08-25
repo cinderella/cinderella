@@ -16,6 +16,8 @@
 // under the License.
 package com.cloud.bridge.service;
 
+import static org.jclouds.vcloud.director.v1_5.predicates.ReferencePredicates.typeEquals;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -42,24 +44,100 @@ import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 
-import com.amazon.ec2.*;
-import com.cloud.bridge.service.core.ec2.*;
 import org.apache.axiom.om.OMAbstractFactory;
 import org.apache.axiom.om.OMFactory;
 import org.apache.axis2.AxisFault;
 import org.apache.axis2.databinding.ADBBean;
 import org.apache.axis2.databinding.ADBException;
 import org.apache.axis2.databinding.utils.writer.MTOMAwareXMLSerializer;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
+import org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType;
+import org.jclouds.vcloud.director.v1_5.domain.Link;
+import org.jclouds.vcloud.director.v1_5.domain.Reference;
+import org.jclouds.vcloud.director.v1_5.user.VCloudDirectorApi;
 
+import com.amazon.ec2.AllocateAddressResponse;
+import com.amazon.ec2.AssociateAddressResponse;
+import com.amazon.ec2.AttachVolumeResponse;
+import com.amazon.ec2.AuthorizeSecurityGroupIngressResponse;
+import com.amazon.ec2.CreateImageResponse;
+import com.amazon.ec2.CreateKeyPairResponse;
+import com.amazon.ec2.CreateSecurityGroupResponse;
+import com.amazon.ec2.CreateSnapshotResponse;
+import com.amazon.ec2.CreateVolumeResponse;
+import com.amazon.ec2.DeleteKeyPairResponse;
+import com.amazon.ec2.DeleteSecurityGroupResponse;
+import com.amazon.ec2.DeleteSnapshotResponse;
+import com.amazon.ec2.DeleteVolumeResponse;
+import com.amazon.ec2.DeregisterImageResponse;
+import com.amazon.ec2.DescribeAvailabilityZonesResponse;
+import com.amazon.ec2.DescribeImageAttributeResponse;
+import com.amazon.ec2.DescribeImagesResponse;
+import com.amazon.ec2.DescribeInstanceAttributeResponse;
+import com.amazon.ec2.DescribeInstancesResponse;
+import com.amazon.ec2.DescribeKeyPairsResponse;
+import com.amazon.ec2.DescribeRegionsResponse;
+import com.amazon.ec2.DescribeSecurityGroupsResponse;
+import com.amazon.ec2.DescribeSnapshotsResponse;
+import com.amazon.ec2.DescribeVolumesResponse;
+import com.amazon.ec2.DetachVolumeResponse;
+import com.amazon.ec2.DisassociateAddressResponse;
+import com.amazon.ec2.GetPasswordDataResponse;
+import com.amazon.ec2.ModifyImageAttributeResponse;
+import com.amazon.ec2.RebootInstancesResponse;
+import com.amazon.ec2.RegisterImageResponse;
+import com.amazon.ec2.ReleaseAddressResponse;
+import com.amazon.ec2.ResetImageAttributeResponse;
+import com.amazon.ec2.RevokeSecurityGroupIngressResponse;
+import com.amazon.ec2.RunInstancesResponse;
+import com.amazon.ec2.StartInstancesResponse;
+import com.amazon.ec2.StopInstancesResponse;
+import com.amazon.ec2.TerminateInstancesResponse;
+import com.cloud.bridge.service.core.ec2.EC2AssociateAddress;
+import com.cloud.bridge.service.core.ec2.EC2AuthorizeRevokeSecurityGroup;
+import com.cloud.bridge.service.core.ec2.EC2CreateImage;
+import com.cloud.bridge.service.core.ec2.EC2CreateKeyPair;
+import com.cloud.bridge.service.core.ec2.EC2CreateVolume;
+import com.cloud.bridge.service.core.ec2.EC2DeleteKeyPair;
+import com.cloud.bridge.service.core.ec2.EC2DescribeAddresses;
+import com.cloud.bridge.service.core.ec2.EC2DescribeAvailabilityZones;
+import com.cloud.bridge.service.core.ec2.EC2DescribeImages;
+import com.cloud.bridge.service.core.ec2.EC2DescribeInstances;
+import com.cloud.bridge.service.core.ec2.EC2DescribeKeyPairs;
+import com.cloud.bridge.service.core.ec2.EC2DescribeRegions;
+import com.cloud.bridge.service.core.ec2.EC2DescribeSecurityGroups;
+import com.cloud.bridge.service.core.ec2.EC2DescribeSnapshots;
+import com.cloud.bridge.service.core.ec2.EC2DescribeVolumes;
+import com.cloud.bridge.service.core.ec2.EC2DisassociateAddress;
+import com.cloud.bridge.service.core.ec2.EC2Filter;
+import com.cloud.bridge.service.core.ec2.EC2GroupFilterSet;
+import com.cloud.bridge.service.core.ec2.EC2Image;
+import com.cloud.bridge.service.core.ec2.EC2InstanceFilterSet;
+import com.cloud.bridge.service.core.ec2.EC2IpPermission;
+import com.cloud.bridge.service.core.ec2.EC2KeyPairFilterSet;
+import com.cloud.bridge.service.core.ec2.EC2RebootInstances;
+import com.cloud.bridge.service.core.ec2.EC2RegisterImage;
+import com.cloud.bridge.service.core.ec2.EC2ReleaseAddress;
+import com.cloud.bridge.service.core.ec2.EC2RunInstances;
+import com.cloud.bridge.service.core.ec2.EC2SecurityGroup;
+import com.cloud.bridge.service.core.ec2.EC2SnapshotFilterSet;
+import com.cloud.bridge.service.core.ec2.EC2StartInstances;
+import com.cloud.bridge.service.core.ec2.EC2StopInstances;
+import com.cloud.bridge.service.core.ec2.EC2Volume;
+import com.cloud.bridge.service.core.ec2.EC2VolumeFilterSet;
 import com.cloud.bridge.service.exception.EC2ServiceException;
 import com.cloud.bridge.service.exception.EC2ServiceException.ClientError;
 import com.cloud.bridge.service.exception.PermissionDeniedException;
+import com.cloud.bridge.service.jclouds.JCloudsEC2Engine;
 import com.cloud.bridge.util.ConfigurationHelper;
 import com.cloud.bridge.util.EC2RestAuth;
+import com.google.common.base.Function;
+import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.FluentIterable;
 
 public abstract class EC2RestServlet extends HttpServlet implements Supplier<EC2Engine> {
 
@@ -916,10 +994,26 @@ public abstract class EC2RestServlet extends HttpServlet implements Supplier<EC2
       }
       // -> execute the request
       DescribeAvailabilityZonesResponse EC2response = GeneratedCode.toDescribeAvailabilityZonesResponse(get()
-            .handleRequest(EC2request));
+            .handleRequest(getCurrentRegion(request), EC2request));
       serializeResponse(response, EC2response);
    }
 
+   String getCurrentRegion(HttpServletRequest request){
+      Predicate<Link> whichVDC = Predicates.alwaysTrue(); // TODO: choose based on port, or something else
+      final VCloudDirectorApi api = JCloudsEC2Engine.class.cast(get()).getApi();
+      Optional<Link> vdcPresent = FluentIterable.from(api.getOrgApi().list())
+            .transformAndConcat(new Function<Reference, Iterable<Link>>() {
+               @Override
+               public Iterable<Link> apply(Reference in) {
+                  return api.getOrgApi().get(in.getHref()).getLinks();
+               }
+            }).firstMatch(Predicates.<Link> and(typeEquals(VCloudDirectorMediaType.VDC), whichVDC));
+      if (!vdcPresent.isPresent())
+         throw new IllegalStateException("No VDC matches request: " + whichVDC);
+      return vdcPresent.get().getName();
+   }
+   
+   
    private void describeRegions(HttpServletRequest request, HttpServletResponse response)
          throws ADBException, XMLStreamException, IOException {
       EC2DescribeRegions EC2request = new EC2DescribeRegions();
@@ -957,7 +1051,7 @@ public abstract class EC2RestServlet extends HttpServlet implements Supplier<EC2
       }
       // -> execute the request
 
-      DescribeImagesResponse EC2response = GeneratedCode.toDescribeImagesResponse(get().describeImages(EC2request));
+      DescribeImagesResponse EC2response = GeneratedCode.toDescribeImagesResponse(get().describeImages(getCurrentRegion(request), EC2request));
       serializeResponse(response, EC2response);
    }
 
@@ -976,7 +1070,7 @@ public abstract class EC2RestServlet extends HttpServlet implements Supplier<EC2
       }
 
       // -> execute the request
-      DescribeImageAttributeResponse EC2response = GeneratedCode.toDescribeImageAttributeResponse(get().describeImages(
+      DescribeImageAttributeResponse EC2response = GeneratedCode.toDescribeImageAttributeResponse(get().describeImages(getCurrentRegion(request),
             EC2request));
       serializeResponse(response, EC2response);
    }

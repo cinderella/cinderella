@@ -864,13 +864,13 @@ public class GeneratedCode {
       DescribeRegionsResponse response = new DescribeRegionsResponse();
       DescribeRegionsResponseType param1 = new DescribeRegionsResponseType();
       RegionSetType param2 = new RegionSetType();
-      
       String endpoint = getEndpoint();
 
       String[] regions = engineResponse.getRegionSet();
       for (String region : regions) {
          RegionItemType param3 = new RegionItemType();
          param3.setRegionName(region);
+//TODO: endpoint should be based on the input request!
          param3.setRegionEndpoint(endpoint);
          param2.addItem(param3);
       }
@@ -882,13 +882,13 @@ public class GeneratedCode {
    }
 
    private static String getEndpoint() {
-      String endpoint = "http://localhost:8080";
+      String endpoint = "localhost:8080";
       HttpURLConnection connection = null;
       try {
          URL url = new URL("http://checkip.amazonaws.com/");
          connection = (HttpURLConnection) url.openConnection();
          connection.connect();
-         endpoint = String.format("http://%s:8080", Strings2.toStringAndClose(connection.getInputStream()).trim());
+         endpoint = String.format("%s:8080", Strings2.toStringAndClose(connection.getInputStream()).trim());
       } catch (IOException e) {
          // TODO: log
       } finally {
