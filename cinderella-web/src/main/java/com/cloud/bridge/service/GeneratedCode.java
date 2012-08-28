@@ -272,7 +272,7 @@ public class GeneratedCode {
             AttachmentSetItemResponseType param5 = new AttachmentSetItemResponseType();
             param5.setVolumeId(vol.getId().toString());
             param5.setInstanceId(vol.getInstanceId().toString());
-            // String devicePath = engine.cloudDeviceIdToDevicePath(
+            // String devicePath = engine.deviceIdToDevicePath(
             // vol.getHypervisor(), vol.getDeviceId());
             // param5.setDevice( devicePath );
             param5.setStatus(toVolumeAttachmentState(vol.getInstanceId(), vol.getVMState()));
@@ -307,7 +307,7 @@ public class GeneratedCode {
       if (0 < instanceSet.length) {
          DescribeInstanceAttributeResponseTypeChoice_type0 param2 = new DescribeInstanceAttributeResponseTypeChoice_type0();
          NullableAttributeValueType param3 = new NullableAttributeValueType();
-         param3.setValue(instanceSet[0].getServiceOffering());
+         param3.setValue(instanceSet[0].getInstanceType());
          param2.setInstanceType(param3);
          param1.setDescribeInstanceAttributeResponseTypeChoice_type0(param2);
          param1.setInstanceId(instanceSet[0].getId());
@@ -368,7 +368,7 @@ public class GeneratedCode {
          param7.setReason("");
          param7.setKeyName("");
          param7.setAmiLaunchIndex("");
-         param7.setInstanceType(inst.getServiceOffering());
+         param7.setInstanceType(inst.getInstanceType());
 
          ProductCodesSetType param9 = new ProductCodesSetType();
          ProductCodesSetItemType param10 = new ProductCodesSetItemType();
@@ -406,9 +406,8 @@ public class GeneratedCode {
          param13.setMessage("");
          param7.setStateReason(param13);
          param7.setArchitecture("");
-         param7.setRootDeviceType("");
-         String devicePath = cloudDeviceIdToDevicePath(inst.getHypervisor(), inst.getRootDeviceId());
-         param7.setRootDeviceName(devicePath);
+         param7.setRootDeviceType(inst.getRootDeviceType());
+         param7.setRootDeviceName(inst.getRootDeviceId());
 
 //         param7.setInstanceLifecycle("");
 //         param7.setSpotInstanceRequestId("");
@@ -434,7 +433,7 @@ public class GeneratedCode {
     * @param deviceId
     * @return
     */
-   public static String cloudDeviceIdToDevicePath(String hypervisor, String deviceId) {
+   public static String deviceIdToDevicePath(String hypervisor, String deviceId) {
       Integer devId = new Integer(deviceId);
       if (null != hypervisor && hypervisor.toLowerCase().contains("windows")) {
          switch (devId) {
@@ -777,7 +776,7 @@ public class GeneratedCode {
          param9.addItem(param10);
          param7.setProductCodes(param9);
 
-         param7.setInstanceType(inst.getServiceOffering());
+         param7.setInstanceType(inst.getInstanceType());
          // -> CloudStack seems to have issues with timestamp formats so just in
          // case
          Calendar cal = inst.getCreated();

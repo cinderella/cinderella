@@ -144,11 +144,11 @@ public class EC2Instance {
 		return this.privateIpAddress;
 	}
 
-	public void setServiceOffering( String instanceType ) {
+	public void setInstanceType(String instanceType) {
 		this.instanceType = instanceType;
 	}
 	
-	public String getServiceOffering() {
+	public String getInstanceType() {
 		return this.instanceType;
 	}
 

@@ -130,7 +130,7 @@ public class EC2InstanceFilterSet {
 	    }
 	    else if (filterName.equalsIgnoreCase( "instance-type" ))
 	    {
-	         return containsString( vm.getServiceOffering(), valueSet );	
+	         return containsString( vm.getInstanceType(), valueSet );
 	    }
 	    else if (filterName.equalsIgnoreCase( "instance-state-code" )) 
 	    {

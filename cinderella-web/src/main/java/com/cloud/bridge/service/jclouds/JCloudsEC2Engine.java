@@ -1516,7 +1516,10 @@ public class JCloudsEC2Engine implements EC2Engine {
                .transformAndConcat(new Function<VApp, Iterable<Vm>>() {
                   @Override
                   public Iterable<Vm> apply(VApp in) {
-                     return in.getChildren().getVms();
+                     if (null != in.getChildren() && null != in.getChildren().getVms()) {
+                        return in.getChildren().getVms();
+                     }
+                     return ImmutableSet.of();
                   }
                }).toImmutableSet();
       for (Vm vm : vms) {
@@ -1538,9 +1541,9 @@ public class JCloudsEC2Engine implements EC2Engine {
          }
          // ec2Instance.setCreated(vm.getCreated());
          ec2Instance.setHypervisor("vsphere");
-         // ec2Instance.setRootDeviceType(cloudVm.getRootDeviceType());
-         // ec2Instance.setRootDeviceId(cloudVm.getRootDeviceId());
-         // ec2Instance.setServiceOffering(serviceOfferingIdToInstanceType(cloudVm.getServiceOfferingId().toString()));
+         ec2Instance.setRootDeviceType("instance-store");
+         ec2Instance.setRootDeviceId("/dev/sda");
+         ec2Instance.setInstanceType("m1.small");  //TODO: Map vcloud template specs to unique instancetype
 
          Set<String> addresses = getIpsFromVm(vm);
          ec2Instance.setIpAddress(tryFind(addresses, not(IsPrivateIPAddress.INSTANCE)).orNull());
