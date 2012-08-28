@@ -16,6 +16,8 @@
 // under the License.
 package com.cloud.bridge.service.jclouds;
 
+import static org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType.CATALOG;
+import static org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType.VAPP_TEMPLATE;
 import static org.jclouds.vcloud.director.v1_5.predicates.ReferencePredicates.nameEquals;
 import static org.jclouds.vcloud.director.v1_5.predicates.ReferencePredicates.typeEquals;
 
@@ -37,6 +39,8 @@ import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.vcloud.director.v1_5.VCloudDirectorContext;
 import org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType;
 import org.jclouds.vcloud.director.v1_5.admin.VCloudDirectorAdminApi;
+import org.jclouds.vcloud.director.v1_5.domain.Catalog;
+import org.jclouds.vcloud.director.v1_5.domain.CatalogItem;
 import org.jclouds.vcloud.director.v1_5.domain.Link;
 import org.jclouds.vcloud.director.v1_5.domain.Reference;
 import org.jclouds.vcloud.director.v1_5.domain.VAppTemplate;
@@ -44,6 +48,8 @@ import org.jclouds.vcloud.director.v1_5.domain.Vdc;
 import org.jclouds.vcloud.director.v1_5.domain.Vm;
 import org.jclouds.vcloud.director.v1_5.domain.network.FirewallRule;
 import org.jclouds.vcloud.director.v1_5.domain.network.FirewallService;
+import org.jclouds.vcloud.director.v1_5.domain.org.Org;
+import org.jclouds.vcloud.director.v1_5.predicates.ReferencePredicates;
 import org.jclouds.vcloud.director.v1_5.user.VCloudDirectorApi;
 
 import com.cloud.bridge.service.EC2Engine;
@@ -109,6 +115,7 @@ import com.cloud.bridge.service.exception.EC2ServiceException.ServerError;
 import com.cloud.bridge.util.ConfigurationHelper;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableMultimap;
@@ -973,7 +980,9 @@ public class JCloudsEC2Engine implements EC2Engine {
 
       try {
          String[] templateIds = request.getImageSet();
-         return listTemplatesInVDC(Arrays.asList(templateIds), region, images);
+         Org org = getOrgForVDC(region);
+         logger.info( "org - " + org);
+         return listTemplatesInOrg(Arrays.asList(templateIds), org, images);
          // TODO: This should work but does not, need to fix this
          // return listTemplates(ImmutableSet.<String>copyOf(templateIds), images);
       } catch( Exception e ) {
@@ -1885,25 +1894,44 @@ public class JCloudsEC2Engine implements EC2Engine {
     * @return the same object passed in as the "images" parameter modified with one or more
     *         EC2Image objects loaded.
     */
-   private EC2DescribeImagesResponse listTemplatesInVDC(Iterable<String> imageIds, String vdcName, EC2DescribeImagesResponse images) throws EC2ServiceException {
-      Vdc vdc = getVDC(vdcName);
-
-      ImmutableSet<Vm> vms = FluentIterable.from(vdc.getResourceEntities())
-                                                           .filter(typeEquals(VCloudDirectorMediaType.VAPP_TEMPLATE))
-                                                           .transform(new Function<Reference, VAppTemplate>(){
-                                                              @Override
-                                                              public VAppTemplate apply(Reference in) {
-                                                                 return getApi().getVAppTemplateApi().get(in.getHref());
-                                                              }
-                                                           }).transformAndConcat(new Function<VAppTemplate, Iterable<Vm>>(){
-                                                              @Override
-                                                              public Iterable<Vm> apply(VAppTemplate in) {
-                                                                 return in.getChildren();
-                                                              }
-                                                           }).toImmutableSet();
+   private EC2DescribeImagesResponse listTemplatesInOrg(Iterable<String> imageIds, Org org, EC2DescribeImagesResponse images) throws EC2ServiceException {
+      ImmutableSet<Vm> vms = FluentIterable.from(org.getLinks())
+               .filter(typeEquals(CATALOG))
+               .transform(new Function<Link, Catalog>() {
+                  @Override
+                  public Catalog apply(Link in) {
+                     return getApi().getCatalogApi().get(in.getHref());
+                  }
+               }).transformAndConcat(new Function<Catalog, Iterable<Reference>>() {
+                  @Override
+                  public Iterable<Reference> apply(Catalog in) {
+                     return in.getCatalogItems();
+                  }
+               }).transform(new Function<Reference, CatalogItem>() {
+                  @Override
+                  public CatalogItem apply(Reference in) {
+                     return getApi().getCatalogApi().getItem(in.getHref());
+                  }
+               }).filter(new Predicate<CatalogItem>(){
+                  @Override
+                  public boolean apply(CatalogItem in) {
+                     return typeEquals(VAPP_TEMPLATE).apply(in.getEntity());
+                  }
+               }).transform(new Function<CatalogItem, VAppTemplate>() {
+                  @Override
+                  public VAppTemplate apply(CatalogItem in) {
+                     return getApi().getVAppTemplateApi().get(in.getEntity().getHref());
+                  }
+               }).filter(Predicates.notNull()) // if no access, a template might end up null
+               .transformAndConcat(new Function<VAppTemplate, Iterable<Vm>>() {
+                  @Override
+                  public Iterable<Vm> apply(VAppTemplate in) {
+                     return in.getChildren();
+                  }
+               }).toImmutableSet();
       for (Vm template : vms) {
          EC2Image ec2Image = new EC2Image();
-         ec2Image.setId(template.getId().replace("urn:vcloud:vm", "ami-"));
+         ec2Image.setId(template.getId().replace("-", "").replace("urn:vcloud:vm:", "ami-"));
          ec2Image.setAccountName(getApi().getCurrentSession().getUser());
          ec2Image.setName(template.getName());
          ec2Image.setDescription(template.getDescription());
@@ -1913,7 +1941,7 @@ public class JCloudsEC2Engine implements EC2Engine {
 //         ec2Image.setIsReady(template.isOvfDescriptorUploaded());
          // TODO: domain is not an EC2 Concept.. probably this should be looked at.
          // ec2Image.setDomainId(temp.getDomainId());
-         for (Entry<String, String> resourceTag : getApi().getVAppTemplateApi().getMetadataApi(template.getId()).get()
+         for (Entry<String, String> resourceTag : getApi().getVmApi().getMetadataApi(template.getId()).get()
                .entrySet()) {
             EC2TagKeyValue param = new EC2TagKeyValue();
             param.setKey(resourceTag.getKey());
@@ -1939,7 +1967,15 @@ public class JCloudsEC2Engine implements EC2Engine {
          throw new IllegalStateException("No VDC: "+vdcName);
       return getApi().getVdcApi().get(vdcPresent.get().getHref());
    }
-
+   
+   private Org getOrgForVDC(String vdcName) {
+      Optional<Link> orgPresent = FluentIterable.from(getVDC(vdcName).getLinks())
+            .firstMatch(typeEquals(VCloudDirectorMediaType.ORG));
+      if (!orgPresent.isPresent())
+         throw new IllegalStateException("No VDC: "+vdcName);
+      return getApi().getOrgApi().get(orgPresent.get().getHref());
+   }
+   
    /* (non-Javadoc)
     * @see com.cloud.bridge.service.core.ec2.EC2Engine1#listSecurityGroups(java.lang.String[])
     */
