@@ -1102,7 +1102,7 @@ public abstract class EC2RestServlet extends HttpServlet implements Supplier<EC2
       // -> execute the request
 
       DescribeInstancesResponse EC2response = GeneratedCode.toDescribeInstancesResponse(get().describeInstances(
-            EC2request));
+              getCurrentRegion(request), EC2request));
       serializeResponse(response, EC2response);
    }
 
@@ -1255,7 +1255,7 @@ public abstract class EC2RestServlet extends HttpServlet implements Supplier<EC2
 
       // -> execute the request
       DescribeInstanceAttributeResponse EC2response = GeneratedCode.toDescribeInstanceAttributeResponse(get()
-            .describeInstances(EC2request));
+            .describeInstances(getCurrentRegion(request), EC2request));
       serializeResponse(response, EC2response);
    }
 

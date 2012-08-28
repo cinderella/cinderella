@@ -218,7 +218,7 @@ public interface EC2Engine {
     * @param request
     * @return
     */
-   EC2DescribeInstancesResponse describeInstances(EC2DescribeInstances request);
+   EC2DescribeInstancesResponse describeInstances(String region, EC2DescribeInstances request);
 
    /**
     * list Zones
