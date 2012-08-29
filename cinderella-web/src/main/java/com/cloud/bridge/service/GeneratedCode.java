@@ -138,35 +138,27 @@ public class GeneratedCode {
       DescribeImagesResponseInfoType param2 = new DescribeImagesResponseInfoType();
 
       EC2Image[] images = engineResponse.getImageSet();
-      for (int i = 0; i < images.length; i++) {
-         String accountName = images[i].getAccountName();
-         String domainId = images[i].getDomainId();
-         String ownerId = domainId + ":" + accountName;
+      for (EC2Image image : images) {
+         String accountName = image.getAccountName();
 
          DescribeImagesResponseItemType param3 = new DescribeImagesResponseItemType();
-         param3.setImageId(images[i].getId());
-         param3.setImageLocation("");
-         param3.setImageState((images[i].getIsReady() ? "available" : "unavailable"));
-         param3.setImageOwnerId(ownerId);
-         param3.setIsPublic(images[i].getIsPublic());
+         param3.setImageId(image.getId());
+         param3.setImageLocation("imagelocation");
+         param3.setImageState((image.getIsReady() ? "available" : "unavailable"));
+         param3.setImageOwnerId(accountName);
+         param3.setIsPublic(image.getIsPublic());
 
-         ProductCodesSetType param4 = new ProductCodesSetType();
-         ProductCodesSetItemType param5 = new ProductCodesSetItemType();
-         param5.setProductCode("");
-         param4.addItem(param5);
-         param3.setProductCodes(param4);
-
-         String description = images[i].getDescription();
+         String description = image.getDescription();
          param3.setDescription((null == description ? "" : description));
 
          if (null == description)
             param3.setArchitecture("");
-         else if (-1 != description.indexOf("x86_64"))
+         else if (-1 != description.indexOf("64"))
             param3.setArchitecture("x86_64");
-         else if (-1 != description.indexOf("i386"))
+         else if (-1 != description.indexOf("86"))
             param3.setArchitecture("i386");
          else
-            param3.setArchitecture("");
+            param3.setArchitecture("i386");
 
          param3.setImageType("machine");
          param3.setKernelId("");
@@ -178,27 +170,27 @@ public class GeneratedCode {
          param6.setMessage("");
          param3.setStateReason(param6);
 
-         param3.setImageOwnerAlias("");
-         param3.setName(images[i].getName());
-         param3.setRootDeviceType("");
+         param3.setImageOwnerAlias(accountName);
+         param3.setName(image.getName());
+         param3.setRootDeviceType("instance-store");
          param3.setRootDeviceName("");
 
-         BlockDeviceMappingType param7 = new BlockDeviceMappingType();
-         BlockDeviceMappingItemType param8 = new BlockDeviceMappingItemType();
-         BlockDeviceMappingItemTypeChoice_type0 param9 = new BlockDeviceMappingItemTypeChoice_type0();
-         param8.setDeviceName("");
-         param9.setVirtualName("");
-         EbsBlockDeviceType param10 = new EbsBlockDeviceType();
-         param10.setSnapshotId("");
-         param10.setVolumeSize(0);
-         param10.setDeleteOnTermination(false);
-         param9.setEbs(param10);
-         param8.setBlockDeviceMappingItemTypeChoice_type0(param9);
-         param7.addItem(param8);
+//         BlockDeviceMappingType param7 = new BlockDeviceMappingType();
+//         BlockDeviceMappingItemType param8 = new BlockDeviceMappingItemType();
+//         BlockDeviceMappingItemTypeChoice_type0 param9 = new BlockDeviceMappingItemTypeChoice_type0();
+//         param8.setDeviceName("");
+//         param9.setVirtualName("");
+//         EbsBlockDeviceType param10 = new EbsBlockDeviceType();
+//         param10.setSnapshotId("");
+//         param10.setVolumeSize(0);
+//         param10.setDeleteOnTermination(false);
+//         param9.setEbs(param10);
+//         param8.setBlockDeviceMappingItemTypeChoice_type0(param9);
+//         param7.addItem(param8);
 
-         param3.setBlockDeviceMapping(param7);
+//         param3.setBlockDeviceMapping(param7);
 
-         EC2TagKeyValue[] tags = images[i].getResourceTags();
+         EC2TagKeyValue[] tags = image.getResourceTags();
 //         param3.setTagSet(setResourceTags(tags));
 
          param2.addItem(param3);

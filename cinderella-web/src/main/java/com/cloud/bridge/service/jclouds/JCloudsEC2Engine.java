@@ -1610,8 +1610,6 @@ public class JCloudsEC2Engine implements EC2Engine {
          // TODO use the catalog api to determine if this vm is published
          // ec2Image.setIsPublic(temp.getIsPublic());
          // ec2Image.setIsReady(vm.isOvfDescriptorUploaded());
-         // TODO: domain is not an EC2 Concept.. probably this should be looked at.
-         // ec2Image.setDomainId(temp.getDomainId());
          for (Entry<String, String> resourceTag : getApi().getVmApi().getMetadataApi(vm.getId()).get().entrySet()) {
             EC2TagKeyValue param = new EC2TagKeyValue();
             param.setKey(resourceTag.getKey());

@@ -102,14 +102,6 @@ public class EC2Image {
 		this.accountName = accountName;
 	}
 
-	public String getDomainId() {
-		return domainId;
-	}
-
-	public void setDomainId(String domainId) {
-		this.domainId = domainId;
-	}
-
 
     public void addResourceTag( EC2TagKeyValue param ) {
         tagsSet.add( param );
