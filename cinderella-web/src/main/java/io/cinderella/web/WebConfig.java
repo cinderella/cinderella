@@ -1,7 +1,15 @@
 package io.cinderella.web;
 
+import io.cinderella.security.AuthenticationService;
+import io.cinderella.security.AuthenticationServiceImpl;
+import org.springframework.aop.framework.autoproxy.BeanNameAutoProxyCreator;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.env.Environment;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.xml.MarshallingHttpMessageConverter;
 import org.springframework.oxm.jaxb.Jaxb2Marshaller;
@@ -16,7 +24,11 @@ import java.util.Map;
 @Configuration
 @EnableWebMvc
 @ComponentScan(basePackages = "io.cinderella.web.controller")
+@PropertySource("file:${user.home}/.cinderella/ec2-service.properties")
 public class WebConfig extends WebMvcConfigurerAdapter {
+
+    @Autowired
+    Environment env;
 
     @Override
     public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
@@ -39,4 +51,8 @@ public class WebConfig extends WebMvcConfigurerAdapter {
         return marshaller;
     }
 
+    @Bean
+    public AuthenticationService authenticationService() {
+        return new AuthenticationServiceImpl();
+    }
 }

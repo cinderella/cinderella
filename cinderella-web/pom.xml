@@ -25,6 +25,12 @@
 
     <dependencies>
 
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.6</version>
+        </dependency>
+
         <!--  Spring -->
         <dependency>
             <groupId>org.springframework</groupId>
@@ -157,7 +163,7 @@
                     <artifactId>jmxri</artifactId>
                 </exclusion>
             </exclusions>
-            <scope>runtime</scope>
+            <!--<scope>runtime</scope>-->
         </dependency>
 
         <!--<dependency>
