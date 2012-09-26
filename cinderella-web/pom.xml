@@ -15,27 +15,54 @@
     <name>Cinderella :: Main Webapp</name>
 
     <properties>
-        <axis2.version>1.5.6</axis2.version>
+        <cglib.version>2.2.2</cglib.version>
+        <cxf.version>2.6.2</cxf.version>
+        <log4j.version>1.2.17</log4j.version>
+        <jetty.version>8.1.5.v20120716</jetty.version>
+        <spring.version>3.1.2.RELEASE</spring.version>
         <slf4j.version>1.6.6</slf4j.version>
     </properties>
 
     <dependencies>
-        <!-- Transient Cloudbridge Dependencies -->
+
+        <!--  Spring -->
         <dependency>
-            <groupId>org.apache.axis2</groupId>
-            <artifactId>axis2</artifactId>
-            <version>${axis2.version}</version>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>${spring.version}</version>
+            <exclusions>
+                <!-- Exclude Commons Logging in favor of SLF4j -->
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
-            <groupId>org.apache.axis2</groupId>
-            <artifactId>axis2-adb</artifactId>
-            <version>${axis2.version}</version>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-oxm</artifactId>
+            <version>${spring.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.jasypt</groupId>
-            <artifactId>jasypt</artifactId>
-            <version>1.9.0</version>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <version>${spring.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-webapp</artifactId>
+            <version>${jetty.version}</version>
+        </dependency>
+
+
+        <!-- CGLIB (required for processing @Configuration classes -->
+        <dependency>
+            <groupId>cglib</groupId>
+            <artifactId>cglib-nodep</artifactId>
+            <version>${cglib.version}</version>
+        </dependency>
+
+
         <!-- jclouds Dependencies -->
         <dependency>
             <groupId>org.jclouds.labs</groupId>
@@ -81,7 +108,59 @@
             <artifactId>jclouds-slf4j</artifactId>
             <version>${jclouds.version}</version>
         </dependency>
+
+
+
+        <!-- Logging -->
         <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+            <version>${slf4j.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>${slf4j.version}</version>
+            <scope>runtime</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>log4j</artifactId>
+                    <groupId>log4j</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>${log4j.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>javax.mail</groupId>
+                    <artifactId>mail</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>javax.jms</groupId>
+                    <artifactId>jms</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.sun.jdmk</groupId>
+                    <artifactId>jmxtools</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.sun.jmx</groupId>
+                    <artifactId>jmxri</artifactId>
+                </exclusion>
+            </exclusions>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!--<dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>1.0.6</version>
@@ -90,54 +169,82 @@
             <groupId>org.slf4j</groupId>
             <artifactId>log4j-over-slf4j</artifactId>
             <version>${slf4j.version}</version>
-        </dependency>
+        </dependency>-->
     </dependencies>
     <build>
         <finalName>cinderella</finalName>
         <plugins>
             <plugin>
-                <groupId>org.mortbay.jetty</groupId>
-                <artifactId>jetty-maven-plugin</artifactId>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/generated-sources</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.cxf</groupId>
+                <artifactId>cxf-codegen-plugin</artifactId>
+                <version>${cxf.version}</version>
+                <executions>
+                    <execution>
+                        <id>generate-sources</id>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <sourceRoot>${project.build.directory}/generated-sources</sourceRoot>
+                            <wsdlOptions>
+                                <wsdlOption>
+                                    <wsdl>${basedir}/src/main/resources/2012-08-15.ec2.wsdl</wsdl>
+                                    <bindingFiles>
+                                        <bindingFile>${basedir}/src/main/resources/jaxb/bindings.xml</bindingFile>
+                                    </bindingFiles>
+                                    <extraargs>
+                                        <extraarg>-xjc-p,com.amazon.ec2</extraarg>
+                                        <extraarg>-server</extraarg>
+                                        <extraarg>-verbose</extraarg>
+                                    </extraargs>
+                                </wsdlOption>
+                            </wsdlOptions>
+                        </configuration>
+                        <goals>
+                            <goal>wsdl2java</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.5.1</version>
                 <configuration>
-                    <war>${project.build.directory}/${project.build.finalName}</war>
-                    <!--
-                              <excludedGoals>
-                                <excludedGoal>run</excludedGoal>
-                              </excludedGoals>
-                    -->
-                    <webAppConfig>
-                        <contextPath>/</contextPath>
-                    </webAppConfig>
-                    <stopPort>9966</stopPort>
-                    <stopKey>jetty-stop</stopKey>
-                    <scanIntervalSeconds>0</scanIntervalSeconds>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                    <showWarnings>true</showWarnings>
+                    <includes>
+                        <include>${project.build.directory}/generated-sources</include>
+                    </includes>
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.apache.axis2</groupId>
-                <artifactId>axis2-wsdl2code-maven-plugin</artifactId>
-                <version>${axis2.version}</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
                     <execution>
+                        <id>install</id>
+                        <phase>install</phase>
                         <goals>
-                            <goal>wsdl2code</goal>
+                            <goal>sources</goal>
                         </goals>
-                        <configuration>
-                            <generateServerSide>true</generateServerSide>
-                            <generateServicesXml>true</generateServicesXml>
-                            <generateServerSideInterface>true</generateServerSideInterface>
-                            <packageName>com.amazon.ec2</packageName>
-                            <outputDirectory>${project.build.directory}/generated-sources/wsdl2code</outputDirectory>
-                            <namespaceURIs>
-                                <namespaceURI>
-                                    <uri>http://ec2.amazonaws.com/doc/2009-10-31/</uri>
-                                    <packageName>com.amazon.ec2</packageName>
-                                </namespaceURI>
-                            </namespaceURIs>
-                            <wsdlFile>${project.basedir}/src/main/resources/2009-10-31.ec2.wsdl</wsdlFile>
-                            <!--<wsdlFile>${project.basedir}/../cloudbridge/awsapi/resource/AmazonEC2/AmazonEC2.wsdl</wsdlFile>-->
-                            <databindingName>adb</databindingName>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
