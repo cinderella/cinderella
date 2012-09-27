@@ -1,20 +1,27 @@
 package io.cinderella.web.controller;
 
+import com.amazon.ec2.DescribeImages;
 import com.amazon.ec2.DescribeImagesResponse;
 import com.amazon.ec2.DescribeInstancesResponse;
-import com.amazon.ec2.impl.DescribeImagesResponseImpl;
+import com.amazon.ec2.ReservationInfoType;
+import com.amazon.ec2.ReservationSetType;
+import com.amazon.ec2.impl.DescribeImagesImpl;
 import com.amazon.ec2.impl.DescribeInstancesResponseImpl;
-import io.cinderella.security.AuthenticationService;
+import com.amazon.ec2.impl.ReservationInfoTypeImpl;
+import com.amazon.ec2.impl.ReservationSetTypeImpl;
+import io.cinderella.exception.EC2ServiceException;
+import io.cinderella.service.VCloudService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import java.util.UUID;
 
 /**
+ * Main entry point for requests
  * @author shane
  * @since 9/25/12
  */
@@ -22,24 +29,45 @@ import javax.servlet.http.HttpServletResponse;
 @RequestMapping(value = "/", produces = "application/xml")
 public class EC2Controller {
 
+    private static final Logger log = LoggerFactory.getLogger(EC2Controller.class);
+
+    @Autowired
+    private VCloudService vCloudService;
 
     @RequestMapping(params = "Action=DescribeImages")
     @ResponseBody
-    public DescribeImagesResponse describeImages() throws Exception {
+    public DescribeImagesResponse describeImages() throws EC2ServiceException {
 
-        DescribeImagesResponse res = new DescribeImagesResponseImpl();
-        res.setRequestId("123");
+        DescribeImages describeImages = new DescribeImagesImpl();
+        String region = vCloudService.getCurrentRegion();
 
-        return res;
+        DescribeImagesResponse describeImagesResponse = vCloudService.describeImages(region, describeImages);
+        describeImagesResponse.setRequestId(UUID.randomUUID().toString());
+
+        return describeImagesResponse;
     }
 
     @RequestMapping(params = "Action=DescribeInstances")
     @ResponseBody
     public DescribeInstancesResponse describeInstances() throws Exception {
 
-        DescribeInstancesResponse res = new DescribeInstancesResponseImpl();
-        res.setRequestId("456");
+        // todo make actual call
 
-        return res;
+        DescribeInstancesResponse describeInstancesResponse = new DescribeInstancesResponseImpl();
+        describeInstancesResponse.setRequestId("456");
+
+
+        ReservationInfoType reservationInfoType = new ReservationInfoTypeImpl();
+        reservationInfoType.setOwnerId("foo");
+
+        ReservationSetType reserveSet = new ReservationSetTypeImpl();
+        reserveSet.getItems().add(reservationInfoType);
+
+        describeInstancesResponse.setReservationSet(reserveSet);
+
+        return describeInstancesResponse;
     }
+
+
+
 }

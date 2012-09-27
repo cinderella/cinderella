@@ -3,21 +3,20 @@ package io.cinderella.web;
 import io.cinderella.security.AuthenticationService;
 import io.cinderella.security.AuthenticationServiceImpl;
 import io.cinderella.web.interceptor.AuthInterceptor;
-import org.springframework.aop.framework.autoproxy.BeanNameAutoProxyCreator;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.core.env.Environment;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.xml.MarshallingHttpMessageConverter;
 import org.springframework.oxm.jaxb.Jaxb2Marshaller;
+import org.springframework.web.servlet.HandlerExceptionResolver;
+import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.xml.bind.Marshaller;
 import java.util.HashMap;
 import java.util.List;
@@ -26,11 +25,7 @@ import java.util.Map;
 @Configuration
 @EnableWebMvc
 @ComponentScan(basePackages = "io.cinderella.web.controller")
-@PropertySource("file:${user.home}/.cinderella/ec2-service.properties")
 public class WebConfig extends WebMvcConfigurerAdapter {
-
-    @Autowired
-    Environment env;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
@@ -39,10 +34,20 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 
     @Override
     public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
-        converters.add(marshallingMessageConverter());
+        converters.add(marshalingMessageConverter());
     }
 
-    public MarshallingHttpMessageConverter marshallingMessageConverter() {
+    @Override
+    public void configureHandlerExceptionResolvers(List<HandlerExceptionResolver> exceptionResolvers) {
+        exceptionResolvers.add(new HandlerExceptionResolver() {
+            @Override
+            public ModelAndView resolveException(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+                return null;  //To change body of implemented methods use File | Settings | File Templates.
+            }
+        });
+    }
+
+    public MarshallingHttpMessageConverter marshalingMessageConverter() {
         return new MarshallingHttpMessageConverter(jaxb2Marshaller());
     }
 

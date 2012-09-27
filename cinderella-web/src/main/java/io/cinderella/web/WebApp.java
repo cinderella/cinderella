@@ -1,5 +1,6 @@
 package io.cinderella.web;
 
+import io.cinderella.CinderellaConfig;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -12,7 +13,8 @@ public class WebApp {
     public static void main(String[] args) throws Exception {
 
         final AnnotationConfigWebApplicationContext applicationContext = new AnnotationConfigWebApplicationContext();
-        applicationContext.register(WebConfig.class);
+        applicationContext.register(CinderellaConfig.class, WebConfig.class);
+//        applicationContext.refresh();
 
         final ServletHolder servletHolder = new ServletHolder(new DispatcherServlet(applicationContext));
         final ServletContextHandler context = new ServletContextHandler();
