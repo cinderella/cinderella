@@ -22,8 +22,6 @@ import javax.servlet.http.HttpServletResponse;
 @RequestMapping(value = "/", produces = "application/xml")
 public class EC2Controller {
 
-    @Autowired
-    private AuthenticationService authenticationService;
 
     @RequestMapping(params = "Action=DescribeImages")
     @ResponseBody
@@ -38,7 +36,6 @@ public class EC2Controller {
                                                  HttpServletResponse response) throws Exception {
 
 
-
         DescribeImagesResponse res = new DescribeImagesResponseImpl();
         res.setRequestId("123");
 
@@ -49,8 +46,6 @@ public class EC2Controller {
     @ResponseBody
     public DescribeInstancesResponse describeInstances(HttpServletRequest request,
                                                        HttpServletResponse response) throws Exception {
-
-        boolean success = authenticationService.authenticateRequest(request, response);
 
         DescribeInstancesResponse res = new DescribeInstancesResponseImpl();
         res.setRequestId("456");

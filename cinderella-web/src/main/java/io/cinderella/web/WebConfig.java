@@ -2,6 +2,7 @@ package io.cinderella.web;
 
 import io.cinderella.security.AuthenticationService;
 import io.cinderella.security.AuthenticationServiceImpl;
+import io.cinderella.web.interceptor.AuthInterceptor;
 import org.springframework.aop.framework.autoproxy.BeanNameAutoProxyCreator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -14,6 +15,7 @@ import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.xml.MarshallingHttpMessageConverter;
 import org.springframework.oxm.jaxb.Jaxb2Marshaller;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 import javax.xml.bind.Marshaller;
@@ -29,6 +31,11 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 
     @Autowired
     Environment env;
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(authInterceptor());
+    }
 
     @Override
     public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
@@ -54,5 +61,10 @@ public class WebConfig extends WebMvcConfigurerAdapter {
     @Bean
     public AuthenticationService authenticationService() {
         return new AuthenticationServiceImpl();
+    }
+
+    @Bean
+    public AuthInterceptor authInterceptor() {
+        return new AuthInterceptor(authenticationService());
     }
 }
