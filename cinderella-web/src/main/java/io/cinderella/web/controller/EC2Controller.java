@@ -25,16 +25,7 @@ public class EC2Controller {
 
     @RequestMapping(params = "Action=DescribeImages")
     @ResponseBody
-    public DescribeImagesResponse describeImages(@RequestParam(value = "AWSAccessKeyId") String awsAccessKeyId,
-                                                 @RequestParam(value = "Timestamp") String timestamp,
-                                                 @RequestParam(value = "Expires") String expires,
-                                                 @RequestParam(value = "Signature") String signature,
-                                                 @RequestParam(value = "SignatureMethod") String signatureMethod,
-                                                 @RequestParam(value = "SignatureVersion") String signatureVersion,
-                                                 @RequestParam(value = "Version") String version,
-                                                 HttpServletRequest request,
-                                                 HttpServletResponse response) throws Exception {
-
+    public DescribeImagesResponse describeImages() throws Exception {
 
         DescribeImagesResponse res = new DescribeImagesResponseImpl();
         res.setRequestId("123");
@@ -44,8 +35,7 @@ public class EC2Controller {
 
     @RequestMapping(params = "Action=DescribeInstances")
     @ResponseBody
-    public DescribeInstancesResponse describeInstances(HttpServletRequest request,
-                                                       HttpServletResponse response) throws Exception {
+    public DescribeInstancesResponse describeInstances() throws Exception {
 
         DescribeInstancesResponse res = new DescribeInstancesResponseImpl();
         res.setRequestId("456");
