@@ -2,6 +2,10 @@ package io.cinderella;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Module;
+import io.cinderella.service.CinderellaService;
+import io.cinderella.service.CinderellaServiceImpl;
+import io.cinderella.service.MappingService;
+import io.cinderella.service.MappingServiceJclouds;
 import io.cinderella.service.VCloudService;
 import io.cinderella.service.VCloudServiceJclouds;
 import io.cinderella.web.WebConfig;
@@ -50,12 +54,21 @@ public class CinderellaConfig {
 
     @Bean
     public VCloudService vCloudService() {
-        return new VCloudServiceJclouds();
+        return new VCloudServiceJclouds(vCloudDirectorApi());
+    }
+
+    @Bean
+    public MappingService mappingService() {
+        return new MappingServiceJclouds(vCloudService());
+    }
+
+    @Bean
+    public CinderellaService cinderellaService() {
+        return new CinderellaServiceImpl(mappingService(), vCloudService());
     }
 
     @Bean
     public VCloudDirectorApi vCloudDirectorApi() {
-
         Properties overrides = new Properties();
         overrides.setProperty(Constants.PROPERTY_TRUST_ALL_CERTS, "true");
         overrides.setProperty(Constants.PROPERTY_RELAX_HOSTNAME, "true");

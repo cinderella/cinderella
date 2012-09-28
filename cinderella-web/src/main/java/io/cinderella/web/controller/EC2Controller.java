@@ -10,6 +10,7 @@ import com.amazon.ec2.impl.DescribeInstancesResponseImpl;
 import com.amazon.ec2.impl.ReservationInfoTypeImpl;
 import com.amazon.ec2.impl.ReservationSetTypeImpl;
 import io.cinderella.exception.EC2ServiceException;
+import io.cinderella.service.CinderellaService;
 import io.cinderella.service.VCloudService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,19 +33,12 @@ public class EC2Controller {
     private static final Logger log = LoggerFactory.getLogger(EC2Controller.class);
 
     @Autowired
-    private VCloudService vCloudService;
+    private CinderellaService cinderellaService;
 
     @RequestMapping(params = "Action=DescribeImages")
     @ResponseBody
     public DescribeImagesResponse describeImages() throws EC2ServiceException {
-
-        DescribeImages describeImages = new DescribeImagesImpl();
-        String region = vCloudService.getCurrentRegion();
-
-        DescribeImagesResponse describeImagesResponse = vCloudService.describeImages(region, describeImages);
-        describeImagesResponse.setRequestId(UUID.randomUUID().toString());
-
-        return describeImagesResponse;
+        return cinderellaService.describeImages(new DescribeImagesImpl());
     }
 
     @RequestMapping(params = "Action=DescribeInstances")
