@@ -8,11 +8,14 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
 import io.cinderella.domain.DescribeImagesRequestVCloud;
 import io.cinderella.domain.DescribeImagesResponseVCloud;
+import io.cinderella.domain.DescribeInstancesRequestVCloud;
+import io.cinderella.domain.DescribeInstancesResponseVCloud;
 import org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType;
 import org.jclouds.vcloud.director.v1_5.domain.Catalog;
 import org.jclouds.vcloud.director.v1_5.domain.CatalogItem;
 import org.jclouds.vcloud.director.v1_5.domain.Link;
 import org.jclouds.vcloud.director.v1_5.domain.Reference;
+import org.jclouds.vcloud.director.v1_5.domain.VApp;
 import org.jclouds.vcloud.director.v1_5.domain.VAppTemplate;
 import org.jclouds.vcloud.director.v1_5.domain.Vdc;
 import org.jclouds.vcloud.director.v1_5.domain.Vm;
@@ -20,6 +23,7 @@ import org.jclouds.vcloud.director.v1_5.domain.org.Org;
 import org.jclouds.vcloud.director.v1_5.user.VCloudDirectorApi;
 
 import static org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType.CATALOG;
+import static org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType.VAPP;
 import static org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType.VAPP_TEMPLATE;
 import static org.jclouds.vcloud.director.v1_5.predicates.ReferencePredicates.nameEquals;
 import static org.jclouds.vcloud.director.v1_5.predicates.ReferencePredicates.typeEquals;
@@ -121,6 +125,36 @@ public class VCloudServiceJclouds implements VCloudService {
         DescribeImagesResponseVCloud response = new DescribeImagesResponseVCloud();
         response.setVms(vms);
         response.setImageOwnerId(getVCloudDirectorApi().getCurrentSession().getUser());
+
+        return response;
+    }
+
+
+    @Override
+    public DescribeInstancesResponseVCloud getVmsInVAppsInVdc(DescribeInstancesRequestVCloud describeInstancesRequestVCloud) {
+
+        Vdc vdc = describeInstancesRequestVCloud.getVdc();
+
+        ImmutableSet<Vm> vms = FluentIterable.from(vdc.getResourceEntities()).filter(typeEquals(VAPP))
+                .transform(new Function<Reference, VApp>() {
+                    @Override
+                    public VApp apply(Reference in) {
+                        return vCloudDirectorApi.getVAppApi().get(in.getHref());
+                    }
+                }).filter(Predicates.notNull()) // if no access, a vApp might end up null
+                .transformAndConcat(new Function<VApp, Iterable<Vm>>() {
+                    @Override
+                    public Iterable<Vm> apply(VApp in) {
+                        if (null != in.getChildren() && null != in.getChildren().getVms()) {
+                            return in.getChildren().getVms();
+                        }
+                        return ImmutableSet.of();
+                    }
+                }).toImmutableSet();
+
+
+        DescribeInstancesResponseVCloud response = new DescribeInstancesResponseVCloud();
+        response.setVms(vms);
 
         return response;
     }

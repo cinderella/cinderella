@@ -216,6 +216,7 @@
                                     </bindingFiles>
                                     <extraargs>
                                         <extraarg>-xjc-p,com.amazon.ec2</extraarg>
+                                        <!--<extraarg>-autoNameResolution</extraarg>-->
                                         <extraarg>-server</extraarg>
                                         <extraarg>-verbose</extraarg>
                                     </extraargs>
@@ -226,6 +227,30 @@
                             <goal>wsdl2java</goal>
                         </goals>
                     </execution>
+                    <!--<execution>
+                        <id>generate-sources</id>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <sourceRoot>${project.build.directory}/generated-sources</sourceRoot>
+                            <wsdlOptions>
+                                <wsdlOption>
+                                    <wsdl>${basedir}/src/main/resources/2009-10-31.ec2.wsdl</wsdl>
+                                    <bindingFiles>
+                                        <bindingFile>${basedir}/src/main/resources/jaxb/bindings.xml</bindingFile>
+                                    </bindingFiles>
+                                    <extraargs>
+                                        <extraarg>-xjc-p,com.amazon.ec2.v2009_10_31</extraarg>
+                                        <extraarg>-autoNameResolution</extraarg>
+                                        <extraarg>-server</extraarg>
+                                        <extraarg>-verbose</extraarg>
+                                    </extraargs>
+                                </wsdlOption>
+                            </wsdlOptions>
+                        </configuration>
+                        <goals>
+                            <goal>wsdl2java</goal>
+                        </goals>
+                    </execution>-->
                 </executions>
             </plugin>
             <plugin>

@@ -2,11 +2,17 @@ package io.cinderella.service;
 
 import com.amazon.ec2.DescribeImages;
 import com.amazon.ec2.DescribeImagesResponse;
+import com.amazon.ec2.DescribeInstances;
+import com.amazon.ec2.DescribeInstancesResponse;
 import io.cinderella.domain.DescribeImagesRequestVCloud;
 import io.cinderella.domain.DescribeImagesResponseVCloud;
+import io.cinderella.domain.DescribeInstancesRequestVCloud;
+import io.cinderella.domain.DescribeInstancesResponseVCloud;
 import io.cinderella.exception.EC2ServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static io.cinderella.exception.EC2ServiceException.ServerError.InternalError;
 
 /**
  * @author shane
@@ -26,20 +32,30 @@ public class CinderellaServiceImpl implements CinderellaService {
 
     @Override
     public DescribeImagesResponse describeImages(DescribeImages request) {
-
         try {
-            // EC2 request -> vCloud request (MappingService)
+
             DescribeImagesRequestVCloud vCloudRequest = mappingService.getDescribeImagesRequest(request);
-
-            // perform vCloud request -> vCloud response (VCloudService)
             DescribeImagesResponseVCloud vCloudResponse = vCloudService.getVmsInVAppTemplatesInOrg(vCloudRequest);
-
-            // vCloud response -> EC2 response (MappingService)
             return mappingService.getDescribeImagesResponse(vCloudResponse);
 
         } catch (Exception e) {
             log.error("EC2 DescribeImages - ", e);
-            throw new EC2ServiceException(EC2ServiceException.ServerError.InternalError, e.getMessage() != null ? e.getMessage()
+            throw new EC2ServiceException(InternalError, e.getMessage() != null ? e.getMessage()
+                    : "An unexpected error occurred.");
+        }
+    }
+
+    @Override
+    public DescribeInstancesResponse describeInstances(DescribeInstances describeInstances) {
+        try {
+
+            DescribeInstancesRequestVCloud vCloudRequest = mappingService.getDescribeInstancesRequest(describeInstances);
+            DescribeInstancesResponseVCloud vCloudResponse = vCloudService.getVmsInVAppsInVdc(vCloudRequest);
+            return mappingService.getDescribeInstancesResponse(vCloudResponse);
+
+        } catch (Exception e) {
+            log.error("EC2 DescribeInstances - ", e);
+            throw new EC2ServiceException(InternalError, e.getMessage() != null ? e.getMessage()
                     : "An unexpected error occurred.");
         }
     }

@@ -2,6 +2,8 @@ package io.cinderella.service;
 
 import com.amazon.ec2.DescribeImages;
 import com.amazon.ec2.DescribeImagesResponse;
+import com.amazon.ec2.DescribeInstances;
+import com.amazon.ec2.DescribeInstancesResponse;
 
 /**
  * @author shane
@@ -10,5 +12,7 @@ import com.amazon.ec2.DescribeImagesResponse;
 public interface CinderellaService {
 
     DescribeImagesResponse describeImages(DescribeImages describeImages);
+
+    DescribeInstancesResponse describeInstances(DescribeInstances describeInstances);
 
 }
