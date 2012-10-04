@@ -2,12 +2,16 @@ package io.cinderella.service;
 
 import com.amazon.ec2.*;
 import com.amazon.ec2.impl.*;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import io.cinderella.domain.DescribeImagesRequestVCloud;
 import io.cinderella.domain.DescribeImagesResponseVCloud;
 import io.cinderella.domain.DescribeInstancesRequestVCloud;
 import io.cinderella.domain.DescribeInstancesResponseVCloud;
+import io.cinderella.domain.DescribeRegionsRequestVCloud;
+import io.cinderella.domain.DescribeRegionsResponseVCloud;
 import org.jclouds.util.InetAddresses2;
 import org.jclouds.vcloud.director.v1_5.domain.Vdc;
 import org.jclouds.vcloud.director.v1_5.domain.Vm;
@@ -16,6 +20,8 @@ import org.jclouds.vcloud.director.v1_5.features.VmApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -36,10 +42,12 @@ public class MappingServiceJclouds implements MappingService {
 
     private static final Logger log = LoggerFactory.getLogger(MappingServiceJclouds.class);
 
+    private String hostPort;
     private VCloudService vCloudService;
 
-    public MappingServiceJclouds(VCloudService vCloudService) {
+    public MappingServiceJclouds(VCloudService vCloudService, String hostPort) {
         this.vCloudService = vCloudService;
+        this.hostPort = hostPort;
     }
 
     @Override
@@ -139,17 +147,17 @@ public class MappingServiceJclouds implements MappingService {
         return describeInstancesRequestVCloud;
     }
 
+    @Override
     public DescribeInstancesResponse getDescribeInstancesResponse(DescribeInstancesResponseVCloud describeInstancesResponseVCloud) {
 
         DescribeInstancesResponse describeInstancesResponse = new DescribeInstancesResponseImpl();
         describeInstancesResponse.setRequestId(UUID.randomUUID().toString());
 
 
-
         ReservationInfoType resInfoType = new ReservationInfoTypeImpl();
 
         GroupSetType groupSet = new GroupSetTypeImpl();
-        GroupItemType group= new GroupItemTypeImpl();
+        GroupItemType group = new GroupItemTypeImpl();
         group.setGroupId("groupId");
         group.setGroupName("groupName");
         groupSet.getItems().add(group);
@@ -184,11 +192,11 @@ public class MappingServiceJclouds implements MappingService {
             instance.setInstanceId("instanceId");
 
             InstanceStateType instanceStateType = new InstanceStateTypeImpl();
-            /*switch (vm.getStatus()) {
-                case POWERED_ON:*/
+            switch (vm.getStatus()) {
+                case POWERED_ON:
                     instanceStateType.setCode(16);
                     instanceStateType.setName("running");
-           /*         break;
+                    break;
                 case POWERED_OFF:
                     instanceStateType.setCode(48);
                     instanceStateType.setName("terminated");
@@ -196,7 +204,7 @@ public class MappingServiceJclouds implements MappingService {
                 default:
                     instanceStateType.setCode(0);
                     instanceStateType.setName("pending");
-            }*/
+            }
             instance.setInstanceState(instanceStateType);
 
             instance.setInstanceType("m1.small"); //TODO: Map vcloud template specs to unique instancetype
@@ -233,11 +241,10 @@ public class MappingServiceJclouds implements MappingService {
             instance.setRootDeviceType("instance-store");
             instance.setVirtualizationType("paravirtual");
 
-
-
             ResourceTagSetType tagSet = new ResourceTagSetTypeImpl();
+            Set<Map.Entry<String, String>> vmMeta = vCloudService.getVCloudDirectorApi().getVmApi().getMetadataApi(vm.getId()).get().entrySet();
 
-            for (Map.Entry<String, String> resourceTag : vCloudService.getVCloudDirectorApi().getVmApi().getMetadataApi(vm.getId()).get().entrySet()) {
+            for (Map.Entry<String, String> resourceTag : vmMeta) {
                 ResourceTagSetItemType tag = new ResourceTagSetItemTypeImpl();
                 tag.setKey(resourceTag.getKey());
                 tag.setValue(resourceTag.getValue());
@@ -246,13 +253,59 @@ public class MappingServiceJclouds implements MappingService {
             instance.setTagSet(tagSet);
 
             instances.add(instance);
-
-
-
-
         }
 
 
         return describeInstancesResponse;
+    }
+
+    @Override
+    public DescribeRegionsRequestVCloud getDescribeRegionsRequest(DescribeRegions describeRegions) {
+
+        DescribeRegionsRequestVCloud request = new DescribeRegionsRequestVCloud();
+
+        // todo: handle filter
+        /*
+        EC2RegionsFilterSet regionsFilterSet = request.getFilterSet();
+            if (null == regionsFilterSet)
+                return availableRegions;
+            else {
+                List<String> matchedRegions = regionsFilterSet.evaluate(availableRegions);
+                if (matchedRegions.isEmpty())
+                    return new EC2DescribeRegionsResponse();
+                return listRegions(matchedRegions);
+            }
+         */
+
+        return request;
+    }
+
+    @Override
+    public DescribeRegionsResponse getDescribeRegionsResponse(DescribeRegionsResponseVCloud describeRegionsResponseVCloud) {
+
+        DescribeRegionsResponse describeRegionsResponse = new DescribeRegionsResponseImpl();
+        describeRegionsResponse.setRequestId(UUID.randomUUID().toString());
+
+        Iterable<String> interestedRegions = describeRegionsResponseVCloud.getInterestedRegions();
+        FluentIterable<Vdc> vdcs = describeRegionsResponseVCloud.getVdcs();
+
+        RegionSetType regionSetType = new RegionSetTypeImpl();
+        List<RegionItemType> regions = regionSetType.getItems();
+        try {
+            for (Vdc vdc : vdcs) {
+                if (Iterables.size(interestedRegions) == 0 || Iterables.contains(interestedRegions, vdc.getName())) {
+                    RegionItemType region = new RegionItemTypeImpl();
+                    region.setRegionName(vdc.getName());
+                    String encodedVdcName = URLEncoder.encode(vdc.getName(), "UTF-8");
+                    region.setRegionEndpoint(String.format("%s/api/regions/%s/", hostPort, encodedVdcName));
+                    regions.add(region);
+                }
+            }
+        } catch (UnsupportedEncodingException e) {
+            log.error("getDescribeRegionsResponse error", e);
+        }
+        describeRegionsResponse.setRegionInfo(regionSetType);
+
+        return describeRegionsResponse;
     }
 }

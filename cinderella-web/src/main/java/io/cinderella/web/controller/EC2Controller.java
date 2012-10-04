@@ -2,8 +2,10 @@ package io.cinderella.web.controller;
 
 import com.amazon.ec2.DescribeImagesResponse;
 import com.amazon.ec2.DescribeInstancesResponse;
+import com.amazon.ec2.DescribeRegionsResponse;
 import com.amazon.ec2.impl.DescribeImagesImpl;
 import com.amazon.ec2.impl.DescribeInstancesImpl;
+import com.amazon.ec2.impl.DescribeRegionsImpl;
 import io.cinderella.domain.EC2Request;
 import io.cinderella.exception.EC2ServiceException;
 import io.cinderella.service.CinderellaService;
@@ -30,6 +32,11 @@ public class EC2Controller {
     @Autowired
     private CinderellaService cinderellaService;
 
+    @RequestMapping(params = "Action=DescribeRegions")
+    @ResponseBody
+    public DescribeRegionsResponse describeRegions(EC2Request ec2Request) throws EC2ServiceException {
+        return cinderellaService.describeRegions(new DescribeRegionsImpl());
+    }
 
     @RequestMapping(params = "Action=DescribeImages")
     @ResponseBody

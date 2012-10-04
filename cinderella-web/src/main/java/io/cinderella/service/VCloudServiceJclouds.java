@@ -6,10 +6,14 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import io.cinderella.domain.DescribeImagesRequestVCloud;
 import io.cinderella.domain.DescribeImagesResponseVCloud;
 import io.cinderella.domain.DescribeInstancesRequestVCloud;
 import io.cinderella.domain.DescribeInstancesResponseVCloud;
+import io.cinderella.domain.DescribeRegionsRequestVCloud;
+import io.cinderella.domain.DescribeRegionsResponseVCloud;
+import io.cinderella.exception.EC2ServiceException;
 import org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType;
 import org.jclouds.vcloud.director.v1_5.domain.Catalog;
 import org.jclouds.vcloud.director.v1_5.domain.CatalogItem;
@@ -21,6 +25,11 @@ import org.jclouds.vcloud.director.v1_5.domain.Vdc;
 import org.jclouds.vcloud.director.v1_5.domain.Vm;
 import org.jclouds.vcloud.director.v1_5.domain.org.Org;
 import org.jclouds.vcloud.director.v1_5.user.VCloudDirectorApi;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
+import java.util.List;
 
 import static org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType.CATALOG;
 import static org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType.VAPP;
@@ -34,6 +43,8 @@ import static org.jclouds.vcloud.director.v1_5.predicates.ReferencePredicates.ty
  */
 public class VCloudServiceJclouds implements VCloudService {
 
+    private static final Logger log = LoggerFactory.getLogger(VCloudServiceJclouds.class);
+
     private VCloudDirectorApi vCloudDirectorApi;
 
     public VCloudServiceJclouds(VCloudDirectorApi vCloudDirectorApi) {
@@ -45,6 +56,32 @@ public class VCloudServiceJclouds implements VCloudService {
     public VCloudDirectorApi getVCloudDirectorApi() {
         return vCloudDirectorApi;
     }
+
+    @Override
+    public DescribeRegionsResponseVCloud describeRegions(DescribeRegionsRequestVCloud describeRegionsRequestVCloud) throws Exception {
+        return listRegions(describeRegionsRequestVCloud.getInterestedRegions());
+    }
+
+    private DescribeRegionsResponseVCloud listRegions(Iterable<String> interestedRegions) throws Exception {
+        DescribeRegionsResponseVCloud regions = new DescribeRegionsResponseVCloud();
+        FluentIterable<Vdc> vdcs = FluentIterable.from(vCloudDirectorApi.getOrgApi().list())
+                .transformAndConcat(new Function<Reference, Iterable<Link>>() {
+                    @Override
+                    public Iterable<Link> apply(Reference in) {
+                        return vCloudDirectorApi.getOrgApi().get(in.getHref()).getLinks();
+                    }
+                }).filter(typeEquals(VCloudDirectorMediaType.VDC)).transform(new Function<Link, Vdc>() {
+                    @Override
+                    public Vdc apply(Link in) {
+                        return vCloudDirectorApi.getVdcApi().get(in.getHref());
+                    }
+                });
+
+        regions.setVdcs(vdcs);
+
+        return regions;
+    }
+
 
     @Override
     public String getVdcName() {

@@ -35,6 +35,8 @@ import java.util.Properties;
 @Import({WebConfig.class})
 public class CinderellaConfig {
 
+    private static final String HOST_PORT = "http://localhost:8080";
+
     @Value("${endpoint}")
     private String endpoint;
 
@@ -59,7 +61,7 @@ public class CinderellaConfig {
 
     @Bean
     public MappingService mappingService() {
-        return new MappingServiceJclouds(vCloudService());
+        return new MappingServiceJclouds(vCloudService(), HOST_PORT);
     }
 
     @Bean

@@ -4,12 +4,16 @@ import com.amazon.ec2.DescribeImages;
 import com.amazon.ec2.DescribeImagesResponse;
 import com.amazon.ec2.DescribeInstances;
 import com.amazon.ec2.DescribeInstancesResponse;
+import com.amazon.ec2.DescribeRegions;
+import com.amazon.ec2.DescribeRegionsResponse;
 import com.amazon.ec2.DescribeSecurityGroups;
 import com.amazon.ec2.DescribeSecurityGroupsResponse;
 import io.cinderella.domain.DescribeImagesRequestVCloud;
 import io.cinderella.domain.DescribeImagesResponseVCloud;
 import io.cinderella.domain.DescribeInstancesRequestVCloud;
 import io.cinderella.domain.DescribeInstancesResponseVCloud;
+import io.cinderella.domain.DescribeRegionsRequestVCloud;
+import io.cinderella.domain.DescribeRegionsResponseVCloud;
 import io.cinderella.exception.EC2ServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +35,21 @@ public class CinderellaServiceImpl implements CinderellaService {
     public CinderellaServiceImpl(MappingService mappingService, VCloudService vCloudService) {
         this.mappingService = mappingService;
         this.vCloudService = vCloudService;
+    }
+
+    @Override
+    public DescribeRegionsResponse describeRegions(DescribeRegions describeRegions) {
+        try {
+
+            DescribeRegionsRequestVCloud vCloudRequest = mappingService.getDescribeRegionsRequest(describeRegions);
+            DescribeRegionsResponseVCloud vCloudResponse = vCloudService.describeRegions(vCloudRequest);
+            return mappingService.getDescribeRegionsResponse(vCloudResponse);
+
+        } catch (Exception e) {
+            log.error("EC2 DescribeRegions - ", e);
+            throw new EC2ServiceException(InternalError, e.getMessage() != null ? e.getMessage()
+                    : "An unexpected error occurred.");
+        }
     }
 
     @Override

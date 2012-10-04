@@ -4,6 +4,8 @@ import io.cinderella.domain.DescribeImagesRequestVCloud;
 import io.cinderella.domain.DescribeImagesResponseVCloud;
 import io.cinderella.domain.DescribeInstancesRequestVCloud;
 import io.cinderella.domain.DescribeInstancesResponseVCloud;
+import io.cinderella.domain.DescribeRegionsRequestVCloud;
+import io.cinderella.domain.DescribeRegionsResponseVCloud;
 import org.jclouds.vcloud.director.v1_5.domain.Vdc;
 import org.jclouds.vcloud.director.v1_5.domain.org.Org;
 import org.jclouds.vcloud.director.v1_5.user.VCloudDirectorApi;
@@ -25,4 +27,6 @@ public interface VCloudService {
     Vdc getVDC(String vdcName);
 
     VCloudDirectorApi getVCloudDirectorApi();
+
+    DescribeRegionsResponseVCloud describeRegions(DescribeRegionsRequestVCloud describeRegionsRequestVCloud) throws Exception;
 }
