@@ -38,6 +38,7 @@ public class VCloudServiceJclouds implements VCloudService {
 
     public VCloudServiceJclouds(VCloudDirectorApi vCloudDirectorApi) {
         this.vCloudDirectorApi = vCloudDirectorApi;
+
     }
 
     @Override

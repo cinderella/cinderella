@@ -58,6 +58,7 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 
         Map<String, Object> marshallerProps = new HashMap<String, Object>();
         marshallerProps.put(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+        marshallerProps.put(Marshaller.JAXB_ENCODING, "UTF-8");
         marshaller.setMarshallerProperties(marshallerProps);
 
         return marshaller;

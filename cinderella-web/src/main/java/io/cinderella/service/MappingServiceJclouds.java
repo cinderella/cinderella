@@ -1,19 +1,14 @@
 package io.cinderella.service;
 
 import com.amazon.ec2.*;
-import com.amazon.ec2.impl.DescribeImagesResponseImpl;
-import com.amazon.ec2.impl.DescribeImagesResponseInfoTypeImpl;
-import com.amazon.ec2.impl.DescribeImagesResponseItemTypeImpl;
-import com.amazon.ec2.impl.DescribeInstancesResponseImpl;
-import com.amazon.ec2.impl.ReservationInfoTypeImpl;
-import com.amazon.ec2.impl.ReservationSetTypeImpl;
-import com.amazon.ec2.impl.ResourceTagSetItemTypeImpl;
-import com.amazon.ec2.impl.ResourceTagSetTypeImpl;
+import com.amazon.ec2.impl.*;
 import com.google.common.collect.ImmutableSet;
+import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import io.cinderella.domain.DescribeImagesRequestVCloud;
 import io.cinderella.domain.DescribeImagesResponseVCloud;
 import io.cinderella.domain.DescribeInstancesRequestVCloud;
 import io.cinderella.domain.DescribeInstancesResponseVCloud;
+import org.jclouds.util.InetAddresses2;
 import org.jclouds.vcloud.director.v1_5.domain.Vdc;
 import org.jclouds.vcloud.director.v1_5.domain.Vm;
 import org.jclouds.vcloud.director.v1_5.domain.org.Org;
@@ -22,9 +17,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+
+import static com.google.common.base.Predicates.not;
+import static com.google.common.collect.Iterables.tryFind;
+import static org.jclouds.vcloud.director.v1_5.compute.util.VCloudDirectorComputeUtils.getIpsFromVm;
 
 /**
  * @author shane
@@ -142,54 +144,115 @@ public class MappingServiceJclouds implements MappingService {
         DescribeInstancesResponse describeInstancesResponse = new DescribeInstancesResponseImpl();
         describeInstancesResponse.setRequestId(UUID.randomUUID().toString());
 
+
+
+        ReservationInfoType resInfoType = new ReservationInfoTypeImpl();
+
+        GroupSetType groupSet = new GroupSetTypeImpl();
+        GroupItemType group= new GroupItemTypeImpl();
+        group.setGroupId("groupId");
+        group.setGroupName("groupName");
+        groupSet.getItems().add(group);
+        resInfoType.setGroupSet(groupSet);
+
+        resInfoType.setInstancesSet(new RunningInstancesSetTypeImpl());
+        resInfoType.setOwnerId(vCloudService.getVCloudDirectorApi().getCurrentSession().getUser());
+        resInfoType.setRequesterId("requesterId");
+        resInfoType.setReservationId("r-reservationId");
+
         ReservationSetType reservationSetType = new ReservationSetTypeImpl();
-        List<ReservationInfoType> reservationInfoTypes = reservationSetType.getItems();
+        reservationSetType.getItems().add(resInfoType);
+        describeInstancesResponse.setReservationSet(reservationSetType);
 
         ImmutableSet<Vm> vms = describeInstancesResponseVCloud.getVms();
+        List<RunningInstancesItemType> instances = resInfoType.getInstancesSet().getItems();
 
         for (Vm vm : vms) {
             log.info(vm.getId());
+            Set<String> addresses = getIpsFromVm(vm);
 
+            RunningInstancesItemType instance = new RunningInstancesItemTypeImpl();
 
-            /*EC2Instance ec2Instance = new EC2Instance();
-            ec2Instance.setId(vm.getId().replace("-", "").replace("urn:vcloud:vm:", "i-"));
-            ec2Instance.setAccountName(getApi().getCurrentSession().getUser());
-            ec2Instance.setName(vm.getName());
-            ec2Instance.setName(vm.getName());
-            ec2Instance.setZoneName(vdc.getName() + 'a');
-            switch (vm.getStatus()) {
-                case POWERED_ON:
-                    ec2Instance.setState("running");
-                    break;
+            instance.setAmiLaunchIndex("0");
+            instance.setArchitecture("i386");
+            instance.setBlockDeviceMapping(new InstanceBlockDeviceMappingResponseTypeImpl());
+            instance.setClientToken("client token");
+            instance.setDnsName(vm.getName()); // todo correct?
+            instance.setEbsOptimized(Boolean.TRUE);
+            instance.setHypervisor("vsphere");
+            instance.setImageId(vm.getId().replace("-", "").replace("urn:vcloud:vm:", "i-"));
+            instance.setInstanceId("instanceId");
+
+            InstanceStateType instanceStateType = new InstanceStateTypeImpl();
+            /*switch (vm.getStatus()) {
+                case POWERED_ON:*/
+                    instanceStateType.setCode(16);
+                    instanceStateType.setName("running");
+           /*         break;
                 case POWERED_OFF:
-                    ec2Instance.setState("stopped");
+                    instanceStateType.setCode(48);
+                    instanceStateType.setName("terminated");
                     break;
                 default:
-                    ec2Instance.setState("pending");
+                    instanceStateType.setCode(0);
+                    instanceStateType.setName("pending");
+            }*/
+            instance.setInstanceState(instanceStateType);
+
+            instance.setInstanceType("m1.small"); //TODO: Map vcloud template specs to unique instancetype
+            instance.setIpAddress(tryFind(addresses, not(InetAddresses2.IsPrivateIPAddress.INSTANCE)).orNull());
+            instance.setKernelId("kernelId");
+            instance.setKeyName("keyName");
+
+            /*InstanceNetworkInterfaceSetType networkSet = new InstanceNetworkInterfaceSetTypeImpl();
+            InstanceNetworkInterfaceSetItemType network = new InstanceNetworkInterfaceSetItemTypeImpl();
+            networkSet.getItems().add()
+            instance.setNetworkInterfaceSet();*/
+
+            GregorianCalendar gregorianCalendar = new GregorianCalendar();
+            gregorianCalendar.setTime(new Date());
+            instance.setLaunchTime(new XMLGregorianCalendarImpl(gregorianCalendar));
+
+            PlacementResponseType placement = new PlacementResponseTypeImpl();
+            placement.setAvailabilityZone(vm.getName() + "a");
+            instance.setPlacement(placement);
+
+
+            instance.setPlatform("windows");
+            instance.setPrivateDnsName("privateDnsName");
+            instance.setPrivateIpAddress(tryFind(addresses, InetAddresses2.IsPrivateIPAddress.INSTANCE).orNull());
+
+            ProductCodesSetType productCodesSet = new ProductCodesSetTypeImpl();
+            ProductCodesSetItemType productCodesItem = new ProductCodesSetItemTypeImpl();
+            productCodesSet.getItems().add(productCodesItem);
+            instance.setProductCodes(productCodesSet);
+
+            instance.setRamdiskId("ramDiskId");
+            instance.setReason("reason");
+            instance.setRootDeviceName("/dev/sda"); // id?
+            instance.setRootDeviceType("instance-store");
+            instance.setVirtualizationType("paravirtual");
+
+
+
+            ResourceTagSetType tagSet = new ResourceTagSetTypeImpl();
+
+            for (Map.Entry<String, String> resourceTag : vCloudService.getVCloudDirectorApi().getVmApi().getMetadataApi(vm.getId()).get().entrySet()) {
+                ResourceTagSetItemType tag = new ResourceTagSetItemTypeImpl();
+                tag.setKey(resourceTag.getKey());
+                tag.setValue(resourceTag.getValue());
+                tagSet.getItems().add(tag);
             }
-            // ec2Instance.setCreated(vm.getCreated());
-            ec2Instance.setHypervisor("vsphere");
-            ec2Instance.setRootDeviceType("instance-store");
-            ec2Instance.setRootDeviceId("/dev/sda");
-            ec2Instance.setInstanceType("m1.small");  //TODO: Map vcloud template specs to unique instancetype
+            instance.setTagSet(tagSet);
 
-            Set<String> addresses = getIpsFromVm(vm);
-            ec2Instance.setIpAddress(tryFind(addresses, not(InetAddresses2.IsPrivateIPAddress.INSTANCE)).orNull());
-            ec2Instance.setPrivateIpAddress(tryFind(addresses, InetAddresses2.IsPrivateIPAddress.INSTANCE).orNull());
+            instances.add(instance);
 
-            // TODO add security groups
-            // for ... ec2Instance.addGroupName(securityGroup.getName());
 
-            for (Map.Entry<String, String> resourceTag : getApi().getVmApi().getMetadataApi(vm.getId()).get().entrySet()) {
-                EC2TagKeyValue param = new EC2TagKeyValue();
-                param.setKey(resourceTag.getKey());
-                if (resourceTag.getValue() != null)
-                    param.setValue(resourceTag.getValue());
-                ec2Instance.addResourceTag(param);
-            }
-            Instances.addInstance(ec2Instance);*/
+
 
         }
+
+
         return describeInstancesResponse;
     }
 }
