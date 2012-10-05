@@ -9,14 +9,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.xml.MarshallingHttpMessageConverter;
 import org.springframework.oxm.jaxb.Jaxb2Marshaller;
-import org.springframework.web.servlet.HandlerExceptionResolver;
-import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.xml.bind.Marshaller;
 import java.util.HashMap;
 import java.util.List;
@@ -37,16 +33,6 @@ public class WebConfig extends WebMvcConfigurerAdapter {
         converters.add(marshalingMessageConverter());
     }
 
-    /*@Override
-    public void configureHandlerExceptionResolvers(List<HandlerExceptionResolver> exceptionResolvers) {
-        exceptionResolvers.add(new HandlerExceptionResolver() {
-            @Override
-            public ModelAndView resolveException(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
-                return null;
-            }
-        });
-    }*/
-
     public MarshallingHttpMessageConverter marshalingMessageConverter() {
         return new MarshallingHttpMessageConverter(jaxb2Marshaller());
     }
@@ -54,8 +40,7 @@ public class WebConfig extends WebMvcConfigurerAdapter {
     public Jaxb2Marshaller jaxb2Marshaller() {
 
         Jaxb2Marshaller marshaller = new Jaxb2Marshaller();
-//        marshaller.setContextPath("com.amazon.ec2.impl");
-        marshaller.setContextPaths("com.amazon.ec2.impl", "io.cinderella.domain");
+        marshaller.setContextPath("com.amazon.ec2.impl");
 
         Map<String, Object> marshallerProps = new HashMap<String, Object>();
         marshallerProps.put(Marshaller.JAXB_FORMATTED_OUTPUT, true);
