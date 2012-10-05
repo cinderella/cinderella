@@ -30,14 +30,7 @@ public class AuthInterceptor extends HandlerInterceptorAdapter {
 
         log.info("authenticated? " + authenticated);
 
-        return authenticated || handleUnAuthenticated();
-    }
-
-    private boolean handleUnAuthenticated() {
-
-        // todo
-
-        return false;
+        return authenticated;
     }
 
 }

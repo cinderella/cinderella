@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static io.cinderella.exception.EC2ServiceException.*;
+import static io.cinderella.exception.EC2ServiceException.ClientError.Unsupported;
 import static io.cinderella.exception.EC2ServiceException.ServerError.InternalError;
 
 /**
@@ -84,7 +85,7 @@ public class CinderellaServiceImpl implements CinderellaService {
 
     @Override
     public DescribeSecurityGroupsResponse describeSecurityGroups(DescribeSecurityGroups describeSecurityGroups) {
-        throw new EC2ServiceException(InternalError, "Not implemented in Cinderella");
+        throw new EC2ServiceException(Unsupported, "This operation is not available");
       /*
        * try { EC2DescribeSecurityGroupsResponse groupSet = new EC2DescribeSecurityGroupsResponse();
        *

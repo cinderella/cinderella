@@ -2,6 +2,7 @@ package io.cinderella.security;
 
 import com.cloud.bridge.service.UserContext;
 import com.cloud.bridge.util.EC2RestAuth;
+import io.cinderella.exception.PermissionDeniedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -130,7 +131,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 //        cloudSecretKey = ec2properties.getProperty("key." + cloudAccessKey);
         String cloudSecretKey = env.getProperty("key." + cloudAccessKey);
         if (null == cloudSecretKey) {
-            throw new RuntimeException("No secret key configured for access key: " + cloudAccessKey);
+            throw new PermissionDeniedException("No secret key configured for access key: "+ cloudAccessKey);
         }
 
         // [C] Verify the signature
@@ -172,7 +173,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             UserContext.current().initContext(cloudAccessKey, cloudSecretKey, cloudAccessKey, "REST request", null);
             return true;
         } else
-            throw new RuntimeException("Invalid signature");
+            throw new PermissionDeniedException("Invalid signature");
     }
 
     /**
