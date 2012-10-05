@@ -1,13 +1,8 @@
 package io.cinderella.service;
 
-import com.amazon.ec2.DescribeImages;
-import com.amazon.ec2.DescribeImagesResponse;
-import com.amazon.ec2.DescribeInstances;
-import com.amazon.ec2.DescribeInstancesResponse;
-import com.amazon.ec2.DescribeRegions;
-import com.amazon.ec2.DescribeRegionsResponse;
-import com.amazon.ec2.DescribeSecurityGroups;
-import com.amazon.ec2.DescribeSecurityGroupsResponse;
+import com.amazon.ec2.*;
+import io.cinderella.domain.DescribeAvailabilityZonesRequestVCloud;
+import io.cinderella.domain.DescribeAvailabilityZonesResponseVCloud;
 import io.cinderella.domain.DescribeImagesRequestVCloud;
 import io.cinderella.domain.DescribeImagesResponseVCloud;
 import io.cinderella.domain.DescribeInstancesRequestVCloud;
@@ -18,7 +13,6 @@ import io.cinderella.exception.EC2ServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static io.cinderella.exception.EC2ServiceException.*;
 import static io.cinderella.exception.EC2ServiceException.ClientError.Unsupported;
 import static io.cinderella.exception.EC2ServiceException.ServerError.InternalError;
 
@@ -36,6 +30,22 @@ public class CinderellaServiceImpl implements CinderellaService {
     public CinderellaServiceImpl(MappingService mappingService, VCloudService vCloudService) {
         this.mappingService = mappingService;
         this.vCloudService = vCloudService;
+    }
+
+    @Override
+    public DescribeAvailabilityZonesResponse describeAvailabilityZones(DescribeAvailabilityZones describeAvailabilityZones) {
+        try {
+
+            DescribeAvailabilityZonesRequestVCloud vCloudRequest
+                    = mappingService.getDescribeAvailabilityZonesRequest(describeAvailabilityZones);
+            DescribeAvailabilityZonesResponseVCloud vCloudResponse = vCloudService.describeAvailabilityZones(vCloudRequest);
+            return mappingService.getDescribeAvailabilityZonesResponse(vCloudResponse);
+
+        } catch (Exception e) {
+            log.error("EC2 DescribeAvailabilityZones - ", e);
+            throw new EC2ServiceException(InternalError, e.getMessage() != null ? e.getMessage()
+                    : "An unexpected error occurred.");
+        }
     }
 
     @Override

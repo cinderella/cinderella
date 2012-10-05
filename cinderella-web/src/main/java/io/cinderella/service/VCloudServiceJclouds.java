@@ -6,14 +6,14 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
+import io.cinderella.domain.DescribeAvailabilityZonesRequestVCloud;
+import io.cinderella.domain.DescribeAvailabilityZonesResponseVCloud;
 import io.cinderella.domain.DescribeImagesRequestVCloud;
 import io.cinderella.domain.DescribeImagesResponseVCloud;
 import io.cinderella.domain.DescribeInstancesRequestVCloud;
 import io.cinderella.domain.DescribeInstancesResponseVCloud;
 import io.cinderella.domain.DescribeRegionsRequestVCloud;
 import io.cinderella.domain.DescribeRegionsResponseVCloud;
-import io.cinderella.exception.EC2ServiceException;
 import org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType;
 import org.jclouds.vcloud.director.v1_5.domain.Catalog;
 import org.jclouds.vcloud.director.v1_5.domain.CatalogItem;
@@ -27,9 +27,6 @@ import org.jclouds.vcloud.director.v1_5.domain.org.Org;
 import org.jclouds.vcloud.director.v1_5.user.VCloudDirectorApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Arrays;
-import java.util.List;
 
 import static org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType.CATALOG;
 import static org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType.VAPP;
@@ -60,6 +57,25 @@ public class VCloudServiceJclouds implements VCloudService {
     @Override
     public DescribeRegionsResponseVCloud describeRegions(DescribeRegionsRequestVCloud describeRegionsRequestVCloud) throws Exception {
         return listRegions(describeRegionsRequestVCloud.getInterestedRegions());
+    }
+
+    @Override
+    public DescribeAvailabilityZonesResponseVCloud describeAvailabilityZones(DescribeAvailabilityZonesRequestVCloud vCloudRequest) {
+
+        DescribeAvailabilityZonesResponseVCloud response = new DescribeAvailabilityZonesResponseVCloud();
+
+        String vdcName = vCloudRequest.getVdcName();
+        if (vdcName == null) {
+            return response;
+        }
+        response.setVdcName(vdcName);
+
+        String availabilityZone = vdcName + "a";
+        if (vCloudRequest.getZoneSet().isEmpty() || vCloudRequest.getZoneSet().contains(availabilityZone)) {
+            response.addZone(availabilityZone);
+        }
+
+        return response;
     }
 
     private DescribeRegionsResponseVCloud listRegions(Iterable<String> interestedRegions) throws Exception {

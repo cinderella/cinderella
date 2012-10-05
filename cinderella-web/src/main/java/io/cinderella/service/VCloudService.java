@@ -1,5 +1,7 @@
 package io.cinderella.service;
 
+import io.cinderella.domain.DescribeAvailabilityZonesRequestVCloud;
+import io.cinderella.domain.DescribeAvailabilityZonesResponseVCloud;
 import io.cinderella.domain.DescribeImagesRequestVCloud;
 import io.cinderella.domain.DescribeImagesResponseVCloud;
 import io.cinderella.domain.DescribeInstancesRequestVCloud;
@@ -29,4 +31,6 @@ public interface VCloudService {
     VCloudDirectorApi getVCloudDirectorApi();
 
     DescribeRegionsResponseVCloud describeRegions(DescribeRegionsRequestVCloud describeRegionsRequestVCloud) throws Exception;
+
+    DescribeAvailabilityZonesResponseVCloud describeAvailabilityZones(DescribeAvailabilityZonesRequestVCloud vCloudRequest);
 }

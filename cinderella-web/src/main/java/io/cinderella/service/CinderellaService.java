@@ -1,19 +1,19 @@
 package io.cinderella.service;
 
-import com.amazon.ec2.DescribeImages;
-import com.amazon.ec2.DescribeImagesResponse;
-import com.amazon.ec2.DescribeInstances;
-import com.amazon.ec2.DescribeInstancesResponse;
-import com.amazon.ec2.DescribeRegions;
-import com.amazon.ec2.DescribeRegionsResponse;
-import com.amazon.ec2.DescribeSecurityGroups;
-import com.amazon.ec2.DescribeSecurityGroupsResponse;
+import com.amazon.ec2.*;
 
 /**
  * @author shane
  * @since 9/28/12
  */
 public interface CinderellaService {
+
+    /**
+     * ec2-describe-availability-zones -U http://localhost:8080/api/ -O AKIAJLRNZIQQ37IVPP3Q -W 5YVvxvaPCcJ2vr5/ZyRsKKuvo6WJvV1KMnUYm+7J -v --debug --request-timeout 120
+     * @param describeAvailabilityZones
+     * @return
+     */
+    DescribeAvailabilityZonesResponse describeAvailabilityZones(DescribeAvailabilityZones describeAvailabilityZones);
 
     /**
      * ec2-describe-regions -U http://localhost:8080/api/ -O AKIAJLRNZIQQ37IVPP3Q -W 5YVvxvaPCcJ2vr5/ZyRsKKuvo6WJvV1KMnUYm+7J -v --debug --request-timeout 120

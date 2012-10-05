@@ -1,9 +1,11 @@
 package io.cinderella.web.controller;
 
+import com.amazon.ec2.DescribeAvailabilityZonesResponse;
 import com.amazon.ec2.DescribeImagesResponse;
 import com.amazon.ec2.DescribeInstancesResponse;
 import com.amazon.ec2.DescribeRegionsResponse;
 import com.amazon.ec2.DescribeSecurityGroupsResponse;
+import com.amazon.ec2.impl.DescribeAvailabilityZonesImpl;
 import com.amazon.ec2.impl.DescribeImagesImpl;
 import com.amazon.ec2.impl.DescribeInstancesImpl;
 import com.amazon.ec2.impl.DescribeRegionsImpl;
@@ -41,6 +43,12 @@ public class EC2Controller {
 
     @Autowired
     private CinderellaService cinderellaService;
+
+    @RequestMapping(params = "Action=DescribeAvailabilityZones")
+    @ResponseBody
+    public DescribeAvailabilityZonesResponse describeAvailabilityZones(EC2Request ec2Request) throws EC2ServiceException {
+        return cinderellaService.describeAvailabilityZones(new DescribeAvailabilityZonesImpl());
+    }
 
     @RequestMapping(params = "Action=DescribeRegions")
     @ResponseBody

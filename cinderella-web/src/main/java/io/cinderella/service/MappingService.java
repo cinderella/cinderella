@@ -1,11 +1,15 @@
 package io.cinderella.service;
 
+import com.amazon.ec2.DescribeAvailabilityZones;
+import com.amazon.ec2.DescribeAvailabilityZonesResponse;
 import com.amazon.ec2.DescribeImages;
 import com.amazon.ec2.DescribeImagesResponse;
 import com.amazon.ec2.DescribeInstances;
 import com.amazon.ec2.DescribeInstancesResponse;
 import com.amazon.ec2.DescribeRegions;
 import com.amazon.ec2.DescribeRegionsResponse;
+import io.cinderella.domain.DescribeAvailabilityZonesRequestVCloud;
+import io.cinderella.domain.DescribeAvailabilityZonesResponseVCloud;
 import io.cinderella.domain.DescribeImagesRequestVCloud;
 import io.cinderella.domain.DescribeImagesResponseVCloud;
 import io.cinderella.domain.DescribeInstancesRequestVCloud;
@@ -30,5 +34,9 @@ public interface MappingService {
     DescribeRegionsRequestVCloud getDescribeRegionsRequest(DescribeRegions describeRegions);
 
     DescribeRegionsResponse getDescribeRegionsResponse(DescribeRegionsResponseVCloud describeRegionsResponseVCloud);
+
+    DescribeAvailabilityZonesRequestVCloud getDescribeAvailabilityZonesRequest(DescribeAvailabilityZones describeAvailabilityZones);
+
+    DescribeAvailabilityZonesResponse getDescribeAvailabilityZonesResponse(DescribeAvailabilityZonesResponseVCloud vCloudResponse);
 
 }

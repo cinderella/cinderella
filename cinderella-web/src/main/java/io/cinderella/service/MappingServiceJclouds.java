@@ -6,6 +6,8 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
+import io.cinderella.domain.DescribeAvailabilityZonesRequestVCloud;
+import io.cinderella.domain.DescribeAvailabilityZonesResponseVCloud;
 import io.cinderella.domain.DescribeImagesRequestVCloud;
 import io.cinderella.domain.DescribeImagesResponseVCloud;
 import io.cinderella.domain.DescribeInstancesRequestVCloud;
@@ -307,5 +309,49 @@ public class MappingServiceJclouds implements MappingService {
         describeRegionsResponse.setRegionInfo(regionSetType);
 
         return describeRegionsResponse;
+    }
+
+    @Override
+    public DescribeAvailabilityZonesRequestVCloud getDescribeAvailabilityZonesRequest(DescribeAvailabilityZones describeAvailabilityZones) {
+
+        DescribeAvailabilityZonesRequestVCloud request = new DescribeAvailabilityZonesRequestVCloud();
+
+        String region = vCloudService.getVdcName();
+        request.setVdcName(region);
+
+        // todo handle ZoneName.n parameters ?
+        // -> load in all the "ZoneName.n" parameters if any
+        /*Enumeration<?> names = request.getParameterNames();
+        while (names.hasMoreElements()) {
+            String key = (String) names.nextElement();
+            if (key.startsWith("ZoneName")) {
+                String[] value = request.getParameterValues(key);
+                if (null != value && 0 < value.length)
+                    EC2request.addZone(value[0]);
+            }
+        }*/
+
+        return request;
+    }
+
+    @Override
+    public DescribeAvailabilityZonesResponse getDescribeAvailabilityZonesResponse(DescribeAvailabilityZonesResponseVCloud vCloudResponse) {
+
+        DescribeAvailabilityZonesResponse response = new DescribeAvailabilityZonesResponseImpl();
+        response.setRequestId(UUID.randomUUID().toString());
+
+        AvailabilityZoneSetType availabilityZoneSetType = new AvailabilityZoneSetTypeImpl();
+        List<AvailabilityZoneItemType> availabilityZoneItemTypes = availabilityZoneSetType.getItems();
+
+        for (String zone : vCloudResponse.getAvailabilityZones()) {
+            AvailabilityZoneItemType avZone = new AvailabilityZoneItemTypeImpl();
+            avZone.setRegionName(vCloudResponse.getVdcName());
+            avZone.setZoneName(zone);
+            avZone.setZoneState("available");
+            availabilityZoneItemTypes.add(avZone);
+        }
+        response.setAvailabilityZoneInfo(availabilityZoneSetType);
+
+        return response;
     }
 }
