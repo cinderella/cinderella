@@ -2,6 +2,7 @@ package io.cinderella.web;
 
 import io.cinderella.CinderellaConfig;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
@@ -19,6 +20,7 @@ public class WebApp {
         final ServletHolder servletHolder = new ServletHolder(new DispatcherServlet(applicationContext));
         final ServletContextHandler context = new ServletContextHandler();
 
+        context.setErrorHandler(null); // use Spring exception handler(s)
         context.setContextPath("/");
         context.addServlet(servletHolder, "/*");
 

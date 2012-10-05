@@ -37,15 +37,15 @@ public class WebConfig extends WebMvcConfigurerAdapter {
         converters.add(marshalingMessageConverter());
     }
 
-    @Override
+    /*@Override
     public void configureHandlerExceptionResolvers(List<HandlerExceptionResolver> exceptionResolvers) {
         exceptionResolvers.add(new HandlerExceptionResolver() {
             @Override
             public ModelAndView resolveException(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
-                return null;  //To change body of implemented methods use File | Settings | File Templates.
+                return null;
             }
         });
-    }
+    }*/
 
     public MarshallingHttpMessageConverter marshalingMessageConverter() {
         return new MarshallingHttpMessageConverter(jaxb2Marshaller());
@@ -54,7 +54,8 @@ public class WebConfig extends WebMvcConfigurerAdapter {
     public Jaxb2Marshaller jaxb2Marshaller() {
 
         Jaxb2Marshaller marshaller = new Jaxb2Marshaller();
-        marshaller.setContextPath("com.amazon.ec2.impl");
+//        marshaller.setContextPath("com.amazon.ec2.impl");
+        marshaller.setContextPaths("com.amazon.ec2.impl", "io.cinderella.domain");
 
         Map<String, Object> marshallerProps = new HashMap<String, Object>();
         marshallerProps.put(Marshaller.JAXB_FORMATTED_OUTPUT, true);

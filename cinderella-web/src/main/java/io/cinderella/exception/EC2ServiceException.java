@@ -112,7 +112,7 @@ public class EC2ServiceException extends RuntimeException {
     }
 
     public EC2ServiceException(String message, int errorCode) {
-//        super(message, new AxisFault(message, new QName("Error")));
+//        super(message, new AxisFault(message, new QName("EC2Error")));
         super(message);
         this.httpErrorCode = errorCode;
     }
