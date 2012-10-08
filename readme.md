@@ -20,9 +20,7 @@ $ mvn clean package
 
 ## Configuration ##
 
-Cinderella expects a properties file to be located at `~/.cinderella/ec2-service.properties`
-
-with the following content:
+Create `~/.cinderella/ec2-service.properties` with the following content:
 
 ```
 endpoint=YOUR_VCD_ENDPOINT
