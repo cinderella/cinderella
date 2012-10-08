@@ -44,11 +44,19 @@ Application will be available at http://localhost:8080/
 
 ## Usage ##
 
-Here are some examples:
+Here are some examples using the [EC2 API Command Line Tool](http://docs.amazonwebservices.com/AWSEC2/latest/CommandLineReference/Welcome.html):
 
+
+### DescribeAvailabilityZones
 ```
 ec2-describe-availability-zones -U http://localhost:8080/api/ -O YOUR_EC2_ACCESSKEY -W YOUR_EC2_SECRETKEY -v --debug
 ```
+
+### DescribeRegions
+```
+ec2-describe-regions -U http://localhost:8080/api/ -O YOUR_EC2_ACCESSKEY -W YOUR_EC2_SECRETKEY -v --debug
+```
+
 
 
 
