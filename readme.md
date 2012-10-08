@@ -11,32 +11,44 @@ $ git submodule update
 
 ## Build ##
 
-The build will run an ant task on the cloudbridge native ant build in order to
-build the required jar files, run the wsdl2code generator plugin to create the
-stubs, and then package the dependencies in a war file.
+The build will generate JAXB annotated classes for EC2 then uses the maven-shade-plugin to package everything into a
+single artifact, cinderella.jar.
+
 ```
 $ mvn clean install
 ```
 
-## Test and run ##
+## Configuration ##
 
-The build is configured to run Jetty via the maven Jetty plugin. Some changes
-such as config files and static resources will trigger a redeploy so that changes
-can be tested immediately.
+Cinderella expects a properties file to be located at `~/.cinderella/ec2-service.properties`
+
+with the following content:
+
 ```
-$ mvn jetty:run -pl :cinderella-web
-or
-$ cd cinderella-web
-$ mvn jetty:run
+endpoint=YOUR_VCD_ENDPOINT
+useratorg=YOUR_VCD_USERATORG
+password=YOUR_VCD_PASSWORD
+key.YOUR_EC2_ACCESSKEY=YOUR_EC2_SECRETKEY
 ```
+
+## Running ##
+
+Cinderella leverages an embedded Jetty container. All that's needed to run is:
+
+```
+$ java -jar cinderella-web/target/cinderella.jar
+```
+
 Application will be available at http://localhost:8080/
 
-## Packaging the war file ##
 
-From the project root
+## Usage ##
+
+Here are some examples:
+
 ```
-$ mvn clean install
+ec2-describe-availability-zones -U http://localhost:8080/api/ -O YOUR_EC2_ACCESSKEY -W YOUR_EC2_SECRETKEY -v --debug
 ```
-This builds and installs all dependencies, and then packages the war file 
-as ```cinderella-web/target/cinderella.war```
+
+
 
