@@ -22,7 +22,7 @@ public class WebApp {
 
         context.setErrorHandler(null); // use Spring exception handler(s)
         context.setContextPath("/");
-        context.addServlet(servletHolder, "/*");
+        context.addServlet(servletHolder, "/");
 
         String webPort = System.getenv("PORT");
         if (webPort == null || webPort.isEmpty()) {
