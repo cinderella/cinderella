@@ -15,7 +15,7 @@ The build will generate JAXB annotated classes for EC2 then uses the maven-shade
 single artifact, cinderella.jar.
 
 ```
-$ mvn clean install
+$ mvn clean package
 ```
 
 ## Configuration ##
