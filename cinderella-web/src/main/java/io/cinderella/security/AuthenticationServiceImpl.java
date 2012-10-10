@@ -160,10 +160,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                     if (paramName.equalsIgnoreCase("Signature"))
                         continue;
                     if (queryString == null)
-                        queryString = paramName + "=" + request.getParameter(paramName);
+                        queryString = paramName + "=" + URLEncoder.encode(request.getParameter(paramName), "UTF-8").
+                                replace("+", "%20").
+                                replace("*", "%2A").
+                                replace("%7E", "~");
                     else
                         queryString = queryString + "&" + paramName + "="
-                                + URLEncoder.encode(request.getParameter(paramName), "UTF-8");
+                                + URLEncoder.encode(request.getParameter(paramName), "UTF-8").
+                                replace("+", "%20").
+                                replace("*", "%2A").
+                                replace("%7E", "~");
                 }
             }
         }
