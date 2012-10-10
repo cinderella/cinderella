@@ -6,6 +6,7 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import io.cinderella.domain.DescribeAvailabilityZonesRequestVCloud;
 import io.cinderella.domain.DescribeAvailabilityZonesResponseVCloud;
 import io.cinderella.domain.DescribeImagesRequestVCloud;
@@ -78,7 +79,7 @@ public class VCloudServiceJclouds implements VCloudService {
         return response;
     }
 
-    private DescribeRegionsResponseVCloud listRegions(Iterable<String> interestedRegions) throws Exception {
+    private DescribeRegionsResponseVCloud listRegions(final Iterable<String> interestedRegions) throws Exception {
         DescribeRegionsResponseVCloud regions = new DescribeRegionsResponseVCloud();
         FluentIterable<Vdc> vdcs = FluentIterable.from(vCloudDirectorApi.getOrgApi().list())
                 .transformAndConcat(new Function<Reference, Iterable<Link>>() {
@@ -91,9 +92,14 @@ public class VCloudServiceJclouds implements VCloudService {
                     public Vdc apply(Link in) {
                         return vCloudDirectorApi.getVdcApi().get(in.getHref());
                     }
+                }).filter(new Predicate<Vdc>() {
+                    @Override
+                    public boolean apply(Vdc in) {
+                        return interestedRegions == null || Iterables.contains(interestedRegions, in.getName());
+                    }
                 });
 
-        regions.setVdcs(vdcs);
+        regions.setVdcs(vdcs.toImmutableSet());
 
         return regions;
     }

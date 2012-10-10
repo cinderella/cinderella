@@ -2,18 +2,11 @@ package io.cinderella.service;
 
 import com.amazon.ec2.*;
 import com.amazon.ec2.impl.*;
+import com.google.common.base.Function;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
-import io.cinderella.domain.DescribeAvailabilityZonesRequestVCloud;
-import io.cinderella.domain.DescribeAvailabilityZonesResponseVCloud;
-import io.cinderella.domain.DescribeImagesRequestVCloud;
-import io.cinderella.domain.DescribeImagesResponseVCloud;
-import io.cinderella.domain.DescribeInstancesRequestVCloud;
-import io.cinderella.domain.DescribeInstancesResponseVCloud;
-import io.cinderella.domain.DescribeRegionsRequestVCloud;
-import io.cinderella.domain.DescribeRegionsResponseVCloud;
+import io.cinderella.domain.*;
 import org.jclouds.util.InetAddresses2;
 import org.jclouds.vcloud.director.v1_5.domain.Vdc;
 import org.jclouds.vcloud.director.v1_5.domain.Vm;
@@ -24,13 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.Iterables.tryFind;
@@ -266,6 +253,21 @@ public class MappingServiceJclouds implements MappingService {
 
         DescribeRegionsRequestVCloud request = new DescribeRegionsRequestVCloud();
 
+        DescribeRegionsSetType regionSet = describeRegions.getRegionSet();
+
+        if (regionSet != null && regionSet.getItems().size() > 0) {
+            ImmutableSet<String> regions = FluentIterable.from(regionSet.getItems())
+                    .transform(new Function<DescribeRegionsSetItemType, String>() {
+                        @Override
+                        public String apply(DescribeRegionsSetItemType in) {
+                            return in.getRegionName();
+                        }
+                    }).toImmutableSet();
+
+            request.setInterestedRegions(regions);
+
+        }
+
         // todo: handle filter
         /*
         EC2RegionsFilterSet regionsFilterSet = request.getFilterSet();
@@ -288,20 +290,17 @@ public class MappingServiceJclouds implements MappingService {
         DescribeRegionsResponse describeRegionsResponse = new DescribeRegionsResponseImpl();
         describeRegionsResponse.setRequestId(UUID.randomUUID().toString());
 
-        Iterable<String> interestedRegions = describeRegionsResponseVCloud.getInterestedRegions();
-        FluentIterable<Vdc> vdcs = describeRegionsResponseVCloud.getVdcs();
+        Iterable<Vdc> vdcs = describeRegionsResponseVCloud.getVdcs();
 
         RegionSetType regionSetType = new RegionSetTypeImpl();
         List<RegionItemType> regions = regionSetType.getItems();
         try {
             for (Vdc vdc : vdcs) {
-                if (Iterables.size(interestedRegions) == 0 || Iterables.contains(interestedRegions, vdc.getName())) {
-                    RegionItemType region = new RegionItemTypeImpl();
-                    region.setRegionName(vdc.getName());
-                    String encodedVdcName = URLEncoder.encode(vdc.getName(), "UTF-8");
-                    region.setRegionEndpoint(String.format("%s/api/regions/%s/", hostPort, encodedVdcName));
-                    regions.add(region);
-                }
+                RegionItemType region = new RegionItemTypeImpl();
+                region.setRegionName(vdc.getName());
+                String encodedVdcName = URLEncoder.encode(vdc.getName(), "UTF-8");
+                region.setRegionEndpoint(String.format("%s/api/regions/%s/", hostPort, encodedVdcName));
+                regions.add(region);
             }
         } catch (UnsupportedEncodingException e) {
             log.error("getDescribeRegionsResponse error", e);

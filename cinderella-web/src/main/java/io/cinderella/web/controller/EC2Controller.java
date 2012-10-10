@@ -1,15 +1,7 @@
 package io.cinderella.web.controller;
 
-import com.amazon.ec2.DescribeAvailabilityZonesResponse;
-import com.amazon.ec2.DescribeImagesResponse;
-import com.amazon.ec2.DescribeInstancesResponse;
-import com.amazon.ec2.DescribeRegionsResponse;
-import com.amazon.ec2.DescribeSecurityGroupsResponse;
-import com.amazon.ec2.impl.DescribeAvailabilityZonesImpl;
-import com.amazon.ec2.impl.DescribeImagesImpl;
-import com.amazon.ec2.impl.DescribeInstancesImpl;
-import com.amazon.ec2.impl.DescribeRegionsImpl;
-import com.amazon.ec2.impl.DescribeSecurityGroupsImpl;
+import com.amazon.ec2.*;
+import com.amazon.ec2.impl.*;
 import io.cinderella.domain.EC2Error;
 import io.cinderella.domain.EC2ErrorResponse;
 import io.cinderella.domain.EC2Request;
@@ -23,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletResponse;
@@ -52,8 +45,21 @@ public class EC2Controller {
 
     @RequestMapping(params = "Action=DescribeRegions")
     @ResponseBody
-    public DescribeRegionsResponse describeRegions(EC2Request ec2Request) throws EC2ServiceException {
-        return cinderellaService.describeRegions(new DescribeRegionsImpl());
+    public DescribeRegionsResponse describeRegions(EC2Request ec2Request, @RequestParam(value = "RegionName.1", required=false) String region ) throws EC2ServiceException {
+        // TODO: How to handle numbered param types like RegionName.1, RegionName.2, etc...
+        DescribeRegionsSetItemType ec2Region;
+        DescribeRegions describeRegions = new DescribeRegionsImpl();
+        DescribeRegionsSetType regionSet;
+
+        if (region != null) {
+            ec2Region = new DescribeRegionsSetItemTypeImpl();
+            ec2Region.setRegionName(region);
+
+            regionSet = new DescribeRegionsSetTypeImpl();
+            regionSet.getItems().add(ec2Region);
+            describeRegions.setRegionSet(regionSet);
+        }
+        return cinderellaService.describeRegions(describeRegions);
     }
 
     @RequestMapping(params = "Action=DescribeImages")

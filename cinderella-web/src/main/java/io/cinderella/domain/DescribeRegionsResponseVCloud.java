@@ -1,6 +1,5 @@
 package io.cinderella.domain;
 
-import com.google.common.collect.FluentIterable;
 import org.jclouds.vcloud.director.v1_5.domain.Vdc;
 
 import java.util.Collections;
@@ -12,21 +11,13 @@ import java.util.Collections;
 public class DescribeRegionsResponseVCloud {
 
     private Iterable<String> interestedRegions = Collections.emptySet();
-    private FluentIterable<Vdc> vdcs;
+    private Iterable<Vdc> vdcs;
 
-    public Iterable<String> getInterestedRegions() {
-        return interestedRegions;
-    }
-
-    public void setInterestedRegions(Iterable<String> interestedRegions) {
-        this.interestedRegions = interestedRegions;
-    }
-
-    public FluentIterable<Vdc> getVdcs() {
+    public Iterable<Vdc> getVdcs() {
         return vdcs;
     }
 
-    public void setVdcs(FluentIterable<Vdc> vdcs) {
+    public void setVdcs(Iterable<Vdc> vdcs) {
         this.vdcs = vdcs;
     }
 }
