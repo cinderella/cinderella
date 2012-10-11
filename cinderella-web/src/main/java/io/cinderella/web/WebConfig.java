@@ -3,6 +3,7 @@ package io.cinderella.web;
 import io.cinderella.security.AuthenticationService;
 import io.cinderella.security.AuthenticationServiceImpl;
 import io.cinderella.web.interceptor.AuthInterceptor;
+import io.cinderella.web.resolver.RegionNameArgumentResolver;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -11,6 +12,7 @@ import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.xml.MarshallingHttpMessageConverter;
 import org.springframework.oxm.jaxb.Jaxb2Marshaller;
+import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -32,7 +34,7 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(authInterceptor()).addPathPatterns("/api/**");
+        registry.addInterceptor(authInterceptor()).addPathPatterns("/api/*", "/api/regions/*");
     }
 
     @Override
@@ -45,6 +47,12 @@ public class WebConfig extends WebMvcConfigurerAdapter {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/favicon.ico").addResourceLocations("/favicon.ico");
     }
+
+    @Override
+    public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
+        argumentResolvers.add(new RegionNameArgumentResolver());
+    }
+
 
     @Bean
     public AuthenticationService authenticationService() {
