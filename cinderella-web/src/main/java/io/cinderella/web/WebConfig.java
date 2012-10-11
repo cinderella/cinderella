@@ -3,7 +3,7 @@ package io.cinderella.web;
 import io.cinderella.security.AuthenticationService;
 import io.cinderella.security.AuthenticationServiceImpl;
 import io.cinderella.web.interceptor.AuthInterceptor;
-import io.cinderella.web.resolver.RegionNameArgumentResolver;
+import io.cinderella.web.resolver.EC2RegionSetArgumentResolver;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -50,7 +50,7 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
-        argumentResolvers.add(new RegionNameArgumentResolver());
+        argumentResolvers.add(new EC2RegionSetArgumentResolver());
     }
 
 

@@ -8,16 +8,15 @@ import io.cinderella.domain.EC2Request;
 import io.cinderella.exception.EC2ServiceException;
 import io.cinderella.exception.PermissionDeniedException;
 import io.cinderella.service.CinderellaService;
-import io.cinderella.web.annotation.RegionName;
+import io.cinderella.web.annotation.EC2FilterSet;
+import io.cinderella.web.annotation.EC2RegionSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletResponse;
@@ -49,20 +48,11 @@ public class EC2Controller {
     @RequestMapping(params = "Action=DescribeRegions")
     @ResponseBody
     public DescribeRegionsResponse describeRegions(EC2Request ec2Request,
-                                                   @RegionName List<String> regionNames) throws EC2ServiceException {
+                                                   @EC2RegionSet DescribeRegionsSetType regionSet) throws EC2ServiceException {
 
-        DescribeRegionsSetItemType ec2Region;
         DescribeRegions describeRegions = new DescribeRegionsImpl();
+        describeRegions.setRegionSet(regionSet);
 
-        if (!regionNames.isEmpty()) {
-            DescribeRegionsSetType regionSet = new DescribeRegionsSetTypeImpl();
-            for (String regionName : regionNames) {
-                ec2Region = new DescribeRegionsSetItemTypeImpl();
-                ec2Region.setRegionName(regionName);
-                regionSet.getItems().add(ec2Region);
-            }
-            describeRegions.setRegionSet(regionSet);
-        }
         return cinderellaService.describeRegions(describeRegions);
     }
 

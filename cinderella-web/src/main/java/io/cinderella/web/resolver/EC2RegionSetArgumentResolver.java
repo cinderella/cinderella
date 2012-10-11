@@ -1,27 +1,29 @@
 package io.cinderella.web.resolver;
 
-import io.cinderella.web.annotation.RegionName;
+import com.amazon.ec2.DescribeRegionsSetItemType;
+import com.amazon.ec2.DescribeRegionsSetType;
+import com.amazon.ec2.impl.DescribeRegionsSetItemTypeImpl;
+import com.amazon.ec2.impl.DescribeRegionsSetTypeImpl;
+import io.cinderella.web.annotation.EC2RegionSet;
 import org.springframework.core.MethodParameter;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 /**
  * @author Shane Witbeck
  * @since 10/11/12
  */
-public class RegionNameArgumentResolver implements HandlerMethodArgumentResolver {
+public class EC2RegionSetArgumentResolver implements HandlerMethodArgumentResolver {
 
     private static final String REGION_NAME_PREFIX = "RegionName.";
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
-        return parameter.getParameterAnnotation(RegionName.class) != null;
+        return parameter.getParameterAnnotation(EC2RegionSet.class) != null;
     }
 
     @Override
@@ -31,13 +33,18 @@ public class RegionNameArgumentResolver implements HandlerMethodArgumentResolver
                                   WebDataBinderFactory binderFactory) throws Exception {
 
         Map<String, String[]> paramMap = webRequest.getParameterMap();
-        List<String> regionNames = new ArrayList<String>();
 
+        DescribeRegionsSetType regionSet = new DescribeRegionsSetTypeImpl();
+
+        DescribeRegionsSetItemType ec2Region;
         for (String key : paramMap.keySet()) {
             if (key.startsWith(REGION_NAME_PREFIX)) {
-                regionNames.add(webRequest.getParameter(key));
+                ec2Region = new DescribeRegionsSetItemTypeImpl();
+                ec2Region.setRegionName(webRequest.getParameter(key));
+                regionSet.getItems().add(ec2Region);
             }
         }
-        return regionNames;
+
+        return regionSet;
     }
 }
