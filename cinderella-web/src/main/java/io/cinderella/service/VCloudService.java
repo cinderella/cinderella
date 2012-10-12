@@ -1,13 +1,7 @@
 package io.cinderella.service;
 
-import io.cinderella.domain.DescribeAvailabilityZonesRequestVCloud;
-import io.cinderella.domain.DescribeAvailabilityZonesResponseVCloud;
-import io.cinderella.domain.DescribeImagesRequestVCloud;
-import io.cinderella.domain.DescribeImagesResponseVCloud;
-import io.cinderella.domain.DescribeInstancesRequestVCloud;
-import io.cinderella.domain.DescribeInstancesResponseVCloud;
-import io.cinderella.domain.DescribeRegionsRequestVCloud;
-import io.cinderella.domain.DescribeRegionsResponseVCloud;
+import io.cinderella.domain.*;
+import org.jclouds.vcloud.director.v1_5.domain.VApp;
 import org.jclouds.vcloud.director.v1_5.domain.Vdc;
 import org.jclouds.vcloud.director.v1_5.domain.org.Org;
 import org.jclouds.vcloud.director.v1_5.user.VCloudDirectorApi;
@@ -33,4 +27,6 @@ public interface VCloudService {
     DescribeRegionsResponseVCloud describeRegions(DescribeRegionsRequestVCloud describeRegionsRequestVCloud) throws Exception;
 
     DescribeAvailabilityZonesResponseVCloud describeAvailabilityZones(DescribeAvailabilityZonesRequestVCloud vCloudRequest);
+
+    StopInstancesResponseVCloud shutdownVm(StopInstancesRequestVCloud vCloudRequest);
 }

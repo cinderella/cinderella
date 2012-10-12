@@ -1,14 +1,7 @@
 package io.cinderella.service;
 
 import com.amazon.ec2.*;
-import io.cinderella.domain.DescribeAvailabilityZonesRequestVCloud;
-import io.cinderella.domain.DescribeAvailabilityZonesResponseVCloud;
-import io.cinderella.domain.DescribeImagesRequestVCloud;
-import io.cinderella.domain.DescribeImagesResponseVCloud;
-import io.cinderella.domain.DescribeInstancesRequestVCloud;
-import io.cinderella.domain.DescribeInstancesResponseVCloud;
-import io.cinderella.domain.DescribeRegionsRequestVCloud;
-import io.cinderella.domain.DescribeRegionsResponseVCloud;
+import io.cinderella.domain.*;
 import io.cinderella.exception.EC2ServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +24,21 @@ public class CinderellaServiceImpl implements CinderellaService {
     public CinderellaServiceImpl(MappingService mappingService, VCloudService vCloudService) {
         this.mappingService = mappingService;
         this.vCloudService = vCloudService;
+    }
+
+    @Override
+    public StopInstancesResponse stopInstances(StopInstances stopInstances) {
+        try {
+
+            StopInstancesRequestVCloud vCloudRequest = mappingService.getStopInstancesRequest(stopInstances);
+            StopInstancesResponseVCloud vCloudResponse = vCloudService.shutdownVm(vCloudRequest);
+            return mappingService.getStopInstancesResponse(vCloudResponse);
+
+        } catch (Exception e) {
+            log.error("EC2 StopInstances - ", e);
+            throw new EC2ServiceException(InternalError, e.getMessage() != null ? e.getMessage()
+                    : "An unexpected error occurred.");
+        }
     }
 
     @Override

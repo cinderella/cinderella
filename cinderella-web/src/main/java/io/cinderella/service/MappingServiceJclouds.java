@@ -29,6 +29,7 @@ import static org.jclouds.vcloud.director.v1_5.compute.util.VCloudDirectorComput
 public class MappingServiceJclouds implements MappingService {
 
     private static final Logger log = LoggerFactory.getLogger(MappingServiceJclouds.class);
+    public static final String URN_VCLOUD_VM = "urn:vcloud:vm:";
 
     private String hostPort;
     private VCloudService vCloudService;
@@ -79,20 +80,20 @@ public class MappingServiceJclouds implements MappingService {
             for (Map.Entry<String, String> resourceTag : vmApi.getMetadataApi(vm.getId()).get().entrySet()) {
                 resourceTagSet
                         .withNewItems()
-                            .withKey(resourceTag.getKey())
-                            .withValue(resourceTag.getValue() != null ? resourceTag.getValue() : null);
+                        .withKey(resourceTag.getKey())
+                        .withValue(resourceTag.getValue() != null ? resourceTag.getValue() : null);
             }
 
             imageResponse
                     .withNewItems()
-                        .withImageId(vm.getId().replace("-", "").replace("urn:vcloud:vm:", "ami-"))
-                        .withImageOwnerId(imageOwnerId)
-                        .withImageLocation(imageOwnerId + "/" + vm.getId().replace("-", "").replace("urn:vcloud:vm:", "ami-"))
-                        .withName(vm.getName())
-                        .withDescription(vm.getDescription())
-                        .withImageState("available")
-                        .withImageType("machine")
-                        .withTagSet(resourceTagSet);
+                    .withImageId(vmIdToImageId(vm.getId()))
+                    .withImageOwnerId(imageOwnerId)
+                    .withImageLocation(imageOwnerId + "/" + vmIdToImageId(vm.getId()))
+                    .withName(vm.getName())
+                    .withDescription(vm.getDescription())
+                    .withImageState("available")
+                    .withImageType("machine")
+                    .withTagSet(resourceTagSet);
 
             // ec2Image.setOsTypeId(temp.getOsTypeId().toString());
             // TODO use the catalog api to determine if this vm is published
@@ -170,8 +171,8 @@ public class MappingServiceJclouds implements MappingService {
             instance.setDnsName(vm.getName()); // todo correct?
             instance.setEbsOptimized(Boolean.TRUE);
             instance.setHypervisor("vsphere");
-            instance.setImageId(vm.getId().replace("-", "").replace("urn:vcloud:vm:", "i-"));
-            instance.setInstanceId("instanceId");
+            instance.setImageId(vmIdToImageId(vm.getId()));
+            instance.setInstanceId(vmIdToInstanceId(vm.getId()));
 
             InstanceStateType instanceStateType = new InstanceStateType();
             switch (vm.getStatus()) {
@@ -258,12 +259,10 @@ public class MappingServiceJclouds implements MappingService {
                     }).toImmutableSet();
 
             request.setInterestedRegions(regions);
-
         }
 
-        // todo: handle filter
-        /*
-        EC2RegionsFilterSet regionsFilterSet = request.getFilterSet();
+        // todo: handle filter(s)
+        /*EC2RegionsFilterSet regionsFilterSet = request.getFilterSet();
             if (null == regionsFilterSet)
                 return availableRegions;
             else {
@@ -271,8 +270,7 @@ public class MappingServiceJclouds implements MappingService {
                 if (matchedRegions.isEmpty())
                     return new EC2DescribeRegionsResponse();
                 return listRegions(matchedRegions);
-            }
-         */
+            }*/
 
         return request;
     }
@@ -345,5 +343,112 @@ public class MappingServiceJclouds implements MappingService {
         response.setAvailabilityZoneInfo(availabilityZoneSetType);
 
         return response;
+    }
+
+    @Override
+    public StopInstancesRequestVCloud getStopInstancesRequest(StopInstances stopInstances) {
+
+        StopInstancesRequestVCloud request = new StopInstancesRequestVCloud();
+
+        Set<String> instanceIds = new HashSet<String>();
+        for (InstanceIdType instanceIdType : stopInstances.getInstancesSet().getItems()) {
+            instanceIds.add(instanceIdType.getInstanceId());
+        }
+        request.setVmIds(instanceIds);
+
+
+        return request;
+    }
+
+    @Override
+    public StopInstancesResponse getStopInstancesResponse(StopInstancesResponseVCloud vCloudResponse) {
+
+        StopInstancesResponse response = new StopInstancesResponse()
+                .withRequestId(UUID.randomUUID().toString());
+
+
+        /*switch (vm.getStatus()) {
+            case POWERED_ON:
+                instanceStateType.setCode(16);
+                instanceStateType.setName("running");
+                break;
+            case POWERED_OFF:
+                instanceStateType.setCode(48);
+                instanceStateType.setName("terminated");
+                break;
+            default:
+                instanceStateType.setCode(0);
+                instanceStateType.setName("pending");
+        }*/
+
+        return response;
+    }
+
+    /*
+    <StopInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2012-08-15/">
+  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
+  <instancesSet>
+    <item>
+      <instanceId>i-10a64379</instanceId>
+      <currentState>
+          <code>64</code>
+          <name>stopping</name>
+      </currentState>
+      <previousState>
+          <code>16</code>
+          <name>running</name>
+      </previousState>
+  </instancesSet>
+</StopInstancesResponse>
+     */
+
+    /**
+     * Converts an EC2 imageId to a UUID prefixed with vm urn
+     * @param imageId
+     * @return
+     */
+    private static String imageIdTovmId(String imageId) {
+        if (imageId == null) return null;
+        StringBuilder vmId = new StringBuilder(imageId.substring(4));
+        vmId.insert(8, '-');
+        vmId.insert(13, '-');
+        vmId.insert(18, '-');
+        vmId.insert(23, '-');
+        vmId.insert(0, URN_VCLOUD_VM);
+        return vmId.toString();
+    }
+
+    /**
+     * Converts an EC2 instanceId to a UUID prefixed with vm urn
+     * @param instanceId
+     * @return
+     */
+    private static String instanceIdToVmId(String instanceId) {
+        if (instanceId == null) return null;
+        StringBuilder vmId = new StringBuilder(instanceId.substring(2));
+        vmId.insert(8, '-');
+        vmId.insert(13, '-');
+        vmId.insert(18, '-');
+        vmId.insert(23, '-');
+        vmId.insert(0, URN_VCLOUD_VM);
+        return vmId.toString();
+    }
+
+    /**
+     * Converts a vm urn prefixed UUID to an EC2 imageId
+     * @param vmId
+     * @return
+     */
+    private static String vmIdToImageId(String vmId) {
+        return vmId == null ? null : vmId.replace("-", "").replace(URN_VCLOUD_VM, "ami-");
+    }
+
+    /**
+     * Converts a vm urn prefixed UUID to an EC2 instanceId
+     * @param vmId
+     * @return
+     */
+    private static String vmIdToInstanceId(String vmId) {
+        return vmId == null ? null : vmId.replace("-", "").replace(URN_VCLOUD_VM, "i-");
     }
 }

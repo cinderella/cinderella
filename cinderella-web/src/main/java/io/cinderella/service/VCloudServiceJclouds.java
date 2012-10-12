@@ -7,34 +7,26 @@ import com.google.common.base.Predicates;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import io.cinderella.domain.DescribeAvailabilityZonesRequestVCloud;
-import io.cinderella.domain.DescribeAvailabilityZonesResponseVCloud;
-import io.cinderella.domain.DescribeImagesRequestVCloud;
-import io.cinderella.domain.DescribeImagesResponseVCloud;
-import io.cinderella.domain.DescribeInstancesRequestVCloud;
-import io.cinderella.domain.DescribeInstancesResponseVCloud;
-import io.cinderella.domain.DescribeRegionsRequestVCloud;
-import io.cinderella.domain.DescribeRegionsResponseVCloud;
+import io.cinderella.domain.*;
+import org.jclouds.predicates.RetryablePredicate;
 import org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType;
-import org.jclouds.vcloud.director.v1_5.domain.Catalog;
-import org.jclouds.vcloud.director.v1_5.domain.CatalogItem;
-import org.jclouds.vcloud.director.v1_5.domain.Link;
-import org.jclouds.vcloud.director.v1_5.domain.Reference;
-import org.jclouds.vcloud.director.v1_5.domain.VApp;
-import org.jclouds.vcloud.director.v1_5.domain.VAppTemplate;
-import org.jclouds.vcloud.director.v1_5.domain.Vdc;
-import org.jclouds.vcloud.director.v1_5.domain.Vm;
+import org.jclouds.vcloud.director.v1_5.domain.*;
 import org.jclouds.vcloud.director.v1_5.domain.org.Org;
 import org.jclouds.vcloud.director.v1_5.domain.query.QueryResultRecordType;
+import org.jclouds.vcloud.director.v1_5.domain.query.QueryResultRecords;
+import org.jclouds.vcloud.director.v1_5.domain.query.QueryResultVAppRecord;
+import org.jclouds.vcloud.director.v1_5.features.QueryApi;
+import org.jclouds.vcloud.director.v1_5.features.VAppApi;
+import org.jclouds.vcloud.director.v1_5.predicates.TaskSuccess;
 import org.jclouds.vcloud.director.v1_5.user.VCloudDirectorApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import java.net.URI;
 import java.util.Set;
 
-import static org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType.CATALOG;
-import static org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType.VAPP;
-import static org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType.VAPP_TEMPLATE;
+import static org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType.*;
 import static org.jclouds.vcloud.director.v1_5.predicates.ReferencePredicates.nameEquals;
 import static org.jclouds.vcloud.director.v1_5.predicates.ReferencePredicates.typeEquals;
 
@@ -46,11 +38,23 @@ public class VCloudServiceJclouds implements VCloudService {
 
     private static final Logger log = LoggerFactory.getLogger(VCloudServiceJclouds.class);
 
+    protected static final long LONG_TASK_TIMEOUT_SECONDS = 300L;
+
     private VCloudDirectorApi vCloudDirectorApi;
+    private VAppApi vAppApi;
+    private QueryApi queryApi;
+
+    private Predicate<Task> retryTaskSuccessLong;
+
+    @Inject
+    protected void initTaskSuccessLong(TaskSuccess taskSuccess) {
+        retryTaskSuccessLong = new RetryablePredicate<Task>(taskSuccess, LONG_TASK_TIMEOUT_SECONDS * 1000L);
+    }
 
     public VCloudServiceJclouds(VCloudDirectorApi vCloudDirectorApi) {
         this.vCloudDirectorApi = vCloudDirectorApi;
-
+        this.vAppApi = this.vCloudDirectorApi.getVAppApi();
+        this.queryApi = this.vCloudDirectorApi.getQueryApi();
     }
 
     @Override
@@ -80,6 +84,34 @@ public class VCloudServiceJclouds implements VCloudService {
         }
 
         return response;
+    }
+
+    @Override
+    public StopInstancesResponseVCloud shutdownVm(StopInstancesRequestVCloud vCloudRequest) {
+
+        // todo filter vmQuery by href of vms to shutdown to get previous state
+
+        // todo do a DescribeInstances call to get previous state?
+        QueryResultRecords qrs = queryApi.vmsQueryAll();
+        System.out.println(qrs);
+
+        /*Set<QueryResultRecordType> recordTypes = qrs.getRecords();
+        for(QueryResultRecordType record : recordTypes) {
+            QueryResultVAppRecord vAppRecord = (QueryResultVAppRecord) record;
+            System.out.println(vAppRecord);
+        }*/
+
+        // todo call Shutdown
+
+/*
+        Task shutdownTask = vAppApi.shutdown(URI.create("https://lon01.ilandcloud.com/api/vApp/vm-8a67fb37-60a5-4962-8ee7-96a19aee7b2b"));
+        boolean shutdownSuccessful = retryTaskSuccessLong.apply(shutdownTask);
+
+        System.out.println(shutdownSuccessful);
+*/
+
+
+        return null;
     }
 
     private DescribeRegionsResponseVCloud listRegions(final Iterable<String> interestedRegions) throws Exception {

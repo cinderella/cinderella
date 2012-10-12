@@ -4,10 +4,6 @@ import com.amazon.ec2.FilterSetType;
 import com.amazon.ec2.FilterType;
 import com.amazon.ec2.ValueSetType;
 import com.amazon.ec2.ValueType;
-import com.amazon.ec2.impl.FilterSetTypeImpl;
-import com.amazon.ec2.impl.FilterTypeImpl;
-import com.amazon.ec2.impl.ValueSetTypeImpl;
-import com.amazon.ec2.impl.ValueTypeImpl;
 import io.cinderella.domain.EC2Filter;
 import io.cinderella.web.annotation.EC2FilterSet;
 import org.springframework.core.MethodParameter;
@@ -48,21 +44,22 @@ public class EC2FilterSetArgumentResolver implements HandlerMethodArgumentResolv
 
         if (filters == null) return null;
 
-        FilterSetType filterSetType = new FilterSetTypeImpl();
+        // todo use new fluent api here
+        FilterSetType filterSetType = new FilterSetType();
 
         List<FilterType> filterTypes = filterSetType.getItems();
         for (EC2Filter filter : filters) {
 
             List<String> filterValues = filter.getValues();
 
-            ValueSetType valueSetType = new ValueSetTypeImpl();
+            ValueSetType valueSetType = new ValueSetType();
             for (String filterValue : filterValues) {
-                ValueType valueType = new ValueTypeImpl();
+                ValueType valueType = new ValueType();
                 valueType.setValue(filterValue);
                 valueSetType.getItems().add(valueType);
             }
 
-            FilterType filterType = new FilterTypeImpl();
+            FilterType filterType = new FilterType();
             filterType.setName(filter.getName());
             filterType.setValueSet(valueSetType);
 

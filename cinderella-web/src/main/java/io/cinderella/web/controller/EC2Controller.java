@@ -8,6 +8,8 @@ import io.cinderella.exception.EC2ServiceException;
 import io.cinderella.exception.PermissionDeniedException;
 import io.cinderella.service.CinderellaService;
 import io.cinderella.web.annotation.EC2ImageSet;
+import io.cinderella.web.annotation.EC2FilterSet;
+import io.cinderella.web.annotation.EC2InstanceIdSet;
 import io.cinderella.web.annotation.EC2RegionSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletResponse;
@@ -49,9 +52,9 @@ public class EC2Controller {
                                                    @EC2RegionSet DescribeRegionsSetType regionSet,
                                                    @EC2FilterSet FilterSetType filterSet) throws EC2ServiceException {
 
-        DescribeRegions describeRegions = new DescribeRegions();
-        describeRegions.setRegionSet(regionSet);
-        describeRegions.setFilterSet(filterSet);
+        DescribeRegions describeRegions = new DescribeRegions()
+                .withRegionSet(regionSet)
+                .withFilterSet(filterSet);
 
         return cinderellaService.describeRegions(describeRegions);
     }
@@ -61,8 +64,8 @@ public class EC2Controller {
     public DescribeImagesResponse describeImages(EC2Request ec2Request,
                                                  @EC2ImageSet DescribeImagesInfoType imageSet) throws EC2ServiceException {
 
-        DescribeImages describeImages = new DescribeImages();
-        describeImages.setImagesSet(imageSet);
+        DescribeImages describeImages = new DescribeImages()
+                .withImagesSet(imageSet);
 
         return cinderellaService.describeImages(describeImages);
     }
@@ -78,6 +81,17 @@ public class EC2Controller {
     @ResponseBody
     public DescribeSecurityGroupsResponse describeSecurityGroups(EC2Request ec2Request) throws Exception {
         return cinderellaService.describeSecurityGroups(new DescribeSecurityGroups());
+    }
+
+    @RequestMapping(params = "Action=StopInstances")
+    @ResponseBody
+    public StopInstancesResponse stopInstances(EC2Request ec2Request,
+                                               @EC2InstanceIdSet InstanceIdSetType instanceIdSetType) throws Exception {
+
+        StopInstances stopInstances = new StopInstances()
+                .withInstancesSet(instanceIdSetType);
+
+        return cinderellaService.stopInstances(stopInstances);
     }
 
     @ExceptionHandler(EC2ServiceException.class)

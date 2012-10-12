@@ -12,8 +12,13 @@ import io.cinderella.web.WebConfig;
 import org.jclouds.Constants;
 import org.jclouds.ContextBuilder;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
+import org.jclouds.logging.ConsoleLogger;
+import org.jclouds.logging.Logger;
+import org.jclouds.logging.slf4j.SLF4JLogger;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.vcloud.director.v1_5.VCloudDirectorContext;
+import org.jclouds.vcloud.director.v1_5.features.TaskApi;
+import org.jclouds.vcloud.director.v1_5.predicates.TaskSuccess;
 import org.jclouds.vcloud.director.v1_5.user.VCloudDirectorApi;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,7 +37,6 @@ import java.util.Properties;
  */
 @Configuration
 @PropertySource("file:${user.home}/.cinderella/ec2-service.properties")
-@Import({WebConfig.class})
 public class CinderellaConfig {
 
     private static final String HOST_PORT = "http://localhost:8080";
@@ -62,6 +66,21 @@ public class CinderellaConfig {
     @Bean
     public MappingService mappingService() {
         return new MappingServiceJclouds(vCloudService(), HOST_PORT);
+    }
+
+    @Bean
+    public Logger logger() {
+        return new ConsoleLogger();
+    }
+
+    @Bean
+    public TaskSuccess taskSuccess() {
+       return new TaskSuccess(taskApi());
+    }
+
+    @Bean
+    public TaskApi taskApi() {
+        return vCloudDirectorApi().getTaskApi();
     }
 
     @Bean

@@ -9,6 +9,14 @@ import com.amazon.ec2.*;
 public interface CinderellaService {
 
     /**
+     *
+     * @param stopInstances
+     * @return
+     */
+    StopInstancesResponse stopInstances(StopInstances stopInstances);
+
+
+    /**
      * @param describeAvailabilityZones
      * @return
      */
