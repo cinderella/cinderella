@@ -13,6 +13,7 @@ import io.cinderella.exception.EC2ServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static io.cinderella.exception.EC2ServiceException.ClientError.InvalidAMIID_Malformed;
 import static io.cinderella.exception.EC2ServiceException.ClientError.Unsupported;
 import static io.cinderella.exception.EC2ServiceException.ServerError.InternalError;
 
@@ -65,6 +66,15 @@ public class CinderellaServiceImpl implements CinderellaService {
 
     @Override
     public DescribeImagesResponse describeImages(DescribeImages request) {
+
+        if ( request.getImagesSet() != null) {
+            for (DescribeImagesItemType image : request.getImagesSet().getItems()) {
+                if (!image.getImageId().startsWith("ami-")) {
+                    throw new EC2ServiceException(InvalidAMIID_Malformed, "Invalid id: \"" + image.getImageId() + "\" (expecting \"ami-...\")");
+                }
+            }
+        }
+
         try {
 
             DescribeImagesRequestVCloud vCloudRequest = mappingService.getDescribeImagesRequest(request);

@@ -25,9 +25,12 @@ import org.jclouds.vcloud.director.v1_5.domain.VAppTemplate;
 import org.jclouds.vcloud.director.v1_5.domain.Vdc;
 import org.jclouds.vcloud.director.v1_5.domain.Vm;
 import org.jclouds.vcloud.director.v1_5.domain.org.Org;
+import org.jclouds.vcloud.director.v1_5.domain.query.QueryResultRecordType;
 import org.jclouds.vcloud.director.v1_5.user.VCloudDirectorApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Set;
 
 import static org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType.CATALOG;
 import static org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType.VAPP;
@@ -146,7 +149,7 @@ public class VCloudServiceJclouds implements VCloudService {
 
 
     @Override
-    public DescribeImagesResponseVCloud getVmsInVAppTemplatesInOrg(DescribeImagesRequestVCloud describeImagesRequestVCloud) {
+    public DescribeImagesResponseVCloud getVmsInVAppTemplatesInOrg(final DescribeImagesRequestVCloud describeImagesRequestVCloud) {
 
         ImmutableSet<Vm> vms = FluentIterable.from(describeImagesRequestVCloud.getOrg().getLinks()).filter(typeEquals(CATALOG))
                 .transform(new Function<Link, Catalog>() {
@@ -180,7 +183,13 @@ public class VCloudServiceJclouds implements VCloudService {
                     public Iterable<Vm> apply(VAppTemplate in) {
                         return in.getChildren();
                     }
-                }).toImmutableSet();
+                }).filter(new Predicate<Vm>() {
+                    @Override
+                    public boolean apply(Vm in) {
+                        return (Iterables.isEmpty(describeImagesRequestVCloud.getVmIds()) || Iterables.contains(describeImagesRequestVCloud.getVmIds(), in.getId().replace("-", "").replace("urn:vcloud:vm:", "ami-")));
+                    }
+                })
+        .toImmutableSet();
 
         DescribeImagesResponseVCloud response = new DescribeImagesResponseVCloud();
         response.setVms(vms);

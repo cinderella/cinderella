@@ -11,11 +11,11 @@ public class EC2ServiceException extends RuntimeException {
     // ServerError & ClientError are correct as of schema version 2010-08-31
 
     public static enum ServerError {
-        InsufficientAddressCapacity("Server.InsufficientAddressCapacity", 500),
-        InsufficientInstanceCapacity("Server.InsufficientInstanceCapacity", 500),
-        InsufficientReservedInstanceCapacity("Server.InsufficientReservedInstanceCapacity", 500),
-        InternalError("Server.InternalError", 500),
-        Unavailable("Server.Unavailable", 501);
+        InsufficientAddressCapacity("InsufficientAddressCapacity", 500),
+        InsufficientInstanceCapacity("InsufficientInstanceCapacity", 500),
+        InsufficientReservedInstanceCapacity("InsufficientReservedInstanceCapacity", 500),
+        InternalError("InternalError", 500),
+        Unavailable("Unavailable", 501);
 
         private String errorString;
         private int httpErrorCode;
@@ -30,57 +30,57 @@ public class EC2ServiceException extends RuntimeException {
     }
 
     public static enum ClientError {
-        AddressLimitExceeded("Client.AddressLimitExceeded", 400),
-        AttachmentLimitExceeded("Client.AttachmentLimitExceeded", 400),
-        AuthFailure("Client.AuthFailure", 400),
-        Blocked("Client.Blocked", 400),
-        FilterLimitExceeded("Client.FilterLimitExceeded", 400),
-        IdempotentParameterMismatch("Client.IdempotentParameterMismatch", 400),
-        IncorrectState("Client.IncorrectState", 400),
-        InstanceLimitExceeded("Client.InstanceLimitExceeded", 400),
-        InsufficientInstanceCapacity("Client.InsufficientInstanceCapacity", 400),
-        InsufficientReservedInstancesCapacity("Client.InsufficientReservedInstancesCapacity", 400),
-        InvalidAMIAttributeItemValue("Client.InvalidAMIAttributeItemValue", 400),
-        InvalidAMIID_Malformed("Client.InvalidAMIID.Malformed", 400),
-        InvalidAMIID_NotFound("Client.InvalidAMIID.NotFound", 400),
-        InvalidAMIID_Unavailable("Client.InvalidAMIID.Unavailable", 400),
-        InvalidAttachment_NotFound("Client.InvalidAttachment.NotFound", 400),
-        InvalidDevice_InUse("Client.InvalidDevice.InUse", 400),
-        InvalidGroup_Duplicate("Client.InvalidGroup.Duplicate", 400),
-        InvalidGroup_InUse("Client.InvalidGroup.InUse", 400),
-        InvalidGroup_NotFound("Client.InvalidGroup.NotFound", 400),
-        InvalidGroup_Reserved("Client.InvalidGroup.Reserved", 400),
-        InvalidInstanceID_Malformed("Client.InvalidInstanceID.Malformed", 400),
-        InvalidInstanceID_NotFound("Client.InvalidInstanceID.NotFound", 400),
-        InvalidIPAddress_InUse("Client.InvalidIPAddress.InUse", 400),
-        InvalidKeyPair_Duplicate("Client.InvalidKeyPair.Duplicate", 400),
-        InvalidKeyPair_Format("Client.InvalidKeyPair.Format", 400),
-        InvalidKeyPair_NotFound("Client.InvalidKeyPair.NotFound", 400),
-        InvalidManifest("Client.InvalidManifest", 400),
-        InvalidParameterCombination("Client.InvalidParameterCombination", 400),
-        InvalidParameterValue("Client.InvalidParameterValue", 400),
-        InvalidPermission_Duplicate("Client.InvalidPermission.Duplicate", 400),
-        InvalidPermission_Malformed("Client.InvalidPermission.Malformed", 400),
-        InvalidReservationID_Malformed("Client.InvalidReservationID.Malformed", 400),
-        InvalidReservationID_NotFound("Client.InvalidReservationID.NotFound", 400),
-        InvalidSnapshotID_Malformed("Client.InvalidSnapshotID.Malformed", 400),
-        InvalidSnapshot_NotFound("Client.InvalidSnapshot.NotFound", 400),
-        InvalidUserID_Malformed("Client.InvalidUserID.Malformed", 400),
-        InvalidReservedInstancesId("Client.InvalidReservedInstancesId", 400),
-        InvalidReservedInstancesOfferingId("Client.InvalidReservedInstancesOfferingId", 400),
-        InvalidVolumeID_Duplicate("Client.InvalidVolumeID.Duplicate", 400),
-        InvalidVolumeID_Malformed("Client.InvalidVolumeID.Malformed", 400),
-        InvalidVolume_NotFound("Client.InvalidVolume.NotFound", 400),
-        InvalidVolumeID_ZoneMismatch("Client.InvalidVolumeID.ZoneMismatch", 400),
-        InvalidZone_NotFound("Client.InvalidZone.NotFound", 400),
-        NonEBSInstance("Client.NonEBSInstance", 400),
-        PendingVerification("Client.PendingVerification", 400),
-        PendingSnapshotLimitExceeded("Client.PendingSnapshotLimitExceeded", 400),
-        ReservedInstancesLimitExceeded("Client.ReservedInstancesLimitExceeded", 400),
-        SnapshotLimitExceeded("Client.SnapshotLimitExceeded", 400),
-        UnknownParameter("Client.UnknownParameter", 400),
-        Unsupported("Client.Unsupported", 400),
-        VolumeLimitExceeded("Client.VolumeLimitExceeded", 400);
+        AddressLimitExceeded("AddressLimitExceeded", 400),
+        AttachmentLimitExceeded("AttachmentLimitExceeded", 400),
+        AuthFailure("AuthFailure", 400),
+        Blocked("Blocked", 400),
+        FilterLimitExceeded("FilterLimitExceeded", 400),
+        IdempotentParameterMismatch("IdempotentParameterMismatch", 400),
+        IncorrectState("IncorrectState", 400),
+        InstanceLimitExceeded("InstanceLimitExceeded", 400),
+        InsufficientInstanceCapacity("InsufficientInstanceCapacity", 400),
+        InsufficientReservedInstancesCapacity("InsufficientReservedInstancesCapacity", 400),
+        InvalidAMIAttributeItemValue("InvalidAMIAttributeItemValue", 400),
+        InvalidAMIID_Malformed("InvalidAMIID.Malformed", 400),
+        InvalidAMIID_NotFound("InvalidAMIID.NotFound", 400),
+        InvalidAMIID_Unavailable("InvalidAMIID.Unavailable", 400),
+        InvalidAttachment_NotFound("InvalidAttachment.NotFound", 400),
+        InvalidDevice_InUse("InvalidDevice.InUse", 400),
+        InvalidGroup_Duplicate("InvalidGroup.Duplicate", 400),
+        InvalidGroup_InUse("InvalidGroup.InUse", 400),
+        InvalidGroup_NotFound("InvalidGroup.NotFound", 400),
+        InvalidGroup_Reserved("InvalidGroup.Reserved", 400),
+        InvalidInstanceID_Malformed("InvalidInstanceID.Malformed", 400),
+        InvalidInstanceID_NotFound("InvalidInstanceID.NotFound", 400),
+        InvalidIPAddress_InUse("InvalidIPAddress.InUse", 400),
+        InvalidKeyPair_Duplicate("InvalidKeyPair.Duplicate", 400),
+        InvalidKeyPair_Format("InvalidKeyPair.Format", 400),
+        InvalidKeyPair_NotFound("InvalidKeyPair.NotFound", 400),
+        InvalidManifest("InvalidManifest", 400),
+        InvalidParameterCombination("InvalidParameterCombination", 400),
+        InvalidParameterValue("InvalidParameterValue", 400),
+        InvalidPermission_Duplicate("InvalidPermission.Duplicate", 400),
+        InvalidPermission_Malformed("InvalidPermission.Malformed", 400),
+        InvalidReservationID_Malformed("InvalidReservationID.Malformed", 400),
+        InvalidReservationID_NotFound("InvalidReservationID.NotFound", 400),
+        InvalidSnapshotID_Malformed("InvalidSnapshotID.Malformed", 400),
+        InvalidSnapshot_NotFound("InvalidSnapshot.NotFound", 400),
+        InvalidUserID_Malformed("InvalidUserID.Malformed", 400),
+        InvalidReservedInstancesId("InvalidReservedInstancesId", 400),
+        InvalidReservedInstancesOfferingId("InvalidReservedInstancesOfferingId", 400),
+        InvalidVolumeID_Duplicate("InvalidVolumeID.Duplicate", 400),
+        InvalidVolumeID_Malformed("InvalidVolumeID.Malformed", 400),
+        InvalidVolume_NotFound("InvalidVolume.NotFound", 400),
+        InvalidVolumeID_ZoneMismatch("InvalidVolumeID.ZoneMismatch", 400),
+        InvalidZone_NotFound("InvalidZone.NotFound", 400),
+        NonEBSInstance("NonEBSInstance", 400),
+        PendingVerification("PendingVerification", 400),
+        PendingSnapshotLimitExceeded("PendingSnapshotLimitExceeded", 400),
+        ReservedInstancesLimitExceeded("ReservedInstancesLimitExceeded", 400),
+        SnapshotLimitExceeded("SnapshotLimitExceeded", 400),
+        UnknownParameter("UnknownParameter", 400),
+        Unsupported("Unsupported", 400),
+        VolumeLimitExceeded("VolumeLimitExceeded", 400);
 
         private String errorString;
         private int httpErrorCode;
@@ -95,6 +95,7 @@ public class EC2ServiceException extends RuntimeException {
     }
 
     private int httpErrorCode = 0;
+    private String errorCode;
 
     public EC2ServiceException() {
     }
@@ -125,16 +126,23 @@ public class EC2ServiceException extends RuntimeException {
     public EC2ServiceException(ServerError errorCode, String message) {
 //        super(message, new AxisFault(message, new QName(errorCode.getErrorString())));
         super(message);
+        this.errorCode = errorCode.getErrorString();
         this.httpErrorCode = errorCode.getHttpErrorCode();
     }
 
     public EC2ServiceException(ClientError errorCode, String message) {
 //        super(message, new AxisFault(message, new QName(errorCode.getErrorString())));
         super(message);
+        this.errorCode = errorCode.getErrorString();
         this.httpErrorCode = errorCode.getHttpErrorCode();
     }
 
-    public int getErrorCode() {
+    public int getHttpErrorCode() {
         return this.httpErrorCode;
     }
+
+    public String getErrorCode() {
+        return this.errorCode;
+    }
+
 }

@@ -46,10 +46,12 @@ public class EC2Controller {
     @RequestMapping(params = "Action=DescribeRegions")
     @ResponseBody
     public DescribeRegionsResponse describeRegions(EC2Request ec2Request,
-                                                   @EC2RegionSet DescribeRegionsSetType regionSet) throws EC2ServiceException {
+                                                   @EC2RegionSet DescribeRegionsSetType regionSet,
+                                                   @EC2FilterSet FilterSetType filterSet) throws EC2ServiceException {
 
         DescribeRegions describeRegions = new DescribeRegions();
         describeRegions.setRegionSet(regionSet);
+        describeRegions.setFilterSet(filterSet);
 
         return cinderellaService.describeRegions(describeRegions);
     }
