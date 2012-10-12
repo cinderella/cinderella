@@ -3,6 +3,7 @@ package io.cinderella.web;
 import io.cinderella.security.AuthenticationService;
 import io.cinderella.security.AuthenticationServiceImpl;
 import io.cinderella.web.interceptor.AuthInterceptor;
+import io.cinderella.web.resolver.EC2ImageSetArgumentResolver;
 import io.cinderella.web.resolver.EC2RegionSetArgumentResolver;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -51,6 +52,7 @@ public class WebConfig extends WebMvcConfigurerAdapter {
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
         argumentResolvers.add(new EC2RegionSetArgumentResolver());
+        argumentResolvers.add(new EC2ImageSetArgumentResolver());
     }
 
 
@@ -78,7 +80,7 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 
         Jaxb2Marshaller marshaller = new Jaxb2Marshaller();
 //        marshaller.setContextPath("com.amazon.ec2.impl");
-        marshaller.setContextPaths("com.amazon.ec2.impl", "io.cinderella.domain");
+        marshaller.setContextPaths("com.amazon.ec2", "io.cinderella.domain");
 
         Map<String, Object> marshallerProps = new HashMap<String, Object>();
         marshallerProps.put(Marshaller.JAXB_FORMATTED_OUTPUT, true);

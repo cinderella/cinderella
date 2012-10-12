@@ -1,14 +1,13 @@
 package io.cinderella.web.controller;
 
 import com.amazon.ec2.*;
-import com.amazon.ec2.impl.*;
 import io.cinderella.domain.EC2Error;
 import io.cinderella.domain.EC2ErrorResponse;
 import io.cinderella.domain.EC2Request;
 import io.cinderella.exception.EC2ServiceException;
 import io.cinderella.exception.PermissionDeniedException;
 import io.cinderella.service.CinderellaService;
-import io.cinderella.web.annotation.EC2FilterSet;
+import io.cinderella.web.annotation.EC2ImageSet;
 import io.cinderella.web.annotation.EC2RegionSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -42,7 +40,7 @@ public class EC2Controller {
     @RequestMapping(params = "Action=DescribeAvailabilityZones")
     @ResponseBody
     public DescribeAvailabilityZonesResponse describeAvailabilityZones(EC2Request ec2Request) throws EC2ServiceException {
-        return cinderellaService.describeAvailabilityZones(new DescribeAvailabilityZonesImpl());
+        return cinderellaService.describeAvailabilityZones(new DescribeAvailabilityZones());
     }
 
     @RequestMapping(params = "Action=DescribeRegions")
@@ -50,7 +48,7 @@ public class EC2Controller {
     public DescribeRegionsResponse describeRegions(EC2Request ec2Request,
                                                    @EC2RegionSet DescribeRegionsSetType regionSet) throws EC2ServiceException {
 
-        DescribeRegions describeRegions = new DescribeRegionsImpl();
+        DescribeRegions describeRegions = new DescribeRegions();
         describeRegions.setRegionSet(regionSet);
 
         return cinderellaService.describeRegions(describeRegions);
@@ -58,29 +56,34 @@ public class EC2Controller {
 
     @RequestMapping(params = "Action=DescribeImages")
     @ResponseBody
-    public DescribeImagesResponse describeImages(EC2Request ec2Request) throws EC2ServiceException {
-        return cinderellaService.describeImages(new DescribeImagesImpl());
+    public DescribeImagesResponse describeImages(EC2Request ec2Request,
+                                                 @EC2ImageSet DescribeImagesInfoType imageSet) throws EC2ServiceException {
+
+        DescribeImages describeImages = new DescribeImages();
+        describeImages.setImagesSet(imageSet);
+
+        return cinderellaService.describeImages(describeImages);
     }
 
     @RequestMapping(params = "Action=DescribeInstances")
     @ResponseBody
     public DescribeInstancesResponse describeInstances(EC2Request ec2Request) throws Exception {
         log.info("region=" + ec2Request.getRegion());
-        return cinderellaService.describeInstances(new DescribeInstancesImpl());
+        return cinderellaService.describeInstances(new DescribeInstances());
     }
 
     @RequestMapping(params = "Action=DescribeSecurityGroups")
     @ResponseBody
     public DescribeSecurityGroupsResponse describeSecurityGroups(EC2Request ec2Request) throws Exception {
-        return cinderellaService.describeSecurityGroups(new DescribeSecurityGroupsImpl());
+        return cinderellaService.describeSecurityGroups(new DescribeSecurityGroups());
     }
 
     @ExceptionHandler(EC2ServiceException.class)
     @ResponseBody
     public EC2ErrorResponse handleEC2ServiceException(EC2ServiceException ex,
                                                       HttpServletResponse response) {
-        response.setStatus(ex.getErrorCode());
-        return getErrorResponse("EC2ServiceException", ex.getMessage());
+        response.setStatus(ex.getHttpErrorCode());
+        return getErrorResponse(ex.getErrorCode(), ex.getMessage());
     }
 
     @ExceptionHandler(PermissionDeniedException.class)

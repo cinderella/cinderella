@@ -1,7 +1,6 @@
 package io.cinderella.service;
 
 import com.amazon.ec2.*;
-import com.amazon.ec2.impl.*;
 import com.google.common.base.Function;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
@@ -68,49 +67,43 @@ public class MappingServiceJclouds implements MappingService {
     @Override
     public DescribeImagesResponse getDescribeImagesResponse(DescribeImagesResponseVCloud describeImagesResponseVCloud) {
 
-        DescribeImagesResponseInfoType describeImagesInfoType = new DescribeImagesResponseInfoTypeImpl();
-        List<DescribeImagesResponseItemType> images = describeImagesInfoType.getItems();
-
+        DescribeImagesResponseInfoType imageResponse = new DescribeImagesResponseInfoType();
         String imageOwnerId = describeImagesResponseVCloud.getImageOwnerId();
 
         final VmApi vmApi = vCloudService.getVCloudDirectorApi().getVmApi();
 
         for (Vm vm : describeImagesResponseVCloud.getVms()) {
 
-            DescribeImagesResponseItemType image = new DescribeImagesResponseItemTypeImpl();
-
-            image.setImageId(vm.getId().replace("-", "").replace("urn:vcloud:vm:", "ami-"));
-            image.setImageOwnerId(imageOwnerId);
-            image.setName(vm.getName());
-            image.setDescription(vm.getDescription());
-
-            ResourceTagSetType resourceTagSetType = new ResourceTagSetTypeImpl();
-            List<ResourceTagSetItemType> resourceTagSetTypeItems = resourceTagSetType.getItems();
+            ResourceTagSetType resourceTagSet = new ResourceTagSetType();
 
             for (Map.Entry<String, String> resourceTag : vmApi.getMetadataApi(vm.getId()).get().entrySet()) {
-                ResourceTagSetItemType tag = new ResourceTagSetItemTypeImpl();
-                tag.setKey(resourceTag.getKey());
-                if (resourceTag.getValue() != null) {
-                    tag.setValue(resourceTag.getValue());
-                }
-                resourceTagSetTypeItems.add(tag);
+                resourceTagSet
+                        .withNewItems()
+                            .withKey(resourceTag.getKey())
+                            .withValue(resourceTag.getValue() != null ? resourceTag.getValue() : null);
             }
-            image.setTagSet(resourceTagSetType);
+
+            imageResponse
+                    .withNewItems()
+                        .withImageId(vm.getId().replace("-", "").replace("urn:vcloud:vm:", "ami-"))
+                        .withImageOwnerId(imageOwnerId)
+                        .withImageLocation(imageOwnerId + "/" + vm.getId().replace("-", "").replace("urn:vcloud:vm:", "ami-"))
+                        .withName(vm.getName())
+                        .withDescription(vm.getDescription())
+                        .withImageState("available")
+                        .withImageType("machine")
+                        .withTagSet(resourceTagSet);
 
             // ec2Image.setOsTypeId(temp.getOsTypeId().toString());
             // TODO use the catalog api to determine if this vm is published
             // ec2Image.setIsPublic(temp.getIsPublic());
             // ec2Image.setIsReady(vm.isOvfDescriptorUploaded());
 
-            images.add(image);
-
         }
 
-        DescribeImagesResponse describeImagesResponse = new DescribeImagesResponseImpl();
-        describeImagesResponse.setRequestId(UUID.randomUUID().toString());
-        describeImagesResponse.setImagesSet(describeImagesInfoType);
-
-        return describeImagesResponse;
+        return new DescribeImagesResponse()
+                .withRequestId(UUID.randomUUID().toString())
+                .withImagesSet(imageResponse);
     }
 
     @Override
@@ -139,25 +132,25 @@ public class MappingServiceJclouds implements MappingService {
     @Override
     public DescribeInstancesResponse getDescribeInstancesResponse(DescribeInstancesResponseVCloud describeInstancesResponseVCloud) {
 
-        DescribeInstancesResponse describeInstancesResponse = new DescribeInstancesResponseImpl();
+        DescribeInstancesResponse describeInstancesResponse = new DescribeInstancesResponse();
         describeInstancesResponse.setRequestId(UUID.randomUUID().toString());
 
 
-        ReservationInfoType resInfoType = new ReservationInfoTypeImpl();
+        ReservationInfoType resInfoType = new ReservationInfoType();
 
-        GroupSetType groupSet = new GroupSetTypeImpl();
-        GroupItemType group = new GroupItemTypeImpl();
+        GroupSetType groupSet = new GroupSetType();
+        GroupItemType group = new GroupItemType();
         group.setGroupId("groupId");
         group.setGroupName("groupName");
         groupSet.getItems().add(group);
         resInfoType.setGroupSet(groupSet);
 
-        resInfoType.setInstancesSet(new RunningInstancesSetTypeImpl());
+        resInfoType.setInstancesSet(new RunningInstancesSetType());
         resInfoType.setOwnerId(vCloudService.getVCloudDirectorApi().getCurrentSession().getUser());
         resInfoType.setRequesterId("requesterId");
         resInfoType.setReservationId("r-reservationId");
 
-        ReservationSetType reservationSetType = new ReservationSetTypeImpl();
+        ReservationSetType reservationSetType = new ReservationSetType();
         reservationSetType.getItems().add(resInfoType);
         describeInstancesResponse.setReservationSet(reservationSetType);
 
@@ -168,11 +161,11 @@ public class MappingServiceJclouds implements MappingService {
             log.info(vm.getId());
             Set<String> addresses = getIpsFromVm(vm);
 
-            RunningInstancesItemType instance = new RunningInstancesItemTypeImpl();
+            RunningInstancesItemType instance = new RunningInstancesItemType();
 
             instance.setAmiLaunchIndex("0");
             instance.setArchitecture("i386");
-            instance.setBlockDeviceMapping(new InstanceBlockDeviceMappingResponseTypeImpl());
+            instance.setBlockDeviceMapping(new InstanceBlockDeviceMappingResponseType());
             instance.setClientToken("client token");
             instance.setDnsName(vm.getName()); // todo correct?
             instance.setEbsOptimized(Boolean.TRUE);
@@ -180,7 +173,7 @@ public class MappingServiceJclouds implements MappingService {
             instance.setImageId(vm.getId().replace("-", "").replace("urn:vcloud:vm:", "i-"));
             instance.setInstanceId("instanceId");
 
-            InstanceStateType instanceStateType = new InstanceStateTypeImpl();
+            InstanceStateType instanceStateType = new InstanceStateType();
             switch (vm.getStatus()) {
                 case POWERED_ON:
                     instanceStateType.setCode(16);
@@ -201,8 +194,8 @@ public class MappingServiceJclouds implements MappingService {
             instance.setKernelId("kernelId");
             instance.setKeyName("keyName");
 
-            /*InstanceNetworkInterfaceSetType networkSet = new InstanceNetworkInterfaceSetTypeImpl();
-            InstanceNetworkInterfaceSetItemType network = new InstanceNetworkInterfaceSetItemTypeImpl();
+            /*InstanceNetworkInterfaceSetType networkSet = new InstanceNetworkInterfaceSetType();
+            InstanceNetworkInterfaceSetItemType network = new InstanceNetworkInterfaceSetItemType();
             networkSet.getItems().add()
             instance.setNetworkInterfaceSet();*/
 
@@ -210,7 +203,7 @@ public class MappingServiceJclouds implements MappingService {
             gregorianCalendar.setTime(new Date());
             instance.setLaunchTime(new XMLGregorianCalendarImpl(gregorianCalendar));
 
-            PlacementResponseType placement = new PlacementResponseTypeImpl();
+            PlacementResponseType placement = new PlacementResponseType();
             placement.setAvailabilityZone(vm.getName() + "a");
             instance.setPlacement(placement);
 
@@ -219,8 +212,8 @@ public class MappingServiceJclouds implements MappingService {
             instance.setPrivateDnsName("privateDnsName");
             instance.setPrivateIpAddress(tryFind(addresses, InetAddresses2.IsPrivateIPAddress.INSTANCE).orNull());
 
-            ProductCodesSetType productCodesSet = new ProductCodesSetTypeImpl();
-            ProductCodesSetItemType productCodesItem = new ProductCodesSetItemTypeImpl();
+            ProductCodesSetType productCodesSet = new ProductCodesSetType();
+            ProductCodesSetItemType productCodesItem = new ProductCodesSetItemType();
             productCodesSet.getItems().add(productCodesItem);
             instance.setProductCodes(productCodesSet);
 
@@ -230,11 +223,11 @@ public class MappingServiceJclouds implements MappingService {
             instance.setRootDeviceType("instance-store");
             instance.setVirtualizationType("paravirtual");
 
-            ResourceTagSetType tagSet = new ResourceTagSetTypeImpl();
+            ResourceTagSetType tagSet = new ResourceTagSetType();
             Set<Map.Entry<String, String>> vmMeta = vCloudService.getVCloudDirectorApi().getVmApi().getMetadataApi(vm.getId()).get().entrySet();
 
             for (Map.Entry<String, String> resourceTag : vmMeta) {
-                ResourceTagSetItemType tag = new ResourceTagSetItemTypeImpl();
+                ResourceTagSetItemType tag = new ResourceTagSetItemType();
                 tag.setKey(resourceTag.getKey());
                 tag.setValue(resourceTag.getValue());
                 tagSet.getItems().add(tag);
@@ -287,16 +280,16 @@ public class MappingServiceJclouds implements MappingService {
     @Override
     public DescribeRegionsResponse getDescribeRegionsResponse(DescribeRegionsResponseVCloud describeRegionsResponseVCloud) {
 
-        DescribeRegionsResponse describeRegionsResponse = new DescribeRegionsResponseImpl();
+        DescribeRegionsResponse describeRegionsResponse = new DescribeRegionsResponse();
         describeRegionsResponse.setRequestId(UUID.randomUUID().toString());
 
         Iterable<Vdc> vdcs = describeRegionsResponseVCloud.getVdcs();
 
-        RegionSetType regionSetType = new RegionSetTypeImpl();
+        RegionSetType regionSetType = new RegionSetType();
         List<RegionItemType> regions = regionSetType.getItems();
         try {
             for (Vdc vdc : vdcs) {
-                RegionItemType region = new RegionItemTypeImpl();
+                RegionItemType region = new RegionItemType();
                 region.setRegionName(vdc.getName());
                 String encodedVdcName = URLEncoder.encode(vdc.getName(), "UTF-8");
                 region.setRegionEndpoint(String.format("%s/api/regions/%s/", hostPort, encodedVdcName));
@@ -336,14 +329,14 @@ public class MappingServiceJclouds implements MappingService {
     @Override
     public DescribeAvailabilityZonesResponse getDescribeAvailabilityZonesResponse(DescribeAvailabilityZonesResponseVCloud vCloudResponse) {
 
-        DescribeAvailabilityZonesResponse response = new DescribeAvailabilityZonesResponseImpl();
+        DescribeAvailabilityZonesResponse response = new DescribeAvailabilityZonesResponse();
         response.setRequestId(UUID.randomUUID().toString());
 
-        AvailabilityZoneSetType availabilityZoneSetType = new AvailabilityZoneSetTypeImpl();
+        AvailabilityZoneSetType availabilityZoneSetType = new AvailabilityZoneSetType();
         List<AvailabilityZoneItemType> availabilityZoneItemTypes = availabilityZoneSetType.getItems();
 
         for (String zone : vCloudResponse.getAvailabilityZones()) {
-            AvailabilityZoneItemType avZone = new AvailabilityZoneItemTypeImpl();
+            AvailabilityZoneItemType avZone = new AvailabilityZoneItemType();
             avZone.setRegionName(vCloudResponse.getVdcName());
             avZone.setZoneName(zone);
             avZone.setZoneState("available");

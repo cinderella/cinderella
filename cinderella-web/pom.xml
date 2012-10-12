@@ -164,7 +164,23 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
+        <!--Required for cxf xjc tools-->
+        <dependency>
+            <groupId>org.apache.cxf.xjc-utils</groupId>
+            <artifactId>cxf-xjc-runtime</artifactId>
+            <version>2.6.0</version>
+        </dependency>
+
     </dependencies>
+    <repositories>
+        <repository>
+          <id>jaxb-fluent-api-ext-repository</id>
+          <name>Jaxb Fluent API Ext Maven 2 Repository</name>
+          <url>http://jaxb-fluent-api-ext.googlecode.com/svn/maven/release</url>
+            <releases/>
+        </repository>
+    </repositories>
     <build>
         <finalName>cinderella</finalName>
         <plugins>
@@ -192,6 +208,25 @@
                 <groupId>org.apache.cxf</groupId>
                 <artifactId>cxf-codegen-plugin</artifactId>
                 <version>${cxf.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>redmosquito</groupId>
+                        <artifactId>jaxb-fluent-api-ext</artifactId>
+                        <version>0.0.3</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.jvnet.jaxb2_commons</groupId>
+                        <artifactId>jaxb2-fluent-api</artifactId>
+                        <version>3.0</version>
+                    </dependency>
+<!--
+                    <dependency>
+                        <groupId>org.apache.cxf.xjcplugins</groupId>
+                        <artifactId>cxf-xjc-ts</artifactId>
+                        <version>2.6.0</version>
+                     </dependency>
+-->
+                </dependencies>
                 <executions>
                     <execution>
                         <id>generate-sources</id>
@@ -206,8 +241,12 @@
                                     </bindingFiles>
                                     <extraargs>
                                         <extraarg>-xjc-p,com.amazon.ec2</extraarg>
+                                        <extraarg>-xjc-Xfluent-api-ext</extraarg>
+                                        <extraarg>-xjc-Xfluent-api</extraarg>
+                                        <!--<extraarg>-xjc-Xts</extraarg>-->
+                                        <extraarg>-xjc-mark-generated</extraarg>
                                         <extraarg>-autoNameResolution</extraarg>
-                                        <extraarg>-client</extraarg>
+                                        <!--<extraarg>-client</extraarg>-->
                                         <extraarg>-verbose</extraarg>
                                     </extraargs>
                                 </wsdlOption>

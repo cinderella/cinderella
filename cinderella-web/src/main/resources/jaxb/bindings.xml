@@ -6,7 +6,7 @@
 
     <xs:annotation>
         <xs:appinfo>
-            <jaxb:globalBindings generateValueClass="false">
+            <jaxb:globalBindings>
                 <xjc:simple />
             </jaxb:globalBindings>
         </xs:appinfo>

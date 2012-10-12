@@ -2,8 +2,6 @@ package io.cinderella.web.resolver;
 
 import com.amazon.ec2.DescribeRegionsSetItemType;
 import com.amazon.ec2.DescribeRegionsSetType;
-import com.amazon.ec2.impl.DescribeRegionsSetItemTypeImpl;
-import com.amazon.ec2.impl.DescribeRegionsSetTypeImpl;
 import io.cinderella.web.annotation.EC2RegionSet;
 import org.springframework.core.MethodParameter;
 import org.springframework.web.bind.support.WebDataBinderFactory;
@@ -34,12 +32,12 @@ public class EC2RegionSetArgumentResolver implements HandlerMethodArgumentResolv
 
         Map<String, String[]> paramMap = webRequest.getParameterMap();
 
-        DescribeRegionsSetType regionSet = new DescribeRegionsSetTypeImpl();
+        DescribeRegionsSetType regionSet = new DescribeRegionsSetType();
 
         DescribeRegionsSetItemType ec2Region;
         for (String key : paramMap.keySet()) {
             if (key.startsWith(REGION_NAME_PREFIX)) {
-                ec2Region = new DescribeRegionsSetItemTypeImpl();
+                ec2Region = new DescribeRegionsSetItemType();
                 ec2Region.setRegionName(webRequest.getParameter(key));
                 regionSet.getItems().add(ec2Region);
             }
