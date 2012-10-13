@@ -379,4 +379,34 @@ public class MappingServiceJclouds implements MappingService {
         return response;
     }
 
+    @Override
+    public StartInstancesRequestVCloud getStartInstancesRequest(StartInstances startInstances) {
+        StartInstancesRequestVCloud request = new StartInstancesRequestVCloud();
+
+        Set<String> vmUrns = new HashSet<String>();
+        for (InstanceIdType instanceIdType : startInstances.getInstancesSet().getItems()) {
+            vmUrns.add(MappingUtils.instanceIdToVmUrn(instanceIdType.getInstanceId()));
+        }
+        request.setVmUrns(vmUrns);
+
+        return request;
+    }
+
+    @Override
+    public StartInstancesResponse getStartInstancesResponse(StartInstancesResponseVCloud vCloudResponse) {
+        StartInstancesResponse response = new StartInstancesResponse()
+                .withRequestId(UUID.randomUUID().toString());
+
+        for (Vm vm : vCloudResponse.getVms()) {
+            response.withInstancesSet()
+                    .withNewItems()
+                    .withInstanceId(MappingUtils.vmUrnToInstanceId(vm.getId()))
+                    .withCurrentState(MappingUtils.vCloudStatusToEc2Status(vm.getStatus()))
+                    .withPreviousState(MappingUtils
+                            .vCloudStatusToEc2Status(vCloudResponse.getPreviousStatus().get(vm.getId())));
+        }
+
+        return response;
+    }
+
 }

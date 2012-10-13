@@ -29,5 +29,9 @@ public interface MappingService {
 
     StopInstancesResponse getStopInstancesResponse(StopInstancesResponseVCloud vCloudResponse);
 
+    StartInstancesRequestVCloud getStartInstancesRequest(StartInstances startInstances);
+
+    StartInstancesResponse getStartInstancesResponse(StartInstancesResponseVCloud vCloudResponse);
+
 
 }

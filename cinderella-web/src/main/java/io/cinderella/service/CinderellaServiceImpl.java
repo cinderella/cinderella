@@ -43,7 +43,19 @@ public class CinderellaServiceImpl implements CinderellaService {
 
     @Override
     public StartInstancesResponse startInstances(StartInstances startInstances) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        try {
+
+            StartInstancesRequestVCloud vCloudRequest
+                    = mappingService.getStartInstancesRequest(startInstances);
+            StartInstancesResponseVCloud vCloudResponse = vCloudService.startVApp(vCloudRequest);
+            return mappingService.getStartInstancesResponse(vCloudResponse);
+
+        } catch (Exception e) {
+            log.error("EC2 StartInstances - ", e);
+            throw new EC2ServiceException(InternalError, e.getMessage() != null ? e.getMessage()
+                    : "An unexpected error occurred.");
+        }
+
     }
 
     @Override

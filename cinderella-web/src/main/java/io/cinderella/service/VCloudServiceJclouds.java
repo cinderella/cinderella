@@ -111,6 +111,31 @@ public class VCloudServiceJclouds implements VCloudService {
         return response;
     }
 
+    @Override
+    public StartInstancesResponseVCloud startVApp(StartInstancesRequestVCloud vCloudRequest) {
+        StartInstancesResponseVCloud response = new StartInstancesResponseVCloud();
+
+        Map<String, ResourceEntity.Status> previousStatus = getVmStatusMap(vCloudRequest.getVmUrns());
+        response.setPreviousStatus(previousStatus);
+
+        // todo: use something like Guava's ListenableFuture ?
+        Set<Vm> vms = new HashSet<Vm>();
+        for (String vmUrn : vCloudRequest.getVmUrns()) {
+            log.info("powering on " + vmUrn);
+            Task powerOnTask = vmApi.powerOn(vmUrn);
+            boolean powerOnSuccessful = retryTaskSuccessLong.apply(powerOnTask);
+            log.info(vmUrn + " power on success? " + powerOnSuccessful);
+
+            // now get vm for current status of ec2 response
+            Vm vm = vmApi.get(vmUrn);
+            vms.add(vm);
+        }
+        response.setVms(ImmutableSet.copyOf(vms));
+
+        return response;
+
+    }
+
     private Map<String, ResourceEntity.Status> getVmStatusMap(Iterable<String> vmUrns) {
 
         Map<String, ResourceEntity.Status> statusMap = new HashMap<String, ResourceEntity.Status>();
