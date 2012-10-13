@@ -8,13 +8,14 @@ import java.util.Collections;
  */
 public class StopInstancesRequestVCloud {
 
-    private Iterable<String> vmIds = Collections.emptySet();
+    private Iterable<String> vmUrns = Collections.emptySet();
 
-    public Iterable<String> getVmIds() {
-        return vmIds;
+    public Iterable<String> getVmUrns() {
+        return vmUrns;
     }
 
-    public void setVmIds(Iterable<String> vmIds) {
-        this.vmIds = vmIds;
+    public void setVmUrns(Iterable<String> vmUrns) {
+        this.vmUrns = vmUrns;
     }
+
 }

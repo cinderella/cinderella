@@ -83,6 +83,17 @@ public class EC2Controller {
         return cinderellaService.describeSecurityGroups(new DescribeSecurityGroups());
     }
 
+    @RequestMapping(params = "Action=StartInstances")
+    @ResponseBody
+    public StartInstancesResponse startInstances(EC2Request ec2Request,
+                                               @EC2InstanceIdSet InstanceIdSetType instanceIdSetType) throws Exception {
+
+        StartInstances startInstances = new StartInstances()
+                .withInstancesSet(instanceIdSetType);
+
+        return cinderellaService.startInstances(startInstances);
+    }
+
     @RequestMapping(params = "Action=StopInstances")
     @ResponseBody
     public StopInstancesResponse stopInstances(EC2Request ec2Request,

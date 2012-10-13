@@ -28,5 +28,5 @@ public interface VCloudService {
 
     DescribeAvailabilityZonesResponseVCloud describeAvailabilityZones(DescribeAvailabilityZonesRequestVCloud vCloudRequest);
 
-    StopInstancesResponseVCloud shutdownVm(StopInstancesRequestVCloud vCloudRequest);
+    StopInstancesResponseVCloud shutdownVApp(StopInstancesRequestVCloud vCloudRequest);
 }

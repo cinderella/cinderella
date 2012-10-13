@@ -31,7 +31,7 @@ public class CinderellaServiceImpl implements CinderellaService {
         try {
 
             StopInstancesRequestVCloud vCloudRequest = mappingService.getStopInstancesRequest(stopInstances);
-            StopInstancesResponseVCloud vCloudResponse = vCloudService.shutdownVm(vCloudRequest);
+            StopInstancesResponseVCloud vCloudResponse = vCloudService.shutdownVApp(vCloudRequest);
             return mappingService.getStopInstancesResponse(vCloudResponse);
 
         } catch (Exception e) {
@@ -39,6 +39,11 @@ public class CinderellaServiceImpl implements CinderellaService {
             throw new EC2ServiceException(InternalError, e.getMessage() != null ? e.getMessage()
                     : "An unexpected error occurred.");
         }
+    }
+
+    @Override
+    public StartInstancesResponse startInstances(StartInstances startInstances) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override

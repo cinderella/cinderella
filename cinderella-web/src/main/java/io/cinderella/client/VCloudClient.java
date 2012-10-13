@@ -1,6 +1,7 @@
 package io.cinderella.client;
 
 import io.cinderella.CinderellaConfig;
+import io.cinderella.domain.DescribeInstancesRequestVCloud;
 import io.cinderella.service.VCloudService;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 
@@ -20,9 +21,12 @@ public class VCloudClient {
 
         VCloudService vCloudService = applicationContext.getBean(VCloudService.class);
 
-//        vCloudService.getVmsInVAppsInVdc(new DescribeInstancesRequestVCloud());
+//        DescribeInstancesRequestVCloud request = new DescribeInstancesRequestVCloud();
+//        request.setVdc(vCloudService.getVDC(vCloudService.getVdcName()));
+//        vCloudService.getVmsInVAppsInVdc(request);
 
-        vCloudService.shutdownVm(null);
+
+        vCloudService.shutdownVApp(null);
 
 //        String vdcName = vCloudService.getVdcName();
 

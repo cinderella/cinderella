@@ -15,6 +15,12 @@ public interface CinderellaService {
      */
     StopInstancesResponse stopInstances(StopInstances stopInstances);
 
+    /**
+     *
+     * @param startInstances
+     * @return
+     */
+    StartInstancesResponse startInstances(StartInstances startInstances);
 
     /**
      * @param describeAvailabilityZones
@@ -46,5 +52,7 @@ public interface CinderellaService {
      * @return
      */
     DescribeSecurityGroupsResponse describeSecurityGroups(DescribeSecurityGroups describeSecurityGroups);
+
+
 
 }

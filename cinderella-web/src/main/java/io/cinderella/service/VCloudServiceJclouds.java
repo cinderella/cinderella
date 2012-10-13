@@ -12,19 +12,16 @@ import org.jclouds.predicates.RetryablePredicate;
 import org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType;
 import org.jclouds.vcloud.director.v1_5.domain.*;
 import org.jclouds.vcloud.director.v1_5.domain.org.Org;
-import org.jclouds.vcloud.director.v1_5.domain.query.QueryResultRecordType;
-import org.jclouds.vcloud.director.v1_5.domain.query.QueryResultRecords;
-import org.jclouds.vcloud.director.v1_5.domain.query.QueryResultVAppRecord;
 import org.jclouds.vcloud.director.v1_5.features.QueryApi;
 import org.jclouds.vcloud.director.v1_5.features.VAppApi;
+import org.jclouds.vcloud.director.v1_5.features.VmApi;
 import org.jclouds.vcloud.director.v1_5.predicates.TaskSuccess;
 import org.jclouds.vcloud.director.v1_5.user.VCloudDirectorApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import java.net.URI;
-import java.util.Set;
+import java.util.*;
 
 import static org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType.*;
 import static org.jclouds.vcloud.director.v1_5.predicates.ReferencePredicates.nameEquals;
@@ -42,6 +39,7 @@ public class VCloudServiceJclouds implements VCloudService {
 
     private VCloudDirectorApi vCloudDirectorApi;
     private VAppApi vAppApi;
+    private VmApi vmApi;
     private QueryApi queryApi;
 
     private Predicate<Task> retryTaskSuccessLong;
@@ -54,7 +52,9 @@ public class VCloudServiceJclouds implements VCloudService {
     public VCloudServiceJclouds(VCloudDirectorApi vCloudDirectorApi) {
         this.vCloudDirectorApi = vCloudDirectorApi;
         this.vAppApi = this.vCloudDirectorApi.getVAppApi();
+        this.vmApi = this.vCloudDirectorApi.getVmApi();
         this.queryApi = this.vCloudDirectorApi.getQueryApi();
+
     }
 
     @Override
@@ -87,31 +87,41 @@ public class VCloudServiceJclouds implements VCloudService {
     }
 
     @Override
-    public StopInstancesResponseVCloud shutdownVm(StopInstancesRequestVCloud vCloudRequest) {
+    public StopInstancesResponseVCloud shutdownVApp(StopInstancesRequestVCloud vCloudRequest) {
 
-        // todo filter vmQuery by href of vms to shutdown to get previous state
+        StopInstancesResponseVCloud response = new StopInstancesResponseVCloud();
 
-        // todo do a DescribeInstances call to get previous state?
-        QueryResultRecords qrs = queryApi.vmsQueryAll();
-        System.out.println(qrs);
+        Map<String, ResourceEntity.Status> previousStatus = getVmStatusMap(vCloudRequest.getVmUrns());
+        response.setPreviousStatus(previousStatus);
 
-        /*Set<QueryResultRecordType> recordTypes = qrs.getRecords();
-        for(QueryResultRecordType record : recordTypes) {
-            QueryResultVAppRecord vAppRecord = (QueryResultVAppRecord) record;
-            System.out.println(vAppRecord);
-        }*/
+        // todo: use something like Guava's ListenableFuture ?
+        Set<Vm> vms = new HashSet<Vm>();
+        for (String vmUrn : vCloudRequest.getVmUrns()) {
+            log.info("shutting down " + vmUrn);
+            Task shutdownTask = vmApi.shutdown(vmUrn);
+            boolean shutdownSuccessful = retryTaskSuccessLong.apply(shutdownTask);
+            log.info(vmUrn + " shutdown success? " + shutdownSuccessful);
 
-        // todo call Shutdown
+            // now get vm for current status of ec2 response
+            Vm vm = vmApi.get(vmUrn);
+            vms.add(vm);
+        }
+        response.setVms(ImmutableSet.copyOf(vms));
 
-/*
-        Task shutdownTask = vAppApi.shutdown(URI.create("https://lon01.ilandcloud.com/api/vApp/vm-8a67fb37-60a5-4962-8ee7-96a19aee7b2b"));
-        boolean shutdownSuccessful = retryTaskSuccessLong.apply(shutdownTask);
+        return response;
+    }
 
-        System.out.println(shutdownSuccessful);
-*/
+    private Map<String, ResourceEntity.Status> getVmStatusMap(Iterable<String> vmUrns) {
 
+        Map<String, ResourceEntity.Status> statusMap = new HashMap<String, ResourceEntity.Status>();
 
-        return null;
+        // todo: terribly inefficient; look to see if 5.1 query api supports something better
+        // key on URN, value is ResourceEntity.Status
+        for (String vmUrn : vmUrns) {
+            Vm vm = vmApi.get(vmUrn);
+            statusMap.put(vmUrn, vm.getStatus());
+        }
+        return statusMap;
     }
 
     private DescribeRegionsResponseVCloud listRegions(final Iterable<String> interestedRegions) throws Exception {
