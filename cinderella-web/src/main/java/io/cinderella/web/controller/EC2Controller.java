@@ -105,6 +105,21 @@ public class EC2Controller {
         return cinderellaService.stopInstances(stopInstances);
     }
 
+    @RequestMapping(params = "Action=RunInstances")
+    @ResponseBody
+    public RunInstancesResponse runInstances(EC2Request ec2Request,
+                                             @RequestParam(value = "ImageId") String imageId,
+                                             @RequestParam(value = "MinCount") int minCount,
+                                             @RequestParam(value = "MaxCount") int maxCount) throws Exception {
+
+        RunInstances runInstances = new RunInstances()
+                .withImageId(imageId)
+                .withMinCount(minCount)
+                .withMaxCount(maxCount);
+
+        return cinderellaService.runInstances(runInstances);
+    }
+
     @ExceptionHandler(EC2ServiceException.class)
     @ResponseBody
     public EC2ErrorResponse handleEC2ServiceException(EC2ServiceException ex,

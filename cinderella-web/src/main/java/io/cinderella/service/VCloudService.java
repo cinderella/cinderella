@@ -31,4 +31,6 @@ public interface VCloudService {
     StopInstancesResponseVCloud shutdownVApp(StopInstancesRequestVCloud vCloudRequest);
 
     StartInstancesResponseVCloud startVApp(StartInstancesRequestVCloud vCloudRequest);
+
+    RunInstancesResponseVCloud runInstances(RunInstancesRequestVCloud vCloudRequest);
 }

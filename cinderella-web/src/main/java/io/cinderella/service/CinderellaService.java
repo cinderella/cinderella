@@ -53,6 +53,12 @@ public interface CinderellaService {
      */
     DescribeSecurityGroupsResponse describeSecurityGroups(DescribeSecurityGroups describeSecurityGroups);
 
+    /**
+     *
+     * @param runInstances
+     * @return
+     */
+    RunInstancesResponse runInstances(RunInstances runInstances);
 
 
 }

@@ -150,4 +150,19 @@ public class CinderellaServiceImpl implements CinderellaService {
        * e.getMessage()); }
        */
     }
+
+    @Override
+    public RunInstancesResponse runInstances(RunInstances runInstances) {
+        try {
+
+            RunInstancesRequestVCloud vCloudRequest = mappingService.getRunInstancesRequest(runInstances);
+            RunInstancesResponseVCloud vCloudResponse = vCloudService.runInstances(vCloudRequest);
+            return mappingService.getRunInstancesResponse(vCloudResponse);
+
+        } catch (Exception e) {
+            log.error("EC2 RunInstances - ", e);
+            throw new EC2ServiceException(InternalError, e.getMessage() != null ? e.getMessage()
+                    : "An unexpected error occurred.");
+        }
+    }
 }

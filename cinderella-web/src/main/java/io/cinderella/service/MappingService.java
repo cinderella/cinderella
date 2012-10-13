@@ -33,5 +33,9 @@ public interface MappingService {
 
     StartInstancesResponse getStartInstancesResponse(StartInstancesResponseVCloud vCloudResponse);
 
+    RunInstancesRequestVCloud getRunInstancesRequest(RunInstances runInstances);
+
+    RunInstancesResponse getRunInstancesResponse(RunInstancesResponseVCloud vCloudResponse);
+
 
 }

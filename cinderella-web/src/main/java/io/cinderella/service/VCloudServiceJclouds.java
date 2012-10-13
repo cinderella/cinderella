@@ -136,6 +136,11 @@ public class VCloudServiceJclouds implements VCloudService {
 
     }
 
+    @Override
+    public RunInstancesResponseVCloud runInstances(RunInstancesRequestVCloud vCloudRequest) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
     private Map<String, ResourceEntity.Status> getVmStatusMap(Iterable<String> vmUrns) {
 
         Map<String, ResourceEntity.Status> statusMap = new HashMap<String, ResourceEntity.Status>();

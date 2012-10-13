@@ -409,4 +409,23 @@ public class MappingServiceJclouds implements MappingService {
         return response;
     }
 
+    @Override
+    public RunInstancesRequestVCloud getRunInstancesRequest(RunInstances runInstances) {
+
+        // todo
+
+        return new RunInstancesRequestVCloud();
+    }
+
+    @Override
+    public RunInstancesResponse getRunInstancesResponse(RunInstancesResponseVCloud vCloudResponse) {
+
+        RunInstancesResponse response = new RunInstancesResponse()
+                .withRequestId(UUID.randomUUID().toString());
+
+        // todo
+
+        return response;
+    }
+
 }
