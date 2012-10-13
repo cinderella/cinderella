@@ -2,19 +2,12 @@ package io.cinderella;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Module;
-import io.cinderella.service.CinderellaService;
-import io.cinderella.service.CinderellaServiceImpl;
-import io.cinderella.service.MappingService;
-import io.cinderella.service.MappingServiceJclouds;
-import io.cinderella.service.VCloudService;
-import io.cinderella.service.VCloudServiceJclouds;
-import io.cinderella.web.WebConfig;
+import io.cinderella.service.*;
 import org.jclouds.Constants;
 import org.jclouds.ContextBuilder;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
 import org.jclouds.logging.ConsoleLogger;
 import org.jclouds.logging.Logger;
-import org.jclouds.logging.slf4j.SLF4JLogger;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.vcloud.director.v1_5.VCloudDirectorContext;
 import org.jclouds.vcloud.director.v1_5.features.TaskApi;
@@ -22,12 +15,13 @@ import org.jclouds.vcloud.director.v1_5.predicates.TaskSuccess;
 import org.jclouds.vcloud.director.v1_5.user.VCloudDirectorApi;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.MethodInvokingFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.env.Environment;
+import org.springframework.util.Log4jConfigurer;
 
 import java.util.Properties;
 
@@ -105,5 +99,16 @@ public class CinderellaConfig {
         context.utils().injector().injectMembers(this);
         VCloudDirectorApi vCloudDirectorApi = context.getApi();
         return (vCloudDirectorApi != null ? vCloudDirectorApi : null);
+    }
+
+    @Bean
+    public MethodInvokingFactoryBean jcloudsLoggingInit() {
+        MethodInvokingFactoryBean miFactoryBean = new MethodInvokingFactoryBean();
+        miFactoryBean.setTargetClass(Log4jConfigurer.class);
+        miFactoryBean.setTargetMethod("initLogging");
+        miFactoryBean.setArguments(new String[]{
+                "classpath:jclouds-log4j.xml"
+        });
+        return miFactoryBean;
     }
 }

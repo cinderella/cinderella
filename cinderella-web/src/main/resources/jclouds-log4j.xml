@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2012 by Cloudsoft Corporation; All Rights Reserved. -->
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="false">
+    <appender name="WIREFILE" class="org.apache.log4j.FileAppender">
+        <param name="File" value="logs/jclouds-wire.log" />
+        <param name="Append" value="true" />
+        <param name="Threshold" value="TRACE" />
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d %m%n" />
+        </layout>
+    </appender>
+
+    <appender name="FILE" class="org.apache.log4j.FileAppender">
+        <param name="File" value="logs/jclouds.log" />
+        <param name="Append" value="true" />
+        <param name="Threshold" value="TRACE" />
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d %-5p [%c] (%t) %m%n" />
+        </layout>
+    </appender>
+
+    <appender name="COMPUTEFILE" class="org.apache.log4j.FileAppender">
+        <param name="File" value="logs/jclouds-compute.log" />
+        <param name="Append" value="true" />
+        <param name="Threshold" value="TRACE" />
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d %-5p [%c] (%t) %m%n" />
+        </layout>
+    </appender>
+
+    <appender name="SSHFILE" class="org.apache.log4j.FileAppender">
+        <param name="File" value="logs/jclouds-ssh.log" />
+        <param name="Append" value="true" />
+        <param name="Threshold" value="TRACE" />
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d %-5p [%c] (%t) %m%n" />
+        </layout>
+    </appender>
+
+    <appender name="ASYNCCOMPUTE" class="org.apache.log4j.AsyncAppender">
+        <appender-ref ref="COMPUTEFILE" />
+    </appender>
+
+    <appender name="ASYNCSSH" class="org.apache.log4j.AsyncAppender">
+        <appender-ref ref="SSHFILE" />
+    </appender>
+
+    <appender name="ASYNC" class="org.apache.log4j.AsyncAppender">
+        <appender-ref ref="FILE" />
+    </appender>
+
+    <appender name="ASYNCWIRE" class="org.apache.log4j.AsyncAppender">
+        <appender-ref ref="WIREFILE" />
+    </appender>
+
+    <category name="org.jclouds">
+        <priority value="DEBUG" />
+        <appender-ref ref="ASYNC" />
+    </category>
+
+    <category name="jclouds.headers">
+        <priority value="DEBUG" />
+        <appender-ref ref="ASYNCWIRE" />
+    </category>
+
+    <category name="jclouds.ssh">
+        <priority value="DEBUG" />
+        <appender-ref ref="ASYNCSSH" />
+    </category>
+
+    <category name="jclouds.wire">
+        <priority value="DEBUG" />
+        <appender-ref ref="ASYNCWIRE" />
+    </category>
+
+
+</log4j:configuration>
