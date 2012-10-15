@@ -3,6 +3,8 @@ package io.cinderella.client;
 import io.cinderella.CinderellaConfig;
 import io.cinderella.domain.DescribeInstancesRequestVCloud;
 import io.cinderella.service.VCloudService;
+import org.jclouds.vcloud.director.v1_5.domain.query.QueryResultRecords;
+import org.jclouds.vcloud.director.v1_5.features.QueryApi;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 
 /**
@@ -21,12 +23,17 @@ public class VCloudClient {
 
         VCloudService vCloudService = applicationContext.getBean(VCloudService.class);
 
+        QueryApi queryApi = vCloudService.getVCloudDirectorApi().getQueryApi();
+        QueryResultRecords qrs = queryApi.vAppTemplatesQueryAll();
+        System.out.println(qrs);
+
+
 //        DescribeInstancesRequestVCloud request = new DescribeInstancesRequestVCloud();
 //        request.setVdc(vCloudService.getVDC(vCloudService.getVdcName()));
 //        vCloudService.getVmsInVAppsInVdc(request);
 
 
-        vCloudService.shutdownVApp(null);
+//        vCloudService.shutdownVApp(null);
 
 //        String vdcName = vCloudService.getVdcName();
 

@@ -412,9 +412,13 @@ public class MappingServiceJclouds implements MappingService {
     @Override
     public RunInstancesRequestVCloud getRunInstancesRequest(RunInstances runInstances) {
 
-        // todo
+        RunInstancesRequestVCloud request = new RunInstancesRequestVCloud();
 
-        return new RunInstancesRequestVCloud();
+        request.setvAppTemplateId(MappingUtils.imageIdToVAppUrn(runInstances.getImageId()));
+
+        // todo min/max count
+
+        return request;
     }
 
     @Override
@@ -423,7 +427,7 @@ public class MappingServiceJclouds implements MappingService {
         RunInstancesResponse response = new RunInstancesResponse()
                 .withRequestId(UUID.randomUUID().toString());
 
-        // todo
+
 
         return response;
     }

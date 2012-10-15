@@ -8,13 +8,20 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import io.cinderella.domain.*;
+import io.cinderella.exception.EC2ServiceException;
 import org.jclouds.predicates.RetryablePredicate;
 import org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType;
 import org.jclouds.vcloud.director.v1_5.domain.*;
+import org.jclouds.vcloud.director.v1_5.domain.network.Network;
+import org.jclouds.vcloud.director.v1_5.domain.network.NetworkConfiguration;
+import org.jclouds.vcloud.director.v1_5.domain.network.VAppNetworkConfiguration;
 import org.jclouds.vcloud.director.v1_5.domain.org.Org;
-import org.jclouds.vcloud.director.v1_5.features.QueryApi;
-import org.jclouds.vcloud.director.v1_5.features.VAppApi;
-import org.jclouds.vcloud.director.v1_5.features.VmApi;
+import org.jclouds.vcloud.director.v1_5.domain.params.InstantiateVAppTemplateParams;
+import org.jclouds.vcloud.director.v1_5.domain.params.InstantiationParams;
+import org.jclouds.vcloud.director.v1_5.domain.query.QueryResultRecords;
+import org.jclouds.vcloud.director.v1_5.domain.query.VAppReferences;
+import org.jclouds.vcloud.director.v1_5.domain.section.NetworkConfigSection;
+import org.jclouds.vcloud.director.v1_5.features.*;
 import org.jclouds.vcloud.director.v1_5.predicates.TaskSuccess;
 import org.jclouds.vcloud.director.v1_5.user.VCloudDirectorApi;
 import org.slf4j.Logger;
@@ -37,10 +44,15 @@ public class VCloudServiceJclouds implements VCloudService {
 
     protected static final long LONG_TASK_TIMEOUT_SECONDS = 300L;
 
+    private static final Random random = new Random();
+
     private VCloudDirectorApi vCloudDirectorApi;
     private VAppApi vAppApi;
     private VmApi vmApi;
     private QueryApi queryApi;
+    private NetworkApi networkApi;
+    private VAppTemplateApi vAppTemplateApi;
+    private VdcApi vdcApi;
 
     private Predicate<Task> retryTaskSuccessLong;
 
@@ -54,7 +66,9 @@ public class VCloudServiceJclouds implements VCloudService {
         this.vAppApi = this.vCloudDirectorApi.getVAppApi();
         this.vmApi = this.vCloudDirectorApi.getVmApi();
         this.queryApi = this.vCloudDirectorApi.getQueryApi();
-
+        this.networkApi = this.getVCloudDirectorApi().getNetworkApi();
+        this.vAppTemplateApi = this.getVCloudDirectorApi().getVAppTemplateApi();
+        this.vdcApi = this.getVCloudDirectorApi().getVdcApi();
     }
 
     @Override
@@ -136,9 +150,135 @@ public class VCloudServiceJclouds implements VCloudService {
 
     }
 
+    /*
+    @Test(description = "POST /vdc/{id}/action/instantiateVAppTemplate")
+   public void testInstantiateVAppTemplate() {
+      Vdc vdc = vdcApi.get(vdcUrn);
+
+      Set<Reference> networks = vdc.getAvailableNetworks();
+      Optional<Reference> parentNetwork = Iterables.tryFind(networks, new Predicate<Reference>() {
+         @Override
+         public boolean apply(Reference reference) {
+            return reference.getHref().equals(network.getHref());
+         }
+      });
+
+      if (!parentNetwork.isPresent()) {
+         fail(String.format("Could not find network %s in vdc", network.getHref().toASCIIString()));
+      }
+
+      NetworkConfiguration networkConfiguration = NetworkConfiguration.builder().parentNetwork(parentNetwork.get())
+               .fenceMode(FenceMode.BRIDGED).build();
+
+      NetworkConfigSection networkConfigSection = NetworkConfigSection
+               .builder()
+               .info("Configuration parameters for logical networks")
+               .networkConfigs(
+                        ImmutableSet.of(VAppNetworkConfiguration.builder().networkName("vAppNetwork")
+                                 .configuration(networkConfiguration).build())).build();
+
+      InstantiationParams instantiationParams = InstantiationParams.builder()
+               .sections(ImmutableSet.of(networkConfigSection)).build();
+
+      InstantiateVAppTemplateParams instantiate = InstantiateVAppTemplateParams.builder().name(name("test-vapp-"))
+               .notDeploy().notPowerOn().description("Test VApp").instantiationParams(instantiationParams)
+               .source(lazyGetVAppTemplate().getHref()).build();
+
+      instantiatedVApp = vdcApi.instantiateVApp(vdcUrn, instantiate);
+      Task instantiationTask = Iterables.getFirst(instantiatedVApp.getTasks(), null);
+      assertTaskSucceedsLong(instantiationTask);
+
+      Checks.checkVApp(instantiatedVApp);
+   }
+     */
+
     @Override
     public RunInstancesResponseVCloud runInstances(RunInstancesRequestVCloud vCloudRequest) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+
+        RunInstancesResponseVCloud response = new RunInstancesResponseVCloud();
+
+//        https://lon01.ilandcloud.com/api/vAppTemplate/vappTemplate-f5d92327-0a7d-426e-b758-0d1cf4987dff
+//        https://lon01.ilandcloud.com/api/vAppTemplate/vappTemplate-8c2bd88fb3194a6d85f40453b0882fd1
+
+        String vAppTemplateId = vCloudRequest.getvAppTemplateId();
+        log.info("RunInstances vAppTemplateId: " + vAppTemplateId);
+
+//        QueryResultRecords qrs = queryApi.vAppTemplatesQueryAll();
+//        System.out.println(qrs);
+
+        VAppTemplate vAppTemplate = vAppTemplateApi.get(vAppTemplateId);
+
+        // todo pass in vApp template from EC2's imageId and verify it exists before proceeding ?
+
+        // todo pass in networkUrn from EC2's NetworkInterface.n.NetworkInterfaceId ?
+        // urn:vcloud:network:dbcd85ec-5d32-4589-b089-1dde1da6f440
+
+        final Network network = networkApi.get("urn:vcloud:network:dbcd85ec-5d32-4589-b089-1dde1da6f440");
+
+        Vdc vdc = getVDC();
+
+        final Set<Reference> availableNetworks = vdc.getAvailableNetworks();
+        Optional<Reference> parentNetwork = Iterables.tryFind(availableNetworks, new Predicate<Reference>() {
+            @Override
+            public boolean apply(Reference reference) {
+                return reference.getHref().equals(network.getHref());
+            }
+        });
+
+        if (!parentNetwork.isPresent()) {
+            throw new EC2ServiceException(String.format("Could not find network %s in vdc", network.getHref().toASCIIString()));
+        }
+        log.info("RunInstances network found");
+
+        // todo network IP assignment, etc.
+
+        NetworkConfiguration networkConfiguration = NetworkConfiguration.builder()
+                .parentNetwork(parentNetwork.get())
+                .fenceMode(Network.FenceMode.BRIDGED)
+                .build();
+
+        NetworkConfigSection networkConfigSection = NetworkConfigSection
+                .builder()
+                .info("Configuration parameters for logical networks")
+                .networkConfigs(ImmutableSet.of(
+                        VAppNetworkConfiguration.builder()
+                                .networkName("Cinderella Network")
+                                .configuration(networkConfiguration)
+                                .build())
+                ).build();
+
+        InstantiationParams instantiationParams = InstantiationParams.builder()
+                .sections(ImmutableSet.of(networkConfigSection))
+                .build();
+
+        InstantiateVAppTemplateParams instantiate = InstantiateVAppTemplateParams.builder()
+                .name(name("cinderella-"))
+                .notDeploy()
+                .notPowerOn()
+                .description("Created by Cinderella")
+                .instantiationParams(instantiationParams)
+                .source(vAppTemplate.getHref())
+                .build();
+
+        String vdcUrn = vdc.getId();
+
+        VApp instantiatedVApp = vdcApi.instantiateVApp(vdcUrn, instantiate);
+        Task instantiationTask = Iterables.getFirst(instantiatedVApp.getTasks(), null);
+
+        boolean instantiationSuccess = retryTaskSuccessLong.apply(instantiationTask);
+
+        // todo populate more response properties once the vApp is instantiated
+
+        // todo start and deploy instance
+
+        System.out.println(instantiatedVApp);
+
+        return response;
+    }
+
+
+    private static String name(String prefix) {
+        return prefix + Integer.toString(random.nextInt(Integer.MAX_VALUE));
     }
 
     private Map<String, ResourceEntity.Status> getVmStatusMap(Iterable<String> vmUrns) {
@@ -219,6 +359,10 @@ public class VCloudServiceJclouds implements VCloudService {
         return vCloudDirectorApi.getVdcApi().get(vdcPresent.get().getHref());
     }
 
+    private Vdc getVDC() {
+        return getVDC(getVdcName());
+    }
+
 
     @Override
     public DescribeImagesResponseVCloud getVmsInVAppTemplatesInOrg(final DescribeImagesRequestVCloud describeImagesRequestVCloud) {
@@ -261,7 +405,7 @@ public class VCloudServiceJclouds implements VCloudService {
                         return (Iterables.isEmpty(describeImagesRequestVCloud.getVmIds()) || Iterables.contains(describeImagesRequestVCloud.getVmIds(), in.getId().replace("-", "").replace("urn:vcloud:vm:", "ami-")));
                     }
                 })
-        .toImmutableSet();
+                .toImmutableSet();
 
         DescribeImagesResponseVCloud response = new DescribeImagesResponseVCloud();
         response.setVms(vms);

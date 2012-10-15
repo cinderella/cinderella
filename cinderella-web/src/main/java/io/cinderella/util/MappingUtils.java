@@ -9,7 +9,23 @@ import org.jclouds.vcloud.director.v1_5.domain.ResourceEntity;
  */
 public class MappingUtils {
 
-    public static final String URN_VCLOUD_VM = "urn:vcloud:vm:";
+    public static final String VM_URN_PREFIX = "urn:vcloud:vm:";
+    public static final String NETWORK_URN_PREFIX = "urn:vcloud:network:";
+    public static final String VAPP_TEMPLATE_URN_PREFIX = "urn:vcloud:vapptemplate:";
+
+
+    /**
+     * Converts an EC2 imageId to a UUID prefixed with vapp template urn
+     *
+     * @param imageId
+     * @return
+     */
+    public static String imageIdToVAppUrn(String imageId) {
+        if (imageId == null) return null;
+        StringBuilder vmId = getUuidFromSubstring(imageId, 4);
+        vmId.insert(0, VAPP_TEMPLATE_URN_PREFIX);
+        return vmId.toString();
+    }
 
     /**
      * Converts an EC2 imageId to a UUID prefixed with vm urn
@@ -17,14 +33,10 @@ public class MappingUtils {
      * @param imageId
      * @return
      */
-    public static String imageIdTovmUrn(String imageId) {
+    public static String imageIdToVmUrn(String imageId) {
         if (imageId == null) return null;
-        StringBuilder vmId = new StringBuilder(imageId.substring(4));
-        vmId.insert(8, '-');
-        vmId.insert(13, '-');
-        vmId.insert(18, '-');
-        vmId.insert(23, '-');
-        vmId.insert(0, URN_VCLOUD_VM);
+        StringBuilder vmId = getUuidFromSubstring(imageId, 4);
+        vmId.insert(0, VM_URN_PREFIX);
         return vmId.toString();
     }
 
@@ -36,14 +48,22 @@ public class MappingUtils {
      */
     public static String instanceIdToVmUrn(String instanceId) {
         if (instanceId == null) return null;
-        StringBuilder vmId = new StringBuilder(instanceId.substring(2));
+        StringBuilder vmId = getUuidFromSubstring(instanceId, 2);
+        vmId.insert(0, VM_URN_PREFIX);
+        return vmId.toString();
+    }
+
+    private static StringBuilder getUuidFromSubstring(String id, int substringIndex) {
+        StringBuilder vmId = new StringBuilder(id.substring(substringIndex));
         vmId.insert(8, '-');
         vmId.insert(13, '-');
         vmId.insert(18, '-');
         vmId.insert(23, '-');
-        vmId.insert(0, URN_VCLOUD_VM);
-        return vmId.toString();
+        return vmId;
     }
+
+
+
 
     /**
      * Converts a vm urn prefixed UUID to an EC2 imageId
@@ -52,7 +72,7 @@ public class MappingUtils {
      * @return
      */
     public static String vmUrnToImageId(String vmId) {
-        return vmId == null ? null : vmId.replace("-", "").replace(URN_VCLOUD_VM, "ami-");
+        return vmId == null ? null : vmId.replace("-", "").replace(VM_URN_PREFIX, "ami-");
     }
 
     /**
@@ -62,7 +82,7 @@ public class MappingUtils {
      * @return
      */
     public static String vmUrnToInstanceId(String vmId) {
-        return vmId == null ? null : vmId.replace("-", "").replace(URN_VCLOUD_VM, "i-");
+        return vmId == null ? null : vmId.replace("-", "").replace(VM_URN_PREFIX, "i-");
     }
 
     /**
