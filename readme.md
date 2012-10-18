@@ -1,5 +1,12 @@
 # Getting Started #
 
+## Requirements ##
+
+* Java 1.6+
+* Maven 3.0.4+
+* Amazon EC2 credentials
+* vCloud Director API endpoint and credentials
+
 ## Getting source ##
 
 ```
