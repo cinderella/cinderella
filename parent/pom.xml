@@ -43,7 +43,7 @@
     </pluginRepositories>
 
     <properties>
-        <jclouds.version>1.5.2</jclouds.version>
+        <jclouds.version>1.6.0-SNAPSHOT</jclouds.version>
         <maven.compile.source>1.6</maven.compile.source>
         <maven.compile.target>1.6</maven.compile.target>
         <maven.compile.optimize>true</maven.compile.optimize>
