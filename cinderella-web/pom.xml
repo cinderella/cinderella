@@ -280,6 +280,9 @@
                         <goals>
                             <goal>sources</goal>
                         </goals>
+                        <configuration>
+                            <silent>true</silent>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
