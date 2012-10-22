@@ -171,6 +171,13 @@
             <version>2.6.0</version>
         </dependency>
 
+        <!--Needed to fix bug with 1.12 dependencies-->
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-client</artifactId>
+            <version>1.14</version>
+        </dependency>
+
     </dependencies>
     <pluginRepositories>
         <pluginRepository>
