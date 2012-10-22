@@ -92,6 +92,7 @@ public class CinderellaConfig {
         ContextBuilder builder = ContextBuilder
                 .newBuilder("vcloud-director")
                 .endpoint(endpoint)
+                .apiVersion("5.1")
                 .credentials(useratorg, password)
                 .modules(
                         ImmutableSet.<Module>builder()
