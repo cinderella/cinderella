@@ -7,6 +7,8 @@ package io.cinderella.domain;
 public class RunInstancesRequestVCloud {
 
     private String vAppTemplateId;
+    private int minCount;
+    private int maxCount;
 
     public String getvAppTemplateId() {
         return vAppTemplateId;
@@ -14,5 +16,21 @@ public class RunInstancesRequestVCloud {
 
     public void setvAppTemplateId(String vAppTemplateId) {
         this.vAppTemplateId = vAppTemplateId;
+    }
+
+    public int getMinCount() {
+        return minCount;
+    }
+
+    public void setMinCount(int minCount) {
+        this.minCount = minCount;
+    }
+
+    public int getMaxCount() {
+        return maxCount;
+    }
+
+    public void setMaxCount(int maxCount) {
+        this.maxCount = maxCount;
     }
 }

@@ -262,6 +262,7 @@ public class MappingServiceJclouds implements MappingService {
             request.setInterestedRegions(regions);
         }
 
+
         // todo: handle filter(s)
         /*EC2RegionsFilterSet regionsFilterSet = request.getFilterSet();
             if (null == regionsFilterSet)
@@ -415,8 +416,8 @@ public class MappingServiceJclouds implements MappingService {
         RunInstancesRequestVCloud request = new RunInstancesRequestVCloud();
 
         request.setvAppTemplateId(MappingUtils.imageIdToVAppUrn(runInstances.getImageId()));
-
-        // todo min/max count
+        request.setMinCount(runInstances.getMinCount());
+        request.setMaxCount(runInstances.getMaxCount());
 
         return request;
     }
