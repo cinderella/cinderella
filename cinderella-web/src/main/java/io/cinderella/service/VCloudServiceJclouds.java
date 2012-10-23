@@ -6,30 +6,30 @@ import io.cinderella.domain.*;
 import io.cinderella.exception.EC2ServiceException;
 import org.jclouds.predicates.RetryablePredicate;
 import org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType;
+import org.jclouds.vcloud.director.v1_5.admin.VCloudDirectorAdminApi;
 import org.jclouds.vcloud.director.v1_5.domain.*;
-import org.jclouds.vcloud.director.v1_5.domain.network.*;
+import org.jclouds.vcloud.director.v1_5.domain.network.NetworkAssignment;
+import org.jclouds.vcloud.director.v1_5.domain.network.NetworkConnection;
+import org.jclouds.vcloud.director.v1_5.domain.network.VAppNetworkConfiguration;
 import org.jclouds.vcloud.director.v1_5.domain.org.Org;
-import org.jclouds.vcloud.director.v1_5.domain.params.InstantiateVAppTemplateParams;
 import org.jclouds.vcloud.director.v1_5.domain.params.InstantiationParams;
 import org.jclouds.vcloud.director.v1_5.domain.params.RecomposeVAppParams;
 import org.jclouds.vcloud.director.v1_5.domain.params.SourcedCompositionItemParam;
 import org.jclouds.vcloud.director.v1_5.domain.query.QueryResultRecords;
 import org.jclouds.vcloud.director.v1_5.domain.section.GuestCustomizationSection;
-import org.jclouds.vcloud.director.v1_5.domain.section.NetworkConfigSection;
 import org.jclouds.vcloud.director.v1_5.domain.section.NetworkConnectionSection;
 import org.jclouds.vcloud.director.v1_5.features.*;
+import org.jclouds.vcloud.director.v1_5.predicates.LinkPredicates;
 import org.jclouds.vcloud.director.v1_5.predicates.TaskSuccess;
 import org.jclouds.vcloud.director.v1_5.user.VCloudDirectorApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.xml.bind.JAXBElement;
 import java.util.*;
 
 import static org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType.*;
-import static org.jclouds.vcloud.director.v1_5.predicates.ReferencePredicates.nameEquals;
-import static org.jclouds.vcloud.director.v1_5.predicates.ReferencePredicates.typeEquals;
+import static org.jclouds.vcloud.director.v1_5.predicates.ReferencePredicates.*;
 
 /**
  * @author shane
@@ -109,7 +109,18 @@ public class VCloudServiceJclouds implements VCloudService {
         Set<Vm> vms = new HashSet<Vm>();
         for (String vmUrn : vCloudRequest.getVmUrns()) {
             log.info("shutting down " + vmUrn);
-            Task shutdownTask = vmApi.shutdown(vmUrn);
+
+            Task shutdownTask;
+            Vm tempVm = vmApi.get(vmUrn);
+
+            if (canDoThis(tempVm, Link.Rel.SHUTDOWN) && (null != vmApi.getRuntimeInfoSection(vmUrn).getVMWareTools())) {
+                shutdownTask = vmApi.shutdown(vmUrn);
+            } else if (canDoThis(tempVm, Link.Rel.POWER_OFF)) {
+                shutdownTask = vmApi.powerOff(vmUrn);
+            } else {
+                throw new EC2ServiceException("These options are not available");
+            }
+
             boolean shutdownSuccessful = retryTaskSuccessLong.apply(shutdownTask);
             log.info(vmUrn + " shutdown success? " + shutdownSuccessful);
 
@@ -651,6 +662,10 @@ public class VCloudServiceJclouds implements VCloudService {
         response.setVms(vms);
 
         return response;
+    }
+
+    boolean canDoThis(Resource resource, Link.Rel rel) {
+        return Iterables.any(resource.getLinks(), LinkPredicates.relEquals(rel));
     }
 
 
