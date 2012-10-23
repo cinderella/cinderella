@@ -128,6 +128,8 @@ public class MappingServiceJclouds implements MappingService {
         describeInstancesRequestVCloud.setVdc(vdc);
         describeInstancesRequestVCloud.setVmIds(vmIds);
 
+        // todo: filter handling
+
         return describeInstancesRequestVCloud;
     }
 
@@ -431,6 +433,27 @@ public class MappingServiceJclouds implements MappingService {
 
 
         return response;
+    }
+
+    @Override
+    public RebootInstancesRequestVCloud getRebootInstancesRequest(RebootInstances rebootInstances) {
+
+        RebootInstancesRequestVCloud request = new RebootInstancesRequestVCloud();
+
+        Set<String> vmUrns = new HashSet<String>();
+        for (RebootInstancesItemType rebootType : rebootInstances.getInstancesSet().getItems()) {
+            vmUrns.add(MappingUtils.instanceIdToVmUrn(rebootType.getInstanceId()));
+        }
+        request.setVmUrns(vmUrns);
+
+        return request;
+    }
+
+    @Override
+    public RebootInstancesResponse getRebootInstancesResponse(RebootInstancesResponseVCloud vCloudResponse) {
+        return new RebootInstancesResponse()
+                .withRequestId(UUID.randomUUID().toString())
+                .withReturn(vCloudResponse.isSuccess());
     }
 
 }

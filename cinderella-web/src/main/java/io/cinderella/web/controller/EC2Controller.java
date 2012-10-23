@@ -7,10 +7,7 @@ import io.cinderella.domain.EC2Request;
 import io.cinderella.exception.EC2ServiceException;
 import io.cinderella.exception.PermissionDeniedException;
 import io.cinderella.service.CinderellaService;
-import io.cinderella.web.annotation.EC2ImageSet;
-import io.cinderella.web.annotation.EC2FilterSet;
-import io.cinderella.web.annotation.EC2InstanceIdSet;
-import io.cinderella.web.annotation.EC2RegionSet;
+import io.cinderella.web.annotation.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,8 +39,11 @@ public class EC2Controller {
 
     @RequestMapping(params = "Action=DescribeAvailabilityZones")
     @ResponseBody
-    public DescribeAvailabilityZonesResponse describeAvailabilityZones(EC2Request ec2Request) throws EC2ServiceException {
-        return cinderellaService.describeAvailabilityZones(new DescribeAvailabilityZones());
+    public DescribeAvailabilityZonesResponse describeAvailabilityZones(EC2Request ec2Request,
+                                                                       @EC2FilterSet FilterSetType filterSet) throws EC2ServiceException {
+        DescribeAvailabilityZones describeAvailabilityZones = new DescribeAvailabilityZones()
+                .withFilterSet(filterSet);
+        return cinderellaService.describeAvailabilityZones(describeAvailabilityZones);
     }
 
     @RequestMapping(params = "Action=DescribeRegions")
@@ -62,19 +62,27 @@ public class EC2Controller {
     @RequestMapping(params = "Action=DescribeImages")
     @ResponseBody
     public DescribeImagesResponse describeImages(EC2Request ec2Request,
-                                                 @EC2ImageSet DescribeImagesInfoType imageSet) throws EC2ServiceException {
+                                                 @EC2ImageSet DescribeImagesInfoType imageSet,
+                                                 @EC2FilterSet FilterSetType filterSet) throws EC2ServiceException {
 
         DescribeImages describeImages = new DescribeImages()
-                .withImagesSet(imageSet);
+                .withImagesSet(imageSet)
+                .withFilterSet(filterSet);
 
         return cinderellaService.describeImages(describeImages);
     }
 
     @RequestMapping(params = "Action=DescribeInstances")
     @ResponseBody
-    public DescribeInstancesResponse describeInstances(EC2Request ec2Request) throws Exception {
-        log.info("region=" + ec2Request.getRegion());
-        return cinderellaService.describeInstances(new DescribeInstances());
+    public DescribeInstancesResponse describeInstances(EC2Request ec2Request,
+                                                       @EC2DescribeInstancesInfo DescribeInstancesInfoType describeInstancesInfoType,
+                                                       @EC2FilterSet FilterSetType filterSet) throws Exception {
+
+        DescribeInstances describeInstances = new DescribeInstances()
+                .withInstancesSet(describeInstancesInfoType)
+                .withFilterSet(filterSet);
+
+        return cinderellaService.describeInstances(describeInstances);
     }
 
     @RequestMapping(params = "Action=DescribeSecurityGroups")
@@ -83,10 +91,21 @@ public class EC2Controller {
         return cinderellaService.describeSecurityGroups(new DescribeSecurityGroups());
     }
 
+    @RequestMapping(params = "Action=RebootInstances")
+    @ResponseBody
+    public RebootInstancesResponse rebootInstances(EC2Request ec2Request,
+                                                   @EC2RebootInstancesInfo RebootInstancesInfoType rebootInstancesInfoType) throws Exception {
+
+        RebootInstances rebootInstances = new RebootInstances()
+                .withInstancesSet(rebootInstancesInfoType);
+
+        return cinderellaService.rebootInstances(rebootInstances);
+    }
+
     @RequestMapping(params = "Action=StartInstances")
     @ResponseBody
     public StartInstancesResponse startInstances(EC2Request ec2Request,
-                                               @EC2InstanceIdSet InstanceIdSetType instanceIdSetType) throws Exception {
+                                                 @EC2InstanceIdSet InstanceIdSetType instanceIdSetType) throws Exception {
 
         StartInstances startInstances = new StartInstances()
                 .withInstancesSet(instanceIdSetType);

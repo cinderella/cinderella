@@ -1,8 +1,7 @@
 package io.cinderella.web.resolver;
 
-import com.amazon.ec2.InstanceIdSetType;
-import com.amazon.ec2.InstanceIdType;
-import io.cinderella.web.annotation.EC2InstanceIdSet;
+import com.amazon.ec2.RebootInstancesInfoType;
+import io.cinderella.web.annotation.EC2RebootInstancesInfo;
 import org.springframework.core.MethodParameter;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
@@ -13,15 +12,13 @@ import java.util.Map;
 
 /**
  * @author Shane Witbeck
- * @since 10/11/12
+ * @since 10/23/12
  */
-public class EC2InstanceIdSetArgumentResolver implements HandlerMethodArgumentResolver {
-
-    protected static final String INSTANCE_ID_PREFIX = "InstanceId.";
+public class EC2RebootInstancesInfoArgumentResolver implements HandlerMethodArgumentResolver {
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
-        return parameter.getParameterAnnotation(EC2InstanceIdSet.class) != null;
+        return parameter.getParameterAnnotation(EC2RebootInstancesInfo.class) != null;
     }
 
     @Override
@@ -32,17 +29,13 @@ public class EC2InstanceIdSetArgumentResolver implements HandlerMethodArgumentRe
 
         Map<String, String[]> paramMap = webRequest.getParameterMap();
 
-        InstanceIdSetType instanceIdSetType = new InstanceIdSetType();
-        InstanceIdType instanceIdType;
-
+        RebootInstancesInfoType rebootInstancesInfoType = new RebootInstancesInfoType();
         for (String key : paramMap.keySet()) {
-            if (key.startsWith(INSTANCE_ID_PREFIX)) {
-                instanceIdType = new InstanceIdType()
-                        .withInstanceId(webRequest.getParameter(key));
-                instanceIdSetType.getItems().add(instanceIdType);
+            if (key.startsWith(EC2InstanceIdSetArgumentResolver.INSTANCE_ID_PREFIX)) {
+                rebootInstancesInfoType.withNewItems().withInstanceId(webRequest.getParameter(key));
             }
         }
 
-        return instanceIdSetType;
+        return rebootInstancesInfoType;
     }
 }

@@ -23,6 +23,13 @@ public interface CinderellaService {
     StartInstancesResponse startInstances(StartInstances startInstances);
 
     /**
+     *
+     * @param rebootInstances
+     * @return
+     */
+    RebootInstancesResponse rebootInstances(RebootInstances rebootInstances);
+
+    /**
      * @param describeAvailabilityZones
      * @return
      */

@@ -37,5 +37,9 @@ public interface MappingService {
 
     RunInstancesResponse getRunInstancesResponse(RunInstancesResponseVCloud vCloudResponse);
 
+    RebootInstancesRequestVCloud getRebootInstancesRequest(RebootInstances rebootInstances);
+
+    RebootInstancesResponse getRebootInstancesResponse(RebootInstancesResponseVCloud vCloudResponse);
+
 
 }

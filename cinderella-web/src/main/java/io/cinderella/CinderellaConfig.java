@@ -7,12 +7,14 @@ import org.jclouds.Constants;
 import org.jclouds.ContextBuilder;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
 import org.jclouds.logging.ConsoleLogger;
-import org.jclouds.logging.Logger;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
+import org.jclouds.vcloud.director.domain.SupportedVersions;
 import org.jclouds.vcloud.director.v1_5.VCloudDirectorContext;
 import org.jclouds.vcloud.director.v1_5.features.TaskApi;
 import org.jclouds.vcloud.director.v1_5.predicates.TaskSuccess;
 import org.jclouds.vcloud.director.v1_5.user.VCloudDirectorApi;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.MethodInvokingFactoryBean;
@@ -21,8 +23,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.env.Environment;
+import org.springframework.http.converter.xml.MarshallingHttpMessageConverter;
+import org.springframework.oxm.jaxb.Jaxb2Marshaller;
 import org.springframework.util.Log4jConfigurer;
+import org.springframework.web.client.RestTemplate;
 
+import javax.xml.bind.Marshaller;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -32,6 +40,8 @@ import java.util.Properties;
 @Configuration
 @PropertySource("file:${user.home}/.cinderella/ec2-service.properties")
 public class CinderellaConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(CinderellaConfig.class);
 
     private static final String HOST_PORT = "http://localhost:8080";
 
@@ -63,7 +73,7 @@ public class CinderellaConfig {
     }
 
     @Bean
-    public Logger logger() {
+    public org.jclouds.logging.Logger logger() {
         return new ConsoleLogger();
     }
 
@@ -82,6 +92,34 @@ public class CinderellaConfig {
         return new CinderellaServiceImpl(mappingService(), vCloudService());
     }
 
+    private SupportedVersions vCloudApiSupportedVersions() {
+        SupportedVersions supportedVersions = restTemplateVcloud().getForObject(endpoint + "/versions", SupportedVersions.class);
+        return supportedVersions;
+    }
+
+    public RestTemplate restTemplateVcloud() {
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.getMessageConverters().add(marshalingMessageConverterVCloud());
+        return restTemplate;
+    }
+
+    private MarshallingHttpMessageConverter marshalingMessageConverterVCloud() {
+        return new MarshallingHttpMessageConverter(jaxb2MarshallerVCloud());
+    }
+
+    private Jaxb2Marshaller jaxb2MarshallerVCloud() {
+
+        Jaxb2Marshaller marshaller = new Jaxb2Marshaller();
+        marshaller.setContextPaths("org.jclouds.vcloud.director.domain");
+
+        Map<String, Object> marshallerProps = new HashMap<String, Object>();
+        marshallerProps.put(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+        marshallerProps.put(Marshaller.JAXB_ENCODING, "UTF-8");
+        marshaller.setMarshallerProperties(marshallerProps);
+
+        return marshaller;
+    }
+
     @Bean
     public VCloudDirectorApi vCloudDirectorApi() {
 
@@ -89,10 +127,17 @@ public class CinderellaConfig {
         overrides.setProperty(Constants.PROPERTY_TRUST_ALL_CERTS, "true");
         overrides.setProperty(Constants.PROPERTY_RELAX_HOSTNAME, "true");
 
+        log.info(">>> vCD Endpoint: " + endpoint);
+
+        // dynamically set api version
+        // todo: allow override via cmd line or props
+        String latestVCloudApiVersion = vCloudApiSupportedVersions().latest();
+        log.info(">>> Targeting vCD API Version: " + latestVCloudApiVersion);
+
         ContextBuilder builder = ContextBuilder
                 .newBuilder("vcloud-director")
                 .endpoint(endpoint)
-                .apiVersion("5.1")
+                .apiVersion(latestVCloudApiVersion)
                 .credentials(useratorg, password)
                 .modules(
                         ImmutableSet.<Module>builder()

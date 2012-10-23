@@ -3,10 +3,7 @@ package io.cinderella.web;
 import io.cinderella.security.AuthenticationService;
 import io.cinderella.security.AuthenticationServiceImpl;
 import io.cinderella.web.interceptor.AuthInterceptor;
-import io.cinderella.web.resolver.EC2FilterSetArgumentResolver;
-import io.cinderella.web.resolver.EC2ImageSetArgumentResolver;
-import io.cinderella.web.resolver.EC2InstanceIdSetArgumentResolver;
-import io.cinderella.web.resolver.EC2RegionSetArgumentResolver;
+import io.cinderella.web.resolver.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -56,9 +53,9 @@ public class WebConfig extends WebMvcConfigurerAdapter {
         argumentResolvers.add(new EC2FilterSetArgumentResolver());
         argumentResolvers.add(new EC2InstanceIdSetArgumentResolver());
         argumentResolvers.add(new EC2RegionSetArgumentResolver());
+        argumentResolvers.add(new EC2RebootInstancesInfoArgumentResolver());
         argumentResolvers.add(new EC2ImageSetArgumentResolver());
     }
-
 
     @Bean
     public AuthenticationService authenticationService() {

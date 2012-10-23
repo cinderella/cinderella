@@ -377,6 +377,31 @@ public class VCloudServiceJclouds implements VCloudService {
         return response;
     }
 
+
+    @Override
+    public RebootInstancesResponseVCloud rebootVApp(RebootInstancesRequestVCloud vCloudRequest) {
+
+        RebootInstancesResponseVCloud response = new RebootInstancesResponseVCloud();
+
+        // todo: use something like Guava's ListenableFuture ?
+        Set<Vm> vms = new HashSet<Vm>();
+        boolean overallSuccess = true;
+        for (String vmUrn : vCloudRequest.getVmUrns()) {
+            log.info("rebooting " + vmUrn);
+            Task rebootTask = vmApi.reboot(vmUrn);
+            boolean rebootSuccessful = retryTaskSuccessLong.apply(rebootTask);
+            log.info(vmUrn + " reboot success? " + rebootSuccessful);
+
+            if (overallSuccess && !rebootSuccessful) {
+                overallSuccess = rebootSuccessful;
+            }
+
+        }
+        response.setSuccess(overallSuccess);
+
+        return response;
+    }
+
     /**
      * Create the recompose vapp params.
      */

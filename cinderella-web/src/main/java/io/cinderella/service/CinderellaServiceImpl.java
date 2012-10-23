@@ -59,6 +59,22 @@ public class CinderellaServiceImpl implements CinderellaService {
     }
 
     @Override
+    public RebootInstancesResponse rebootInstances(RebootInstances rebootInstances) {
+        try {
+
+            RebootInstancesRequestVCloud vCloudRequest
+                    = mappingService.getRebootInstancesRequest(rebootInstances);
+            RebootInstancesResponseVCloud vCloudResponse = vCloudService.rebootVApp(vCloudRequest);
+            return mappingService.getRebootInstancesResponse(vCloudResponse);
+
+        } catch (Exception e) {
+            log.error("EC2 StartInstances - ", e);
+            throw new EC2ServiceException(InternalError, e.getMessage() != null ? e.getMessage()
+                    : "An unexpected error occurred.");
+        }
+    }
+
+    @Override
     public DescribeAvailabilityZonesResponse describeAvailabilityZones(DescribeAvailabilityZones describeAvailabilityZones) {
         try {
 
