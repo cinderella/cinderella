@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static io.cinderella.exception.EC2ServiceException.ClientError.InvalidAMIID_Malformed;
+import static io.cinderella.exception.EC2ServiceException.ClientError.InvalidInstanceID_Malformed;
 import static io.cinderella.exception.EC2ServiceException.ClientError.Unsupported;
 import static io.cinderella.exception.EC2ServiceException.ServerError.InternalError;
 
@@ -108,7 +109,7 @@ public class CinderellaServiceImpl implements CinderellaService {
     @Override
     public DescribeImagesResponse describeImages(DescribeImages request) {
 
-        if ( request.getImagesSet() != null) {
+        if (request.getImagesSet() != null) {
             for (DescribeImagesItemType image : request.getImagesSet().getItems()) {
                 if (!image.getImageId().startsWith("ami-")) {
                     throw new EC2ServiceException(InvalidAMIID_Malformed, "Invalid id: \"" + image.getImageId() + "\" (expecting \"ami-...\")");
@@ -131,6 +132,15 @@ public class CinderellaServiceImpl implements CinderellaService {
 
     @Override
     public DescribeInstancesResponse describeInstances(DescribeInstances describeInstances) {
+
+        if (describeInstances.getInstancesSet() != null) {
+            for (DescribeInstancesItemType instance : describeInstances.getInstancesSet().getItems()) {
+                if (!instance.getInstanceId().startsWith("i-")) {
+                    throw new EC2ServiceException(InvalidInstanceID_Malformed, "Invalid id: \"" + instance.getInstanceId() + "\" (expecting \"i-...\")");
+                }
+            }
+        }
+
         try {
 
             DescribeInstancesRequestVCloud vCloudRequest = mappingService.getDescribeInstancesRequest(describeInstances);
