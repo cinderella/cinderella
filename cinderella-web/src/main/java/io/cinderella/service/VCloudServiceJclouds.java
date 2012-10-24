@@ -8,15 +8,15 @@ import io.cinderella.util.MappingUtils;
 import org.jclouds.predicates.RetryablePredicate;
 import org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType;
 import org.jclouds.vcloud.director.v1_5.domain.*;
-import org.jclouds.vcloud.director.v1_5.domain.network.NetworkAssignment;
-import org.jclouds.vcloud.director.v1_5.domain.network.NetworkConnection;
-import org.jclouds.vcloud.director.v1_5.domain.network.VAppNetworkConfiguration;
+import org.jclouds.vcloud.director.v1_5.domain.network.*;
 import org.jclouds.vcloud.director.v1_5.domain.org.Org;
+import org.jclouds.vcloud.director.v1_5.domain.params.InstantiateVAppTemplateParams;
 import org.jclouds.vcloud.director.v1_5.domain.params.InstantiationParams;
 import org.jclouds.vcloud.director.v1_5.domain.params.RecomposeVAppParams;
 import org.jclouds.vcloud.director.v1_5.domain.params.SourcedCompositionItemParam;
 import org.jclouds.vcloud.director.v1_5.domain.query.QueryResultRecords;
 import org.jclouds.vcloud.director.v1_5.domain.section.GuestCustomizationSection;
+import org.jclouds.vcloud.director.v1_5.domain.section.NetworkConfigSection;
 import org.jclouds.vcloud.director.v1_5.domain.section.NetworkConnectionSection;
 import org.jclouds.vcloud.director.v1_5.features.*;
 import org.jclouds.vcloud.director.v1_5.predicates.LinkPredicates;
@@ -158,48 +158,6 @@ public class VCloudServiceJclouds implements VCloudService {
 
     }
 
-    /*
-    @Test(description = "POST /vdc/{id}/action/instantiateVAppTemplate")
-   public void testInstantiateVAppTemplate() {
-      Vdc vdc = vdcApi.get(vdcUrn);
-
-      Set<Reference> networks = vdc.getAvailableNetworks();
-      Optional<Reference> parentNetwork = Iterables.tryFind(networks, new Predicate<Reference>() {
-         @Override
-         public boolean apply(Reference reference) {
-            return reference.getHref().equals(network.getHref());
-         }
-      });
-
-      if (!parentNetwork.isPresent()) {
-         fail(String.format("Could not find network %s in vdc", network.getHref().toASCIIString()));
-      }
-
-      NetworkConfiguration networkConfiguration = NetworkConfiguration.builder().parentNetwork(parentNetwork.get())
-               .fenceMode(FenceMode.BRIDGED).build();
-
-      NetworkConfigSection networkConfigSection = NetworkConfigSection
-               .builder()
-               .info("Configuration parameters for logical networks")
-               .networkConfigs(
-                        ImmutableSet.of(VAppNetworkConfiguration.builder().networkName("vAppNetwork")
-                                 .configuration(networkConfiguration).build())).build();
-
-      InstantiationParams instantiationParams = InstantiationParams.builder()
-               .sections(ImmutableSet.of(networkConfigSection)).build();
-
-      InstantiateVAppTemplateParams instantiate = InstantiateVAppTemplateParams.builder().name(name("test-vapp-"))
-               .notDeploy().notPowerOn().description("Test VApp").instantiationParams(instantiationParams)
-               .source(lazyGetVAppTemplate().getHref()).build();
-
-      instantiatedVApp = vdcApi.instantiateVApp(vdcUrn, instantiate);
-      Task instantiationTask = Iterables.getFirst(instantiatedVApp.getTasks(), null);
-      assertTaskSucceedsLong(instantiationTask);
-
-      Checks.checkVApp(instantiatedVApp);
-   }
-     */
-
     @Override
     public RunInstancesResponseVCloud runInstances(RunInstancesRequestVCloud vCloudRequest) {
 
@@ -208,104 +166,34 @@ public class VCloudServiceJclouds implements VCloudService {
         String vAppTemplateId = vCloudRequest.getvAppTemplateId();
         log.info("RunInstances vAppTemplateId: " + vAppTemplateId);
 
-        QueryResultRecords qrs = queryApi.vAppTemplatesQueryAll();
-        System.out.println(qrs);
-
         VAppTemplate vAppTemplate = vAppTemplateApi.get(vAppTemplateId);
-
-        Vm vm = vAppTemplate.getChildren().iterator().next();
-        String vmId = vm.getId();
-
-        for (int i = 0; i < vCloudRequest.getMaxCount(); i++) {
-
-
-            /*SourcedCompositionItemParam vappTemplateItem = new SourcedCompositionItemParam();
-            Reference vappTemplateVMRef = new Reference();
-            vappTemplateVMRef.setHref(vmHref);
-            vappTemplateVMRef.setName(i + "-" + vappTemplateRef.getName());
-            vappTemplateItem.setSource(vappTemplateVMRef);*/
-
-            Reference vmRef = Reference.builder()
-                    .href(vm.getHref())
-                    .name(i + "-" + vm.getName())
-                    .build();
-
-            SourcedCompositionItemParam vAppTemplateItem = SourcedCompositionItemParam.builder()
-                    .source(vmRef)
-                    .build();
-
-
-
-
-
-
-
-            // When a vApp includes Vm elements that connect to networks with
-            // different names, you can use a NetworkAssignment element to
-            // assign the network connection for each Vm to a specific network
-            // in the parent vApp
-
-
-
-
-            /*if (vm.getNetworkConnectionSection().getNetworkConnection().size() > 0) {
-                for (NetworkConnectionType networkConnection : vm
-                        .getNetworkConnectionSection().getNetworkConnection()) {
-                    if (networkConnection.getNetworkConnectionIndex() == vm
-                            .getNetworkConnectionSection()
-                            .getPrimaryNetworkConnectionIndex()) {
-                        NetworkAssignmentType networkAssignment = new NetworkAssignmentType();
-                        networkAssignment.setInnerNetwork(networkConnection
-                                .getNetwork());
-                        networkAssignment.setContainerNetwork(newvAppNetwork);
-                        List<NetworkAssignmentType> networkAssignments = vappTemplateItem
-                                .getNetworkAssignment();
-                        networkAssignments.add(networkAssignment);
-                    }
-                }
-            }*/
-            // If the vApp's Vm elements does not contain any network
-            // connections. The network connection settings can be edited and
-            // updated with the network on which you want the Vm's to connect
-            // to.
-            /*else {
-
-                NetworkConnectionSectionType networkConnectionSectionType = new NetworkConnectionSectionType();
-                networkConnectionSectionType.setInfo(networkInfo);
-
-                NetworkConnectionType networkConnectionType = new NetworkConnectionType();
-                networkConnectionType.setNetwork(newvAppNetwork);
-                networkConnectionType
-                        .setIpAddressAllocationMode(IpAddressAllocationModeType.DHCP
-                                .value());
-                networkConnectionSectionType.getNetworkConnection().add(
-                        networkConnectionType);
-
-                InstantiationParamsType vmInstantiationParamsType = new InstantiationParamsType();
-                List<JAXBElement<? extends SectionType>> vmSections = vmInstantiationParamsType
-                        .getSection();
-                vmSections
-                        .add(new ObjectFactory()
-                                .createNetworkConnectionSection(networkConnectionSectionType));
-                vappTemplateItem
-                        .setInstantiationParams(vmInstantiationParamsType);
-            }
-
-            items.add(vappTemplateItem);*/
-
-
+        if (vAppTemplate == null) {
+            throw new EC2ServiceException("VAppTemplate not found for: " + vAppTemplateId);
         }
 
 
 
-        /*// todo pass in vApp template from EC2's imageId and verify it exists before proceeding ?
+
+        // todo pass in vApp template from EC2's imageId and verify it exists before proceeding ?
 
 
-        final Network network = networkApi.get("urn:vcloud:network:dbcd85ec-5d32-4589-b089-1dde1da6f440");
+        /*final Network network = networkApi.get("urn:vcloud:network:dbcd85ec-5d32-4589-b089-1dde1da6f440");
+        if (network == null) {
+            throw new EC2ServiceException("Network not found");
+        }*/
 
         Vdc vdc = getVDC();
 
-        final Set<Reference> availableNetworks = vdc.getAvailableNetworks();
+        Set<Reference> availableNetworkRefs = vdc.getAvailableNetworks();
+
+        if (availableNetworkRefs.isEmpty()) {
+            throw new EC2ServiceException("No Networks in vdc to compose vapp");
+        }
+
+        final Reference parentNetwork = availableNetworkRefs.iterator().next();
+        System.out.println(parentNetwork);
+
+        /*final Set<Reference> availableNetworks = vdc.getAvailableNetworks();
         Optional<Reference> parentNetwork = Iterables.tryFind(availableNetworks, new Predicate<Reference>() {
             @Override
             public boolean apply(Reference reference) {
@@ -314,14 +202,53 @@ public class VCloudServiceJclouds implements VCloudService {
         });
         if (!parentNetwork.isPresent()) {
             throw new EC2ServiceException(String.format("Could not find network %s in vdc", network.getHref().toASCIIString()));
-        }
+        }*/
 
         // todo network IP assignment, etc.
 
         // todo handle more than one VM (see createComposeParams method in ComposeVapp class of vCloud java sdk)
+        /*Vm vm = vAppTemplate.getChildren().iterator().next();
+        String vmId = vm.getId();
+
+        for (int i = 0; i < vCloudRequest.getMaxCount(); i++) {
+
+            Reference vmRef = Reference.builder()
+                    .href(vm.getHref())
+                    .name(i + "-" + vm.getName())
+                    .build();
+
+            SourcedCompositionItemParam vmItem = SourcedCompositionItemParam.builder()
+                    .source(vmRef)
+                    .build();
+
+
+            InstantiationParams vmInstantiationParams = null;
+
+            // if the vm contains a network connection and the vApp does not contain any configured
+            // network
+            if (vmHasNetworkConnectionConfigured(vm)) {
+                // add a new network connection section for the vm.
+                NetworkConnectionSection networkConnectionSection = NetworkConnectionSection.builder()
+                        .info("Empty network configuration parameters")
+                        .build();
+                // adding the network connection section to the instantiation params of the vapp.
+                vmInstantiationParams = InstantiationParams.builder()
+                        .sections(ImmutableSet.of(networkConnectionSection))
+                        .build();
+            }
+
+            if (vmInstantiationParams != null) {
+                vmItem = SourcedCompositionItemParam.builder()
+                        .fromSourcedCompositionItemParam(vmItem)
+                        .instantiationParams(vmInstantiationParams)
+                        .build();
+            }
+
+        }*/
+
 
         NetworkConfiguration networkConfiguration = NetworkConfiguration.builder()
-                .parentNetwork(parentNetwork.get())
+                .parentNetwork(parentNetwork)
                 .fenceMode(Network.FenceMode.BRIDGED)
                 .build();
 
@@ -356,7 +283,9 @@ public class VCloudServiceJclouds implements VCloudService {
 
         boolean instantiationSuccess = retryTaskSuccessLong.apply(instantiationTask);
 
-        if (instantiationSuccess) {
+
+
+        /*if (instantiationSuccess) {
 
             Set<Vm> vms = getAvailableVMsFromVAppTemplate(vAppTemplate);
 
@@ -369,7 +298,7 @@ public class VCloudServiceJclouds implements VCloudService {
             Task recomposeVApp = vAppApi.recompose(instantiatedVApp.getId(), params);
             boolean recomposeSuccess = retryTaskSuccessLong.apply(recomposeVApp);
 
-        }
+        }*/
 
 
         // todo start and deploy instance ?*/
@@ -394,7 +323,7 @@ public class VCloudServiceJclouds implements VCloudService {
                 log.info("rebooting " + vmUrn);
                 rebootTask = vmApi.reboot(vmUrn);
             } else if (canDoThis(tempVm, Link.Rel.RESET)) {
-                log.info("reseting " + vmUrn);
+                log.info("resetting " + vmUrn);
                 rebootTask = vmApi.reset(vmUrn);
             } else {
                 throw new EC2ServiceException("These options are not available");
