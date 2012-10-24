@@ -28,11 +28,11 @@ public interface VCloudService {
 
     DescribeAvailabilityZonesResponseVCloud describeAvailabilityZones(DescribeAvailabilityZonesRequestVCloud vCloudRequest);
 
-    StopInstancesResponseVCloud shutdownVApp(StopInstancesRequestVCloud vCloudRequest);
+    StopInstancesResponseVCloud shutdownVms(StopInstancesRequestVCloud vCloudRequest);
 
-    StartInstancesResponseVCloud startVApp(StartInstancesRequestVCloud vCloudRequest);
+    StartInstancesResponseVCloud startVms(StartInstancesRequestVCloud vCloudRequest);
 
     RunInstancesResponseVCloud runInstances(RunInstancesRequestVCloud vCloudRequest);
 
-    RebootInstancesResponseVCloud rebootVApp(RebootInstancesRequestVCloud vCloudRequest);
+    RebootInstancesResponseVCloud rebootVms(RebootInstancesRequestVCloud vCloudRequest);
 }

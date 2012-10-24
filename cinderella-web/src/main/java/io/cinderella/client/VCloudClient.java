@@ -33,7 +33,7 @@ public class VCloudClient {
 //        vCloudService.getVmsInVAppsInVdc(request);
 
 
-//        vCloudService.shutdownVApp(null);
+//        vCloudService.shutdownVms(null);
 
 //        String vdcName = vCloudService.getVdcName();
 

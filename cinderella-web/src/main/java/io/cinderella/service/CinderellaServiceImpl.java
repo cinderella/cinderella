@@ -32,7 +32,7 @@ public class CinderellaServiceImpl implements CinderellaService {
         try {
 
             StopInstancesRequestVCloud vCloudRequest = mappingService.getStopInstancesRequest(stopInstances);
-            StopInstancesResponseVCloud vCloudResponse = vCloudService.shutdownVApp(vCloudRequest);
+            StopInstancesResponseVCloud vCloudResponse = vCloudService.shutdownVms(vCloudRequest);
             return mappingService.getStopInstancesResponse(vCloudResponse);
 
         } catch (Exception e) {
@@ -48,7 +48,7 @@ public class CinderellaServiceImpl implements CinderellaService {
 
             StartInstancesRequestVCloud vCloudRequest
                     = mappingService.getStartInstancesRequest(startInstances);
-            StartInstancesResponseVCloud vCloudResponse = vCloudService.startVApp(vCloudRequest);
+            StartInstancesResponseVCloud vCloudResponse = vCloudService.startVms(vCloudRequest);
             return mappingService.getStartInstancesResponse(vCloudResponse);
 
         } catch (Exception e) {
@@ -65,7 +65,7 @@ public class CinderellaServiceImpl implements CinderellaService {
 
             RebootInstancesRequestVCloud vCloudRequest
                     = mappingService.getRebootInstancesRequest(rebootInstances);
-            RebootInstancesResponseVCloud vCloudResponse = vCloudService.rebootVApp(vCloudRequest);
+            RebootInstancesResponseVCloud vCloudResponse = vCloudService.rebootVms(vCloudRequest);
             return mappingService.getRebootInstancesResponse(vCloudResponse);
 
         } catch (Exception e) {

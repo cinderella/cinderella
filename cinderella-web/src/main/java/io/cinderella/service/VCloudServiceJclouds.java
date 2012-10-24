@@ -7,7 +7,6 @@ import io.cinderella.exception.EC2ServiceException;
 import io.cinderella.util.MappingUtils;
 import org.jclouds.predicates.RetryablePredicate;
 import org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType;
-import org.jclouds.vcloud.director.v1_5.admin.VCloudDirectorAdminApi;
 import org.jclouds.vcloud.director.v1_5.domain.*;
 import org.jclouds.vcloud.director.v1_5.domain.network.NetworkAssignment;
 import org.jclouds.vcloud.director.v1_5.domain.network.NetworkConnection;
@@ -99,7 +98,7 @@ public class VCloudServiceJclouds implements VCloudService {
     }
 
     @Override
-    public StopInstancesResponseVCloud shutdownVApp(StopInstancesRequestVCloud vCloudRequest) {
+    public StopInstancesResponseVCloud shutdownVms(StopInstancesRequestVCloud vCloudRequest) {
 
         StopInstancesResponseVCloud response = new StopInstancesResponseVCloud();
 
@@ -135,7 +134,7 @@ public class VCloudServiceJclouds implements VCloudService {
     }
 
     @Override
-    public StartInstancesResponseVCloud startVApp(StartInstancesRequestVCloud vCloudRequest) {
+    public StartInstancesResponseVCloud startVms(StartInstancesRequestVCloud vCloudRequest) {
         StartInstancesResponseVCloud response = new StartInstancesResponseVCloud();
 
         Map<String, ResourceEntity.Status> previousStatus = getVmStatusMap(vCloudRequest.getVmUrns());
@@ -380,18 +379,29 @@ public class VCloudServiceJclouds implements VCloudService {
 
 
     @Override
-    public RebootInstancesResponseVCloud rebootVApp(RebootInstancesRequestVCloud vCloudRequest) {
+    public RebootInstancesResponseVCloud rebootVms(RebootInstancesRequestVCloud vCloudRequest) {
 
         RebootInstancesResponseVCloud response = new RebootInstancesResponseVCloud();
 
         // todo: use something like Guava's ListenableFuture ?
-        Set<Vm> vms = new HashSet<Vm>();
         boolean overallSuccess = true;
         for (String vmUrn : vCloudRequest.getVmUrns()) {
-            log.info("rebooting " + vmUrn);
-            Task rebootTask = vmApi.reboot(vmUrn);
+
+            Task rebootTask;
+            Vm tempVm = vmApi.get(vmUrn);
+
+            if (canDoThis(tempVm, Link.Rel.REBOOT) && (null != vmApi.getRuntimeInfoSection(vmUrn).getVMWareTools())) {
+                log.info("rebooting " + vmUrn);
+                rebootTask = vmApi.reboot(vmUrn);
+            } else if (canDoThis(tempVm, Link.Rel.RESET)) {
+                log.info("reseting " + vmUrn);
+                rebootTask = vmApi.reset(vmUrn);
+            } else {
+                throw new EC2ServiceException("These options are not available");
+            }
+
             boolean rebootSuccessful = retryTaskSuccessLong.apply(rebootTask);
-            log.info(vmUrn + " reboot success? " + rebootSuccessful);
+            log.info(vmUrn + " reboot/reset success? " + rebootSuccessful);
 
             if (overallSuccess && !rebootSuccessful) {
                 overallSuccess = rebootSuccessful;
