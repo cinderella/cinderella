@@ -4,6 +4,7 @@ import com.google.common.base.*;
 import com.google.common.collect.*;
 import io.cinderella.domain.*;
 import io.cinderella.exception.EC2ServiceException;
+import io.cinderella.util.MappingUtils;
 import org.jclouds.predicates.RetryablePredicate;
 import org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType;
 import org.jclouds.vcloud.director.v1_5.admin.VCloudDirectorAdminApi;
@@ -647,7 +648,8 @@ public class VCloudServiceJclouds implements VCloudService {
                 }).filter(new Predicate<Vm>() {
                     @Override
                     public boolean apply(Vm in) {
-                        return (Iterables.isEmpty(describeImagesRequestVCloud.getVmIds()) || Iterables.contains(describeImagesRequestVCloud.getVmIds(), in.getId().replace("-", "").replace("urn:vcloud:vm:", "ami-")));
+                        return (Iterables.isEmpty(describeImagesRequestVCloud.getVmIds())
+                                || Iterables.contains(describeImagesRequestVCloud.getVmIds(), MappingUtils.vmUrnToImageId(in.getId())));
                     }
                 })
                 .toImmutableSet();
@@ -661,7 +663,7 @@ public class VCloudServiceJclouds implements VCloudService {
 
 
     @Override
-    public DescribeInstancesResponseVCloud getVmsInVAppsInVdc(DescribeInstancesRequestVCloud describeInstancesRequestVCloud) {
+    public DescribeInstancesResponseVCloud getVmsInVAppsInVdc(final DescribeInstancesRequestVCloud describeInstancesRequestVCloud) {
 
         Vdc vdc = describeInstancesRequestVCloud.getVdc();
 
@@ -679,6 +681,12 @@ public class VCloudServiceJclouds implements VCloudService {
                             return in.getChildren().getVms();
                         }
                         return ImmutableSet.of();
+                    }
+                }).filter(new Predicate<Vm>() {
+                    @Override
+                    public boolean apply(Vm in) {
+                        return (Iterables.isEmpty(describeInstancesRequestVCloud.getVmIds())
+                                || Iterables.contains(describeInstancesRequestVCloud.getVmIds(), MappingUtils.vmUrnToInstanceId(in.getId())));
                     }
                 }).toImmutableSet();
 

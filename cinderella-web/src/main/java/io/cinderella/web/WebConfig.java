@@ -51,10 +51,11 @@ public class WebConfig extends WebMvcConfigurerAdapter {
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
         argumentResolvers.add(new EC2FilterSetArgumentResolver());
-        argumentResolvers.add(new EC2InstanceIdSetArgumentResolver());
-        argumentResolvers.add(new EC2RegionSetArgumentResolver());
-        argumentResolvers.add(new EC2RebootInstancesInfoArgumentResolver());
         argumentResolvers.add(new EC2ImageSetArgumentResolver());
+        argumentResolvers.add(new EC2InstanceIdSetArgumentResolver());
+        argumentResolvers.add(new EC2InstanceSetArgumentResolver());
+        argumentResolvers.add(new EC2RebootInstancesInfoArgumentResolver());
+        argumentResolvers.add(new EC2RegionSetArgumentResolver());
     }
 
     @Bean
