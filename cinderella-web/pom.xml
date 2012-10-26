@@ -179,6 +179,13 @@
         </dependency>
 
     </dependencies>
+    <repositories>
+        <repository>
+            <id>jclouds-cin-snapshots</id>
+            <url>http://repository-cinderella.forge.cloudbees.com/snapshot/</url>
+            <snapshots/>
+        </repository>
+    </repositories>
     <pluginRepositories>
         <pluginRepository>
             <id>jaxb-fluent-api-ext-repository</id>
@@ -203,8 +210,7 @@
                         </goals>
                         <configuration>
                             <sources>
-                                <source>${project.build.directory}/generated-sources</source>
-
+                                <source>${project.build.directory}/generated-sources/ec2</source>
                             </sources>
                         </configuration>
                     </execution>
@@ -231,7 +237,7 @@
                         <id>generate-sources</id>
                         <phase>generate-sources</phase>
                         <configuration>
-                            <sourceRoot>${project.build.directory}/generated-sources</sourceRoot>
+                            <sourceRoot>${project.build.directory}/generated-sources/ec2</sourceRoot>
                             <wsdlOptions>
                                 <wsdlOption>
                                     <wsdl>${basedir}/src/main/resources/2012-08-15.ec2.wsdl</wsdl>
