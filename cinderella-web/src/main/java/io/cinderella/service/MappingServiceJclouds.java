@@ -4,13 +4,14 @@ import com.amazon.ec2.*;
 import com.google.common.base.Function;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
-import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import io.cinderella.domain.*;
 import io.cinderella.util.MappingUtils;
 import org.jclouds.util.InetAddresses2;
 import org.jclouds.vcloud.director.v1_5.domain.Vdc;
 import org.jclouds.vcloud.director.v1_5.domain.Vm;
+import org.jclouds.vcloud.director.v1_5.domain.network.NetworkConnection;
 import org.jclouds.vcloud.director.v1_5.domain.org.Org;
+import org.jclouds.vcloud.director.v1_5.domain.section.OperatingSystemSection;
 import org.jclouds.vcloud.director.v1_5.features.VmApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,19 +140,13 @@ public class MappingServiceJclouds implements MappingService {
         DescribeInstancesResponse describeInstancesResponse = new DescribeInstancesResponse();
         describeInstancesResponse.setRequestId(UUID.randomUUID().toString());
 
+        String currentUser = vCloudService.getVCloudDirectorApi().getCurrentSession().getUser();
 
         ReservationInfoType resInfoType = new ReservationInfoType();
 
-        GroupSetType groupSet = new GroupSetType();
-        GroupItemType group = new GroupItemType();
-        group.setGroupId("groupId");
-        group.setGroupName("groupName");
-        groupSet.getItems().add(group);
-        resInfoType.setGroupSet(groupSet);
-
         resInfoType.setInstancesSet(new RunningInstancesSetType());
-        resInfoType.setOwnerId(vCloudService.getVCloudDirectorApi().getCurrentSession().getUser());
-        resInfoType.setRequesterId("requesterId");
+        resInfoType.setOwnerId(currentUser);
+        resInfoType.setRequesterId(currentUser);
         resInfoType.setReservationId("r-reservationId");
 
         ReservationSetType reservationSetType = new ReservationSetType();
@@ -161,89 +156,55 @@ public class MappingServiceJclouds implements MappingService {
         ImmutableSet<Vm> vms = describeInstancesResponseVCloud.getVms();
         List<RunningInstancesItemType> instances = resInfoType.getInstancesSet().getItems();
 
+        VmApi vmApi = vCloudService.getVCloudDirectorApi().getVmApi();
+
         for (Vm vm : vms) {
-            log.info(vm.getId());
+            String vmId = vm.getId();
+            log.info(vmId);
             Set<String> addresses = getIpsFromVm(vm);
+            OperatingSystemSection operatingSystemSection = vmApi.getOperatingSystemSection(vmId);
 
             RunningInstancesItemType instance = new RunningInstancesItemType();
+            instance.withAmiLaunchIndex("0")
+                    .withBlockDeviceMapping(new InstanceBlockDeviceMappingResponseType())
+                    .withDnsName(vm.getName())
+                    .withEbsOptimized(Boolean.TRUE)
+                    .withHypervisor("vsphere")
+                    .withImageId(MappingUtils.vmUrnToImageId(vmId))
+                    .withInstanceId(MappingUtils.vmUrnToInstanceId(vmId))
+                    .withInstanceState(MappingUtils.vCloudStatusToEc2Status(vm.getStatus()))
+                    .withInstanceType("m1.small") // todo munge VirtualHardwareSection::items
+                    .withIpAddress(tryFind(addresses, not(InetAddresses2.IsPrivateIPAddress.INSTANCE)).orNull())
+                    .withPlacement(new PlacementResponseType().withAvailabilityZone(vm.getName() + "a"))
+                    .withPrivateIpAddress(tryFind(addresses, InetAddresses2.IsPrivateIPAddress.INSTANCE).orNull())
+                    .withVirtualizationType("paravirtual")
+                    .withMonitoring(new InstanceMonitoringStateType().withState("disabled"))
+                    .withArchitecture(operatingSystemSection.getOsType());
 
-            instance.setAmiLaunchIndex("0");
-            instance.setArchitecture("i386");
-            instance.setBlockDeviceMapping(new InstanceBlockDeviceMappingResponseType());
-            instance.setClientToken("client token");
-            instance.setDnsName(vm.getName()); // todo correct?
-            instance.setEbsOptimized(Boolean.TRUE);
-            instance.setHypervisor("vsphere");
-            instance.setImageId(MappingUtils.vmUrnToImageId(vm.getId()));
-            instance.setInstanceId(MappingUtils.vmUrnToInstanceId(vm.getId()));
 
-            InstanceStateType instanceStateType = new InstanceStateType();
-            switch (vm.getStatus()) {
-                case POWERED_ON:
-                    instanceStateType.setCode(16);
-                    instanceStateType.setName("running");
-                    break;
-                case POWERED_OFF:
-                    instanceStateType.setCode(48);
-                    instanceStateType.setName("terminated");
-                    break;
-                default:
-                    instanceStateType.setCode(0);
-                    instanceStateType.setName("pending");
+            // networking
+            Set<NetworkConnection> networkConnections = vmApi.getNetworkConnectionSection(vmId).getNetworkConnections();
+            for (NetworkConnection networkConnection : networkConnections) {
+                instance.withNetworkInterfaceSet(new InstanceNetworkInterfaceSetType()
+                        .withItems(new InstanceNetworkInterfaceSetItemType()
+                                .withNetworkInterfaceId(networkConnection.getNetwork())
+                                .withPrivateIpAddress(networkConnection.getIpAddress())
+                        ));
             }
-            instance.setInstanceState(instanceStateType);
 
-            instance.setInstanceType("m1.small"); //TODO: Map vcloud template specs to unique instancetype
-            instance.setIpAddress(tryFind(addresses, not(InetAddresses2.IsPrivateIPAddress.INSTANCE)).orNull());
-            instance.setKernelId("kernelId");
-            instance.setKeyName("keyName");
-
-            /*InstanceNetworkInterfaceSetType networkSet = new InstanceNetworkInterfaceSetType();
-            InstanceNetworkInterfaceSetItemType network = new InstanceNetworkInterfaceSetItemType();
-            networkSet.getItems().add()
-            instance.setNetworkInterfaceSet();*/
-
-            GregorianCalendar gregorianCalendar = new GregorianCalendar();
-            gregorianCalendar.setTime(new Date());
-            instance.setLaunchTime(new XMLGregorianCalendarImpl(gregorianCalendar));
-
-            PlacementResponseType placement = new PlacementResponseType();
-            placement.setAvailabilityZone(vm.getName() + "a");
-            instance.setPlacement(placement);
-
-
-            instance.setPlatform("windows");
-            instance.setPrivateDnsName("privateDnsName");
-            instance.setPrivateIpAddress(tryFind(addresses, InetAddresses2.IsPrivateIPAddress.INSTANCE).orNull());
-
-            ProductCodesSetType productCodesSet = new ProductCodesSetType();
-            ProductCodesSetItemType productCodesItem = new ProductCodesSetItemType();
-            productCodesSet.getItems().add(productCodesItem);
-            instance.setProductCodes(productCodesSet);
-
-            instance.setRamdiskId("ramDiskId");
-            instance.setReason("reason");
-            instance.setRootDeviceName("/dev/sda"); // id?
-            instance.setRootDeviceType("instance-store");
-            instance.setVirtualizationType("paravirtual");
-
-            ResourceTagSetType tagSet = new ResourceTagSetType();
-            Set<Map.Entry<String, String>> vmMeta = vCloudService.getVCloudDirectorApi().getVmApi().getMetadataApi(vm.getId()).get().entrySet();
-
+            Set<Map.Entry<String, String>> vmMeta = vmApi.getMetadataApi(vmId).get().entrySet();
             for (Map.Entry<String, String> resourceTag : vmMeta) {
-                ResourceTagSetItemType tag = new ResourceTagSetItemType();
-                tag.setKey(resourceTag.getKey());
-                tag.setValue(resourceTag.getValue());
-                tagSet.getItems().add(tag);
+                instance.withTagSet(new ResourceTagSetType()
+                        .withItems(new ResourceTagSetItemType()
+                                .withKey(resourceTag.getKey())
+                                .withValue(resourceTag.getValue())));
             }
-            instance.setTagSet(tagSet);
-
             instances.add(instance);
         }
 
-
         return describeInstancesResponse;
     }
+
 
     @Override
     public DescribeRegionsRequestVCloud getDescribeRegionsRequest(DescribeRegions describeRegions) {
