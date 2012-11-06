@@ -19,10 +19,13 @@ import org.jclouds.vcloud.director.v1_5.domain.section.NetworkConfigSection;
 import org.jclouds.vcloud.director.v1_5.domain.section.NetworkConnectionSection;
 import org.jclouds.vcloud.director.v1_5.features.*;
 import org.jclouds.vcloud.director.v1_5.predicates.LinkPredicates;
+import org.jclouds.vcloud.director.v1_5.predicates.ReferencePredicates;
 import org.jclouds.vcloud.director.v1_5.predicates.TaskSuccess;
 import org.jclouds.vcloud.director.v1_5.user.VCloudDirectorApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 
 import javax.inject.Inject;
 import java.util.*;
@@ -52,6 +55,9 @@ public class VCloudServiceJclouds implements VCloudService {
     private VdcApi vdcApi;
 
     private Predicate<Task> retryTaskSuccessLong;
+
+    @Autowired
+    Environment env;
 
     @Inject
     protected void initTaskSuccessLong(TaskSuccess taskSuccess) {
@@ -178,21 +184,26 @@ public class VCloudServiceJclouds implements VCloudService {
             throw new EC2ServiceException("No Networks in vdc to compose vapp");
         }
 
-        final Reference parentNetwork = availableNetworkRefs.iterator().next();
+        // get reference to configured vdc network
+        String vdcNetwork = env.getProperty("vdc.network");
+        final Reference parentNetwork = FluentIterable.from(getVDC().getAvailableNetworks())
+                .filter(ReferencePredicates.<Reference>nameEquals(vdcNetwork))
+                .first()
+                .get();
 
+        // get network name from vAppTemplate
+        NetworkConfigSection templateNetworkConfigSection = vAppTemplateApi.getNetworkConfigSection(vAppTemplateId);
+        VAppNetworkConfiguration vAppNetworkConfiguration
+                = templateNetworkConfigSection.getNetworkConfigs().iterator().next();
+        String templateNetworkName = vAppNetworkConfiguration.getNetworkName();
 
-        // todo: instantiation parameters must include at least one NetworkConfigSection that defines a vApp
-        // network, and that section must include a NetworkConfig element whose networkName attribute value
-        // matches the value of the network attribute of the NetworkConnection of each Vm in the template
-//        Set<Vm> vAppTemplateVms = getAvailableVMsFromVAppTemplate(vAppTemplate);
-
-
+        // build network config used to instantiate vApp
         NetworkConfigSection networkConfigSection = NetworkConfigSection
                 .builder()
                 .info("Configuration parameters for logical networks")
                 .networkConfigs(ImmutableSet.of(
                         VAppNetworkConfiguration.builder()
-                                .networkName("nat")
+                                .networkName(templateNetworkName)
                                 .configuration(
                                         NetworkConfiguration.builder()
                                                 .parentNetwork(parentNetwork)
@@ -202,7 +213,6 @@ public class VCloudServiceJclouds implements VCloudService {
                                 .build()
                 )).build();
 
-
         InstantiationParams instantiationParams = InstantiationParams.builder()
                 .sections(ImmutableSet.of(networkConfigSection))
                 .build();
@@ -211,6 +221,8 @@ public class VCloudServiceJclouds implements VCloudService {
                 .name(name("cinderella-"))
                 .deploy()
                 .powerOn()
+//                .notDeploy()
+//                .notPowerOn()
                 .description("Created by Cinderella")
                 .instantiationParams(instantiationParams)
                 .source(vAppTemplate.getHref())
@@ -223,11 +235,11 @@ public class VCloudServiceJclouds implements VCloudService {
 
         boolean instantiationSuccess = retryTaskSuccessLong.apply(instantiationTask);
 
+
         // todo if successful, get running VMs and populate response
 
         return response;
     }
-
 
         /*VAppNetworkConfiguration vAppNetworkConfiguration = getVAppNetworkConfig(instantiatedVApp);
         NetworkConnection networkConnection = NetworkConnection.builder()
