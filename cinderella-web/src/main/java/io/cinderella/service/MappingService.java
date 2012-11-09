@@ -42,4 +42,7 @@ public interface MappingService {
     RebootInstancesResponse getRebootInstancesResponse(RebootInstancesResponseVCloud vCloudResponse);
 
 
+    CreateKeyPairResponse getCreateKeyPairResponse(CreateKeyPairResponseVCloud vCloudResponse);
+
+    CreateKeyPairRequestVCloud getCreateKeyPairRequest(CreateKeyPair createKeyPair);
 }

@@ -35,4 +35,6 @@ public interface VCloudService {
     RunInstancesResponseVCloud runInstances(RunInstancesRequestVCloud vCloudRequest);
 
     RebootInstancesResponseVCloud rebootVms(RebootInstancesRequestVCloud vCloudRequest);
+
+    CreateKeyPairResponseVCloud createKeyPair(CreateKeyPairRequestVCloud vCloudRequest);
 }

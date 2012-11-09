@@ -5,6 +5,9 @@ import com.google.common.collect.*;
 import io.cinderella.domain.*;
 import io.cinderella.exception.EC2ServiceException;
 import io.cinderella.util.MappingUtils;
+import org.jclouds.crypto.SshKeys;
+import org.jclouds.io.Payloads;
+import org.jclouds.json.Json;
 import org.jclouds.predicates.RetryablePredicate;
 import org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType;
 import org.jclouds.vcloud.director.v1_5.domain.*;
@@ -30,7 +33,11 @@ import org.springframework.core.env.Environment;
 import javax.inject.Inject;
 import java.util.*;
 
+import static com.google.common.base.Predicates.and;
+import static com.google.common.collect.Iterables.find;
+import static com.google.common.collect.Iterables.getFirst;
 import static org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType.*;
+import static org.jclouds.vcloud.director.v1_5.predicates.LinkPredicates.relEquals;
 import static org.jclouds.vcloud.director.v1_5.predicates.ReferencePredicates.nameEquals;
 import static org.jclouds.vcloud.director.v1_5.predicates.ReferencePredicates.typeEquals;
 
@@ -44,13 +51,22 @@ public class VCloudServiceJclouds implements VCloudService {
 
     protected static final long LONG_TASK_TIMEOUT_SECONDS = 300L;
 
+    @Inject
+    protected Json json;
+
+    public static final String MEDIA = "media";
+
+    private static final String KEY_PAIR_CONTAINER = "keypairs";
+
     private static final Random random = new Random();
 
     private VCloudDirectorApi vCloudDirectorApi;
     private VAppApi vAppApi;
     private VmApi vmApi;
     private QueryApi queryApi;
+    private MediaApi mediaApi;
     private NetworkApi networkApi;
+    private UploadApi uploadApi;
     private VAppTemplateApi vAppTemplateApi;
     private VdcApi vdcApi;
 
@@ -69,7 +85,9 @@ public class VCloudServiceJclouds implements VCloudService {
         this.vAppApi = this.vCloudDirectorApi.getVAppApi();
         this.vmApi = this.vCloudDirectorApi.getVmApi();
         this.queryApi = this.vCloudDirectorApi.getQueryApi();
+        this.mediaApi = this.vCloudDirectorApi.getMediaApi();
         this.networkApi = this.getVCloudDirectorApi().getNetworkApi();
+        this.uploadApi = this.vCloudDirectorApi.getUploadApi();
         this.vAppTemplateApi = this.getVCloudDirectorApi().getVAppTemplateApi();
         this.vdcApi = this.getVCloudDirectorApi().getVdcApi();
     }
@@ -235,7 +253,6 @@ public class VCloudServiceJclouds implements VCloudService {
 
         boolean instantiationSuccess = retryTaskSuccessLong.apply(instantiationTask);
 
-
         // todo if successful, get running VMs and populate response
 
         return response;
@@ -334,6 +351,146 @@ public class VCloudServiceJclouds implements VCloudService {
         response.setSuccess(overallSuccess);
 
         return response;
+    }
+
+    @Override
+    public CreateKeyPairResponseVCloud createKeyPair(CreateKeyPairRequestVCloud vCloudRequest) {
+
+        String keyPairName = vCloudRequest.getKeyPairName();
+
+
+        Vdc currentVDC = getVDC();
+        Media keyPairsContainer = findOrCreateKeyPairContainerInVDCNamed(currentVDC, keyPairName);
+        String keypairValue = mediaApi.getMetadataApi(keyPairsContainer.getId()).get(keyPairName);
+
+        CreateKeyPairResponseVCloud response = new CreateKeyPairResponseVCloud();
+        response.setKeyName(keyPairName);
+        response.setKeyMaterial(keypairValue);
+
+        return response;
+    }
+
+    private Media findOrCreateKeyPairContainerInVDCNamed(Vdc currentVDC,
+                                                         final String keyPairName) {
+        Media keyPairsContainer = null;
+
+        Optional<Media> optionalKeyPairsContainer = Iterables.tryFind(
+                findAllEmptyMediaInOrg(), new Predicate<Media>() {
+
+            @Override
+            public boolean apply(Media input) {
+                return mediaApi.getMetadataApi(input.getId()).get(
+                        keyPairName) != null;
+            }
+        });
+
+        if (optionalKeyPairsContainer.isPresent())
+            keyPairsContainer = optionalKeyPairsContainer.get();
+
+        if (keyPairsContainer == null) {
+            keyPairsContainer = uploadKeyPairInVCD(currentVDC,
+                    KEY_PAIR_CONTAINER, keyPairName);
+        }
+        return keyPairsContainer;
+    }
+
+    private Media uploadKeyPairInVCD(Vdc currentVDC,
+                                     String keyPairsContainerName, String keyPairName) {
+        Media keyPairsContainer = addEmptyMediaInVDC(currentVDC,
+                keyPairsContainerName);
+        /*assertNotNull(keyPairsContainer.getFiles(),
+                String.format(OBJ_FIELD_REQ, MEDIA, "files"));
+        assertTrue(keyPairsContainer.getFiles().size() == 1, String.format(
+                OBJ_FIELD_LIST_SIZE_EQ, MEDIA, "files", 1, keyPairsContainer
+                .getFiles().size()));*/
+
+        Link uploadLink = getUploadLinkForMedia(keyPairsContainer);
+        // generate an empty iso
+        byte[] iso = new byte[]{};
+        uploadApi.upload(uploadLink.getHref(), Payloads.newByteArrayPayload(iso));
+
+//        Checks.checkMediaFor(VCloudDirectorMediaType.MEDIA, keyPairsContainer);
+        setKeyPairOnkeyPairsContainer(keyPairsContainer, keyPairName, generateKeyPair(keyPairName));
+
+        return keyPairsContainer;
+    }
+
+    private Media addEmptyMediaInVDC(Vdc currentVDC, String keyPairName) {
+        Link addMedia = find(
+                currentVDC.getLinks(),
+                and(relEquals("add"), LinkPredicates.typeEquals(VCloudDirectorMediaType.MEDIA)));
+
+        Media sourceMedia = Media.builder().type(VCloudDirectorMediaType.MEDIA)
+                .name(keyPairName).size(0).imageType(Media.ImageType.ISO)
+                .description("iso generated as KeyPair bucket").build();
+
+        return mediaApi.add(addMedia.getHref(), sourceMedia);
+    }
+
+    private void setKeyPairOnkeyPairsContainer(Media media, String keyPairName,
+                                               String keyPair) {
+
+        /*Task setKeyPair = */mediaApi.getMetadataApi(media.getId()).put(keyPairName, keyPair);
+
+//        Checks.checkTask(setKeyPair);
+        /*assertTrue(retryTaskSuccess.apply(setKeyPair),
+                String.format(TASK_COMPLETE_TIMELY, "setKeyPair"));*/
+    }
+
+    private String generateKeyPair(String keyPairName) {
+
+        Map<String, String> sshKey = SshKeys.generate();
+
+        Map<String, String> key = Maps.newHashMap();
+        key.put("keyName", keyPairName);
+        key.put("keyFingerprint", SshKeys.sha1PrivateKey(sshKey.get("private")));
+        key.put("publicKey", sshKey.get("public"));
+
+        return json.toJson(key);
+    }
+
+    private Link getUploadLinkForMedia(Media emptyMedia) {
+        File uploadFile = getFirst(emptyMedia.getFiles(), null);
+        /*assertNotNull(uploadFile,
+                String.format(OBJ_FIELD_REQ, MEDIA, "files.first"));
+        assertEquals(uploadFile.getSize(), Long.valueOf(0));
+        assertEquals(uploadFile.getSize().longValue(), emptyMedia.getSize(),
+                String.format(OBJ_FIELD_EQ, MEDIA, "uploadFile.size()",
+                        emptyMedia.getSize(), uploadFile.getSize()));*/
+
+        Set<Link> links = uploadFile.getLinks();
+        /*assertNotNull(links,
+                String.format(OBJ_FIELD_REQ, MEDIA, "uploadFile.links"));
+        assertTrue(links.size() >= 1, String.format(OBJ_FIELD_LIST_SIZE_GE,
+                MEDIA, "uploadfile.links", 1, links.size()));
+        assertTrue(Iterables.all(links, Predicates.or(
+                LinkPredicates.relEquals(Link.Rel.UPLOAD_DEFAULT),
+                LinkPredicates.relEquals(Link.Rel.UPLOAD_ALTERNATE))),
+                String.format(OBJ_FIELD_REQ, MEDIA, "uploadFile.links.first"));*/
+
+        Link uploadLink = Iterables.find(links,
+                LinkPredicates.relEquals(Link.Rel.UPLOAD_DEFAULT));
+        return uploadLink;
+    }
+
+    public FluentIterable<Media> findAllEmptyMediaInOrg() {
+        Vdc vdc = getVDC();
+        return FluentIterable
+                .from(vdc.getResourceEntities())
+                .filter(ReferencePredicates.<Reference>typeEquals(MEDIA))
+                .transform(new Function<Reference, Media>() {
+
+                    @Override
+                    public Media apply(Reference in) {
+                        return mediaApi.get(in.getHref());
+                    }
+                }).filter(new Predicate<Media>() {
+
+                    @Override
+                    public boolean apply(Media input) {
+                        return input.getSize() == 0;
+                    }
+                });
     }
 
     /**

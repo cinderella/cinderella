@@ -1,11 +1,14 @@
 package io.cinderella;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.inject.Module;
+import com.google.inject.*;
 import io.cinderella.service.*;
 import org.jclouds.Constants;
 import org.jclouds.ContextBuilder;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
+import org.jclouds.http.functions.ParseJson;
+import org.jclouds.json.Json;
+import org.jclouds.json.config.GsonModule;
 import org.jclouds.logging.ConsoleLogger;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.vcloud.director.domain.SupportedVersions;
@@ -60,6 +63,12 @@ public class CinderellaConfig {
     @Bean
     public static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
         return new PropertySourcesPlaceholderConfigurer();
+    }
+
+    @Bean
+    public Json json() {
+        Injector injector = Guice.createInjector(new GsonModule());
+        return injector.getInstance(Json.class);
     }
 
     @Bean

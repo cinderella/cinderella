@@ -60,6 +60,21 @@ public interface CinderellaService {
      */
     DescribeSecurityGroupsResponse describeSecurityGroups(DescribeSecurityGroups describeSecurityGroups);
 
+
+    /**
+     *
+     * @param createKeyPair
+     * @return
+     */
+    CreateKeyPairResponse createKeyPair(CreateKeyPair createKeyPair);
+
+    /**
+     *
+     * @param describeKeyPairs
+     * @return
+     */
+    DescribeKeyPairsResponse describeKeyPairs(DescribeKeyPairs describeKeyPairs);
+
     /**
      *
      * @param runInstances

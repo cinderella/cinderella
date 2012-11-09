@@ -37,6 +37,13 @@ public class EC2Controller {
     @Autowired
     private CinderellaService cinderellaService;
 
+    @RequestMapping(params = "Action=CreateKeyPair")
+    @ResponseBody
+    public CreateKeyPairResponse createKeyPair(EC2Request ec2Request,
+                                               @RequestParam(value = "KeyName") String keyName) throws EC2ServiceException {
+        return cinderellaService.createKeyPair(new CreateKeyPair().withKeyName(keyName));
+    }
+
     @RequestMapping(params = "Action=DescribeAvailabilityZones")
     @ResponseBody
     public DescribeAvailabilityZonesResponse describeAvailabilityZones(EC2Request ec2Request,
