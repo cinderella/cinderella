@@ -194,18 +194,17 @@ public class CinderellaServiceImpl implements CinderellaService {
 
     @Override
     public DescribeKeyPairsResponse describeKeyPairs(DescribeKeyPairs describeKeyPairs) {
-        /*try {
+        try {
 
             DescribeKeyPairsRequestVCloud vCloudRequest = mappingService.getDescribeKeyPairsRequest(describeKeyPairs);
-            DescribeKeyPairsResponseVCloud vCloudResponse = vCloudService.getVmsInVAppsInVdc(vCloudRequest);
-            return mappingService.getDescribeInstancesResponse(vCloudResponse);
+            DescribeKeyPairsResponseVCloud vCloudResponse = vCloudService.describeKeyPairs(vCloudRequest);
+            return mappingService.getDescribeKeyPairsResponse(vCloudResponse);
 
         } catch (Exception e) {
             log.error("EC2 DescribeKeyPairs - ", e);
             throw new EC2ServiceException(InternalError, e.getMessage() != null ? e.getMessage()
                     : "An unexpected error occurred.");
-        }*/
-        return null;
+        }
     }
 
     @Override

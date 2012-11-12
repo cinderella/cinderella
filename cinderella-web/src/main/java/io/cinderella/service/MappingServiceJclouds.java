@@ -428,4 +428,14 @@ public class MappingServiceJclouds implements MappingService {
         return new CreateKeyPairRequestVCloud(createKeyPair.getKeyName());
     }
 
+    @Override
+    public DescribeKeyPairsRequestVCloud getDescribeKeyPairsRequest(DescribeKeyPairs describeKeyPairs) {
+        return new DescribeKeyPairsRequestVCloud();
+    }
+
+    @Override
+    public DescribeKeyPairsResponse getDescribeKeyPairsResponse(DescribeKeyPairsResponseVCloud vCloudResponse) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
 }

@@ -37,6 +37,19 @@ public class EC2Controller {
     @Autowired
     private CinderellaService cinderellaService;
 
+    @RequestMapping(params = "Action=DescribeKeyPairs")
+    @ResponseBody
+    public DescribeKeyPairsResponse describeKeyPairs(EC2Request ec2Request,
+                                                     @EC2KeyNameSet DescribeKeyPairsInfoType describeKeyPairsInfoType,
+                                                     @EC2FilterSet FilterSetType filterSet) throws EC2ServiceException {
+
+        DescribeKeyPairs describeKeyPairs = new DescribeKeyPairs()
+                .withFilterSet(filterSet)
+                .withKeySet(describeKeyPairsInfoType);
+
+        return cinderellaService.describeKeyPairs(describeKeyPairs);
+    }
+
     @RequestMapping(params = "Action=CreateKeyPair")
     @ResponseBody
     public CreateKeyPairResponse createKeyPair(EC2Request ec2Request,

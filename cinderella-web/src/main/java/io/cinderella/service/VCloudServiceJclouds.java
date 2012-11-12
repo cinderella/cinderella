@@ -370,6 +370,19 @@ public class VCloudServiceJclouds implements VCloudService {
         return response;
     }
 
+    @Override
+    public DescribeKeyPairsResponseVCloud describeKeyPairs(DescribeKeyPairsRequestVCloud vCloudRequest) {
+
+
+        Metadata metadata = mediaApi.getMetadataApi(KEY_PAIR_CONTAINER).get();
+
+        System.out.println(metadata);
+
+        // todo parse response or use query api instead?
+
+        return null;
+    }
+
     private Media findOrCreateKeyPairContainerInVDCNamed(Vdc currentVDC,
                                                          final String keyPairName) {
         Media keyPairsContainer = null;

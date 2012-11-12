@@ -37,4 +37,6 @@ public interface VCloudService {
     RebootInstancesResponseVCloud rebootVms(RebootInstancesRequestVCloud vCloudRequest);
 
     CreateKeyPairResponseVCloud createKeyPair(CreateKeyPairRequestVCloud vCloudRequest);
+
+    DescribeKeyPairsResponseVCloud describeKeyPairs(DescribeKeyPairsRequestVCloud vCloudRequest);
 }
