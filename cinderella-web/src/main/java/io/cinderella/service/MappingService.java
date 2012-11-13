@@ -49,4 +49,8 @@ public interface MappingService {
     DescribeKeyPairsRequestVCloud getDescribeKeyPairsRequest(DescribeKeyPairs describeKeyPairs);
 
     DescribeKeyPairsResponse getDescribeKeyPairsResponse(DescribeKeyPairsResponseVCloud vCloudResponse);
+
+    TerminateInstancesRequestVCloud getTerminateInstancesRequest(TerminateInstances terminateInstances);
+
+    TerminateInstancesResponse getTerminateInstancesResponse(TerminateInstancesResponseVCloud vCloudResponse);
 }

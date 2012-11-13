@@ -144,6 +144,17 @@ public class EC2Controller {
         return cinderellaService.stopInstances(stopInstances);
     }
 
+    @RequestMapping(params = "Action=TerminateInstances")
+    @ResponseBody
+    public TerminateInstancesResponse terminateInstances(EC2Request ec2Request,
+                                                         @EC2InstanceIdSet InstanceIdSetType instanceIdSetType) throws Exception {
+
+        TerminateInstances terminateInstances = new TerminateInstances()
+                .withInstancesSet(instanceIdSetType);
+
+        return cinderellaService.terminateInstances(terminateInstances);
+    }
+
     @RequestMapping(params = "Action=RunInstances")
     @ResponseBody
     public RunInstancesResponse runInstances(EC2Request ec2Request,

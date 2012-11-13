@@ -7,6 +7,7 @@ import com.google.common.collect.ImmutableSet;
 import io.cinderella.domain.*;
 import io.cinderella.util.MappingUtils;
 import org.jclouds.util.InetAddresses2;
+import org.jclouds.vcloud.director.v1_5.domain.VApp;
 import org.jclouds.vcloud.director.v1_5.domain.Vdc;
 import org.jclouds.vcloud.director.v1_5.domain.Vm;
 import org.jclouds.vcloud.director.v1_5.domain.network.NetworkConnection;
@@ -420,7 +421,7 @@ public class MappingServiceJclouds implements MappingService {
 
     @Override
     public CreateKeyPairResponse getCreateKeyPairResponse(CreateKeyPairResponseVCloud vCloudResponse) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return new CreateKeyPairResponse().withRequestId(UUID.randomUUID().toString());
     }
 
     @Override
@@ -435,7 +436,36 @@ public class MappingServiceJclouds implements MappingService {
 
     @Override
     public DescribeKeyPairsResponse getDescribeKeyPairsResponse(DescribeKeyPairsResponseVCloud vCloudResponse) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return new DescribeKeyPairsResponse().withRequestId(UUID.randomUUID().toString());
+    }
+
+    @Override
+    public TerminateInstancesRequestVCloud getTerminateInstancesRequest(TerminateInstances terminateInstances) {
+        TerminateInstancesRequestVCloud request = new TerminateInstancesRequestVCloud();
+        Set<String> vmUrns = new HashSet<String>();
+        for (InstanceIdType instanceIdType : terminateInstances.getInstancesSet().getItems()) {
+            vmUrns.add(MappingUtils.instanceIdToVAppUrn(instanceIdType.getInstanceId()));
+        }
+        request.setVAppUrns(vmUrns);
+
+        return request;
+    }
+
+    @Override
+    public TerminateInstancesResponse getTerminateInstancesResponse(TerminateInstancesResponseVCloud vCloudResponse) {
+        TerminateInstancesResponse response = new TerminateInstancesResponse()
+                .withRequestId(UUID.randomUUID().toString());
+
+        for (VApp vApp : vCloudResponse.getVApps()) {
+            response.withInstancesSet()
+                    .withNewItems()
+                    .withInstanceId(MappingUtils.vAppUrnToInstanceId(vApp.getId()))
+                    .withCurrentState(MappingUtils.vCloudStatusToEc2Status(vApp.getStatus()))
+                    .withPreviousState(MappingUtils
+                            .vCloudStatusToEc2Status(vCloudResponse.getPreviousStatus().get(vApp.getId())));
+        }
+
+        return response;
     }
 
 }

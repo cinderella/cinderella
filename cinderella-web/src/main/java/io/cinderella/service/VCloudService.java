@@ -39,4 +39,6 @@ public interface VCloudService {
     CreateKeyPairResponseVCloud createKeyPair(CreateKeyPairRequestVCloud vCloudRequest);
 
     DescribeKeyPairsResponseVCloud describeKeyPairs(DescribeKeyPairsRequestVCloud vCloudRequest);
+
+    TerminateInstancesResponseVCloud terminateInstances(TerminateInstancesRequestVCloud vCloudRequest);
 }
