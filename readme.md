@@ -1,4 +1,4 @@
-# Getting Started #
+cloud# Getting Started #
 
 ## Requirements ##
 
@@ -30,11 +30,11 @@ $ mvn clean package
 Create `~/.cinderella/ec2-service.properties` with the following content:
 
 ```
-endpoint=YOUR_VCD_ENDPOINT
-useratorg=YOUR_VCD_USERATORG
-password=YOUR_VCD_PASSWORD
-key.YOUR_EC2_ACCESSKEY=YOUR_EC2_SECRETKEY
-vdc.network=VDC_NETWORK_FOR_NEW_INSTANCES
+vcd_endpoint=YOUR_VCD_ENDPOINT
+vcd_useratorg=YOUR_VCD_USERATORG
+vcd_password=YOUR_VCD_PASSWORD
+vcd_network=VDC_NETWORK_FOR_NEW_INSTANCES
+aws_key_YOUR_EC2_ACCESSKEY=YOUR_EC2_SECRETKEY
 ```
 
 ## Running ##

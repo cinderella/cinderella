@@ -1,12 +1,17 @@
 package io.cinderella.web;
 
+import io.cinderella.CloudConfig;
+import io.cinderella.LocalConfig;
 import io.cinderella.security.AuthenticationService;
 import io.cinderella.security.AuthenticationServiceImpl;
 import io.cinderella.web.interceptor.AuthInterceptor;
 import io.cinderella.web.resolver.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
@@ -27,10 +32,14 @@ import java.util.Map;
 
 @Configuration
 @EnableWebMvc
-@ComponentScan(basePackages = "io.cinderella.web.controller")
+@Import({LocalConfig.class, CloudConfig.class})
+@ComponentScan(basePackages = {"io.cinderella.web.controller"})
 public class WebConfig extends WebMvcConfigurerAdapter {
 
     private static final Charset UTF8 = Charset.forName("UTF-8");
+
+    @Autowired
+    public Environment env;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
@@ -54,6 +63,7 @@ public class WebConfig extends WebMvcConfigurerAdapter {
         argumentResolvers.add(new EC2ImageSetArgumentResolver());
         argumentResolvers.add(new EC2InstanceIdSetArgumentResolver());
         argumentResolvers.add(new EC2InstanceSetArgumentResolver());
+        argumentResolvers.add(new EC2KeyPairNameSetArgumentResolver());
         argumentResolvers.add(new EC2RebootInstancesInfoArgumentResolver());
         argumentResolvers.add(new EC2RegionSetArgumentResolver());
     }

@@ -2,6 +2,7 @@ package io.cinderella.service;
 
 import com.google.common.base.*;
 import com.google.common.collect.*;
+import io.cinderella.CinderellaConfig;
 import io.cinderella.domain.*;
 import io.cinderella.exception.EC2ServiceException;
 import io.cinderella.util.MappingUtils;
@@ -204,9 +205,9 @@ public class VCloudServiceJclouds implements VCloudService {
         }
 
         // get reference to configured vdc network
-        String vdcNetwork = env.getProperty("vdc.network");
+        String vcdNetwork = env.getProperty(CinderellaConfig.VCD_NETWORK_KEY);
         final Reference parentNetwork = FluentIterable.from(getVDC().getAvailableNetworks())
-                .filter(ReferencePredicates.<Reference>nameEquals(vdcNetwork))
+                .filter(ReferencePredicates.<Reference>nameEquals(vcdNetwork))
                 .first()
                 .get();
 
