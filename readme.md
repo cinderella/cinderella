@@ -1,4 +1,8 @@
-cloud# Getting Started #
+# Getting Started #
+
+## What is Cinderella? ##
+
+The goal is to provide a REST/Query-based API for vCloud that is compatible with Amazon EC2 and S3 services. This will allow tools like Euca2ools to interact with public or private vCloud environments by taking advantage of vCloud Director 5.1 enhancements and the vBlob project from CloudFoundry team.
 
 ## Requirements ##
 
