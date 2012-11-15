@@ -53,4 +53,8 @@ public interface MappingService {
     TerminateInstancesRequestVCloud getTerminateInstancesRequest(TerminateInstances terminateInstances);
 
     TerminateInstancesResponse getTerminateInstancesResponse(TerminateInstancesResponseVCloud vCloudResponse);
+
+    DescribeAddressesRequestVCloud getDescribeAddressesRequest(DescribeAddresses describeAddresses);
+
+    DescribeAddressesResponse getDescribeAddressesResponse(DescribeAddressesResponseVCloud vCloudResponse);
 }

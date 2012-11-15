@@ -432,6 +432,14 @@ public class VCloudServiceJclouds implements VCloudService {
         return response;
     }
 
+    @Override
+    public DescribeAddressesResponseVCloud describeAddresses(DescribeAddressesRequestVCloud vCloudRequest) {
+
+
+
+        return null;
+    }
+
     protected boolean taskDoneEventually(Task task) {
         TaskStatusEquals predicate = new TaskStatusEquals(taskApi, ImmutableSet.of(Task.Status.ABORTED,
                 Task.Status.CANCELED, Task.Status.ERROR, Task.Status.SUCCESS), ImmutableSet.<Task.Status> of());

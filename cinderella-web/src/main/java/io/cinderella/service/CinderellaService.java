@@ -89,4 +89,12 @@ public interface CinderellaService {
      * @return
      */
     TerminateInstancesResponse terminateInstances(TerminateInstances terminateInstances);
+
+
+    /**
+     *
+     * @param describeAddresses
+     * @return
+     */
+    DescribeAddressesResponse describeAddresses(DescribeAddresses describeAddresses);
 }

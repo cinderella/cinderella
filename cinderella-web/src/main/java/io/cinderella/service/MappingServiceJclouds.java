@@ -468,4 +468,15 @@ public class MappingServiceJclouds implements MappingService {
         return response;
     }
 
+    @Override
+    public DescribeAddressesRequestVCloud getDescribeAddressesRequest(DescribeAddresses describeAddresses) {
+        return new DescribeAddressesRequestVCloud();
+    }
+
+    @Override
+    public DescribeAddressesResponse getDescribeAddressesResponse(DescribeAddressesResponseVCloud vCloudResponse) {
+        // todo
+        return null;
+    }
+
 }

@@ -37,6 +37,18 @@ public class EC2Controller {
     @Autowired
     private CinderellaService cinderellaService;
 
+    @RequestMapping(params = "Action=DescribeAddresses")
+    @ResponseBody
+    public DescribeAddressesResponse describeAddresses(EC2Request ec2Request,
+                                                       @EC2FilterSet FilterSetType filterSet) throws EC2ServiceException {
+
+        DescribeAddresses describeAddresses = new DescribeAddresses()
+                .withFilterSet(filterSet);
+
+        return cinderellaService.describeAddresses(describeAddresses);
+    }
+
+
     @RequestMapping(params = "Action=DescribeKeyPairs")
     @ResponseBody
     public DescribeKeyPairsResponse describeKeyPairs(EC2Request ec2Request,
