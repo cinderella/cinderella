@@ -9,6 +9,7 @@ import org.jclouds.vcloud.director.v1_5.domain.ResourceEntity;
  */
 public class MappingUtils {
 
+    public static final String VAPP_URN_PREFIX = "urn:vcloud:vapp:";
     public static final String VM_URN_PREFIX = "urn:vcloud:vm:";
     public static final String NETWORK_URN_PREFIX = "urn:vcloud:network:";
     public static final String VAPP_TEMPLATE_URN_PREFIX = "urn:vcloud:vapptemplate:";
@@ -53,6 +54,13 @@ public class MappingUtils {
         return vmId.toString();
     }
 
+    public static String instanceIdToVAppUrn(String instanceId) {
+        if (instanceId == null) return null;
+        StringBuilder vAppId = getUuidFromSubstring(instanceId, 2);
+        vAppId.insert(0, VAPP_URN_PREFIX);
+        return vAppId.toString();
+    }
+
     private static StringBuilder getUuidFromSubstring(String id, int substringIndex) {
         StringBuilder vmId = new StringBuilder(id.substring(substringIndex));
         vmId.insert(8, '-');
@@ -85,8 +93,13 @@ public class MappingUtils {
         return vmId == null ? null : vmId.replace("-", "").replace(VM_URN_PREFIX, "i-");
     }
 
+    public static String vAppUrnToInstanceId(String vAppId) {
+        return vAppId == null ? null : vAppId.replace("-", "").replace(VAPP_URN_PREFIX, "i-");
+    }
+
     /**
      * Converts a vcloud entity status to an EC2 InstanceStateType
+     * EC2 valid values: 0 (pending) | 16 (running) | 32 (shutting-down) | 48 (terminated) | 64 (stopping) | 80 (stopped)
      * @param status
      * @return
      */
@@ -98,9 +111,13 @@ public class MappingUtils {
                 instanceStateType.setCode(16);
                 instanceStateType.setName("running");
                 break;
-            case POWERED_OFF:
+            case UNKNOWN:
                 instanceStateType.setCode(48);
                 instanceStateType.setName("terminated");
+                break;
+            case POWERED_OFF:
+                instanceStateType.setCode(80);
+                instanceStateType.setName("stopped");
                 break;
             default:
                 instanceStateType.setCode(0);

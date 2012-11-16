@@ -4,27 +4,27 @@ import com.amazon.ec2.*;
 import com.google.common.base.*;
 import com.google.common.collect.*;
 import com.google.gson.reflect.TypeToken;
+import io.cinderella.CinderellaConfig;
 import io.cinderella.domain.*;
 import io.cinderella.exception.EC2ServiceException;
 import io.cinderella.util.MappingUtils;
 import org.jclouds.crypto.SshKeys;
 import org.jclouds.io.Payloads;
 import org.jclouds.json.Json;
+import org.jclouds.lifecycle.LifeCycle;
 import org.jclouds.predicates.RetryablePredicate;
 import org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType;
 import org.jclouds.vcloud.director.v1_5.domain.*;
 import org.jclouds.vcloud.director.v1_5.domain.network.*;
 import org.jclouds.vcloud.director.v1_5.domain.org.Org;
-import org.jclouds.vcloud.director.v1_5.domain.params.InstantiateVAppTemplateParams;
-import org.jclouds.vcloud.director.v1_5.domain.params.InstantiationParams;
-import org.jclouds.vcloud.director.v1_5.domain.params.RecomposeVAppParams;
-import org.jclouds.vcloud.director.v1_5.domain.params.SourcedCompositionItemParam;
+import org.jclouds.vcloud.director.v1_5.domain.params.*;
 import org.jclouds.vcloud.director.v1_5.domain.section.GuestCustomizationSection;
 import org.jclouds.vcloud.director.v1_5.domain.section.NetworkConfigSection;
 import org.jclouds.vcloud.director.v1_5.domain.section.NetworkConnectionSection;
 import org.jclouds.vcloud.director.v1_5.features.*;
 import org.jclouds.vcloud.director.v1_5.predicates.LinkPredicates;
 import org.jclouds.vcloud.director.v1_5.predicates.ReferencePredicates;
+import org.jclouds.vcloud.director.v1_5.predicates.TaskStatusEquals;
 import org.jclouds.vcloud.director.v1_5.predicates.TaskSuccess;
 import org.jclouds.vcloud.director.v1_5.user.VCloudDirectorApi;
 import org.slf4j.Logger;
@@ -66,6 +66,7 @@ public class VCloudServiceJclouds implements VCloudService {
     private QueryApi queryApi;
     private MediaApi mediaApi;
     private NetworkApi networkApi;
+    private TaskApi taskApi;
     private UploadApi uploadApi;
     private VAppTemplateApi vAppTemplateApi;
     private VdcApi vdcApi;
@@ -87,6 +88,7 @@ public class VCloudServiceJclouds implements VCloudService {
         this.queryApi = this.vCloudDirectorApi.getQueryApi();
         this.mediaApi = this.vCloudDirectorApi.getMediaApi();
         this.networkApi = this.getVCloudDirectorApi().getNetworkApi();
+        this.taskApi = this.getVCloudDirectorApi().getTaskApi();
         this.uploadApi = this.vCloudDirectorApi.getUploadApi();
         this.vAppTemplateApi = this.getVCloudDirectorApi().getVAppTemplateApi();
         this.vdcApi = this.getVCloudDirectorApi().getVdcApi();
@@ -137,9 +139,9 @@ public class VCloudServiceJclouds implements VCloudService {
             Task shutdownTask;
             Vm tempVm = vmApi.get(vmUrn);
 
-            if (canDoThis(tempVm, Link.Rel.SHUTDOWN) && (null != vmApi.getRuntimeInfoSection(vmUrn).getVMWareTools())) {
+            if (operationPermitted(tempVm, Link.Rel.SHUTDOWN) && (null != vmApi.getRuntimeInfoSection(vmUrn).getVMWareTools())) {
                 shutdownTask = vmApi.shutdown(vmUrn);
-            } else if (canDoThis(tempVm, Link.Rel.POWER_OFF)) {
+            } else if (operationPermitted(tempVm, Link.Rel.POWER_OFF)) {
                 shutdownTask = vmApi.powerOff(vmUrn);
             } else {
                 throw new EC2ServiceException("These options are not available");
@@ -203,9 +205,9 @@ public class VCloudServiceJclouds implements VCloudService {
         }
 
         // get reference to configured vdc network
-        String vdcNetwork = env.getProperty("vdc.network");
+        String vcdNetwork = env.getProperty(CinderellaConfig.VCD_NETWORK_KEY);
         final Reference parentNetwork = FluentIterable.from(getVDC().getAvailableNetworks())
-                .filter(ReferencePredicates.<Reference>nameEquals(vdcNetwork))
+                .filter(ReferencePredicates.<Reference>nameEquals(vcdNetwork))
                 .first()
                 .get();
 
@@ -330,10 +332,10 @@ public class VCloudServiceJclouds implements VCloudService {
             Task rebootTask;
             Vm tempVm = vmApi.get(vmUrn);
 
-            if (canDoThis(tempVm, Link.Rel.REBOOT) && (null != vmApi.getRuntimeInfoSection(vmUrn).getVMWareTools())) {
+            if (operationPermitted(tempVm, Link.Rel.REBOOT) && (null != vmApi.getRuntimeInfoSection(vmUrn).getVMWareTools())) {
                 log.info("rebooting " + vmUrn);
                 rebootTask = vmApi.reboot(vmUrn);
-            } else if (canDoThis(tempVm, Link.Rel.RESET)) {
+            } else if (operationPermitted(tempVm, Link.Rel.RESET)) {
                 log.info("resetting " + vmUrn);
                 rebootTask = vmApi.reset(vmUrn);
             } else {
@@ -427,6 +429,69 @@ public class VCloudServiceJclouds implements VCloudService {
         return new DescribeKeyPairsResponse()
                 .withRequestId(UUID.randomUUID().toString())
                 .withKeySet(items);
+    }
+
+    @Override
+    public TerminateInstancesResponseVCloud terminateInstances(TerminateInstancesRequestVCloud vCloudRequest) {
+
+        TerminateInstancesResponseVCloud response = new TerminateInstancesResponseVCloud();
+
+        Map<String, ResourceEntity.Status> previousStatus = getVAppStatusMap(vCloudRequest.getVAppUrns());
+        response.setPreviousStatus(previousStatus);
+
+        // todo: use something like Guava's ListenableFuture ?
+        Set<VApp> vApps = new HashSet<VApp>();
+        for (String vAppUrn : vCloudRequest.getVAppUrns()) {
+
+            VApp tempVApp = vAppApi.get(vAppUrn);
+            if (tempVApp.isDeployed()) {
+                log.info("shutting down " + vAppUrn);
+
+                Task shutdownTask = vAppApi.undeploy(vAppUrn,
+                        UndeployVAppParams.builder()
+                                .undeployPowerAction(UndeployVAppParams.PowerAction.SHUTDOWN)
+                                .build()
+                );
+                boolean shutdownSuccess = taskDoneEventually(shutdownTask);
+                log.info(vAppUrn + " shutdown success? " + shutdownSuccess);
+            }
+
+            boolean shutdownSuccessful = false;
+            tempVApp = vAppApi.get(vAppUrn);
+            if (operationPermitted(tempVApp, Link.Rel.REMOVE)) {
+                log.info("removing " + vAppUrn);
+                Task removeTask = vAppApi.remove(vAppUrn);
+                shutdownSuccessful = retryTaskSuccessLong.apply(removeTask);
+                log.info(vAppUrn + " remove success? " + shutdownSuccessful);
+            }
+
+            if (shutdownSuccessful) {
+                // at this point, the vApp is no longer available so fake status to UNKNOWN and map to "terminated" for EC2
+                vApps.add(VApp.builder().fromVApp(tempVApp).status(ResourceEntity.Status.UNKNOWN).build());
+            } else {
+                vApps.add(tempVApp);
+            }
+        }
+        response.setVApps(ImmutableSet.copyOf(vApps));
+
+
+        return response;
+    }
+
+    @Override
+    public DescribeAddressesResponseVCloud describeAddresses(DescribeAddressesRequestVCloud vCloudRequest) {
+
+
+
+        return null;
+    }
+
+    protected boolean taskDoneEventually(Task task) {
+        TaskStatusEquals predicate = new TaskStatusEquals(taskApi, ImmutableSet.of(Task.Status.ABORTED,
+                Task.Status.CANCELED, Task.Status.ERROR, Task.Status.SUCCESS), ImmutableSet.<Task.Status> of());
+        RetryablePredicate<Task> retryablePredicate = new RetryablePredicate<Task>(predicate,
+                LONG_TASK_TIMEOUT_SECONDS * 1000L);
+        return retryablePredicate.apply(task);
     }
 
     private Map<String, String> findOrCreateKeyPairContainerInVDCNamed(Vdc currentVDC,
@@ -708,6 +773,19 @@ public class VCloudServiceJclouds implements VCloudService {
         return statusMap;
     }
 
+    private Map<String, ResourceEntity.Status> getVAppStatusMap(Iterable<String> vAppUrns) {
+
+        Map<String, ResourceEntity.Status> statusMap = new HashMap<String, ResourceEntity.Status>();
+
+        // todo: terribly inefficient; look to see if 5.1 query api supports something better
+        // key on URN, value is ResourceEntity.Status
+        for (String vAppUrn : vAppUrns) {
+            VApp vApp = vAppApi.get(vAppUrn);
+            statusMap.put(vAppUrn, vApp.getStatus());
+        }
+        return statusMap;
+    }
+
     private DescribeRegionsResponseVCloud listRegions(final Iterable<String> interestedRegions) throws Exception {
         DescribeRegionsResponseVCloud regions = new DescribeRegionsResponseVCloud();
         FluentIterable<Vdc> vdcs = FluentIterable.from(vCloudDirectorApi.getOrgApi().list())
@@ -865,7 +943,7 @@ public class VCloudServiceJclouds implements VCloudService {
         return response;
     }
 
-    boolean canDoThis(Resource resource, Link.Rel rel) {
+    boolean operationPermitted(Resource resource, Link.Rel rel) {
         return Iterables.any(resource.getLinks(), LinkPredicates.relEquals(rel));
     }
 

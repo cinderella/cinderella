@@ -2,13 +2,12 @@ package io.cinderella.security;
 
 import com.cloud.bridge.service.UserContext;
 import com.cloud.bridge.util.EC2RestAuth;
+import io.cinderella.CinderellaConfig;
 import io.cinderella.exception.PermissionDeniedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
-import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -24,8 +23,6 @@ import java.util.Enumeration;
  * @author shane
  * @since 9/26/12
  */
-@Component
-@PropertySource("file:${user.home}/.cinderella/ec2-service.properties")
 public class AuthenticationServiceImpl implements AuthenticationService {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationServiceImpl.class);
@@ -117,19 +114,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             }
         }
 
-        // [B] Use the cloudAccessKey to get the users secret key in the db
-        // UserCredentialsDao credentialDao = new UserCredentialsDao();
-      /*
-       * UserCredentials cloudKeys = credentialDao.getByAccessKey(
-       * cloudAccessKey ); if ( null == cloudKeys ) { logger.debug(
-       * cloudAccessKey +
-       * " is not defined in the EC2 service - call SetUserKeys" );
-       * response.sendError(404, cloudAccessKey +
-       * " is not defined in the EC2 service - call SetUserKeys" ); return
-       * false; } else cloudSecretKey = cloudKeys.getSecretKey();
-       */
-//        cloudSecretKey = ec2properties.getProperty("key." + cloudAccessKey);
-        String cloudSecretKey = env.getProperty("key." + cloudAccessKey);
+        String cloudSecretKey = env.getProperty(CinderellaConfig.AWS_PREFIX_KEY + cloudAccessKey);
         if (null == cloudSecretKey) {
             throw new PermissionDeniedException("No secret key configured for access key: "+ cloudAccessKey);
         }

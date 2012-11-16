@@ -1,5 +1,9 @@
 # Getting Started #
 
+## What is Cinderella? ##
+
+The goal is to provide a REST/Query-based API for vCloud that is compatible with Amazon EC2 and S3 services. This will allow tools like Euca2ools to interact with public or private vCloud environments by taking advantage of vCloud Director 5.1 enhancements and the vBlob project from CloudFoundry team.
+
 ## Requirements ##
 
 * Java 1.6+
@@ -30,11 +34,11 @@ $ mvn clean package
 Create `~/.cinderella/ec2-service.properties` with the following content:
 
 ```
-endpoint=YOUR_VCD_ENDPOINT
-useratorg=YOUR_VCD_USERATORG
-password=YOUR_VCD_PASSWORD
-key.YOUR_EC2_ACCESSKEY=YOUR_EC2_SECRETKEY
-vdc.network=VDC_NETWORK_FOR_NEW_INSTANCES
+vcd_endpoint=YOUR_VCD_ENDPOINT
+vcd_useratorg=YOUR_VCD_USERATORG
+vcd_password=YOUR_VCD_PASSWORD
+vcd_network=VDC_NETWORK_FOR_NEW_INSTANCES
+aws_key_YOUR_EC2_ACCESSKEY=YOUR_EC2_SECRETKEY
 ```
 
 ## Running ##

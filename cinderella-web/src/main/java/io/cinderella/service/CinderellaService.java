@@ -90,4 +90,18 @@ public interface CinderellaService {
     RunInstancesResponse runInstances(RunInstances runInstances);
 
 
+    /**
+     *
+     * @param terminateInstances
+     * @return
+     */
+    TerminateInstancesResponse terminateInstances(TerminateInstances terminateInstances);
+
+
+    /**
+     *
+     * @param describeAddresses
+     * @return
+     */
+    DescribeAddressesResponse describeAddresses(DescribeAddresses describeAddresses);
 }

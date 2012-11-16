@@ -1,12 +1,13 @@
 package io.cinderella;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.inject.*;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Module;
 import io.cinderella.service.*;
 import org.jclouds.Constants;
 import org.jclouds.ContextBuilder;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
-import org.jclouds.http.functions.ParseJson;
 import org.jclouds.json.Json;
 import org.jclouds.json.config.GsonModule;
 import org.jclouds.logging.ConsoleLogger;
@@ -19,11 +20,10 @@ import org.jclouds.vcloud.director.v1_5.user.VCloudDirectorApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.MethodInvokingFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.env.Environment;
 import org.springframework.http.converter.xml.MarshallingHttpMessageConverter;
@@ -41,21 +41,20 @@ import java.util.Properties;
  * @since 9/27/12
  */
 @Configuration
-@PropertySource("file:${user.home}/.cinderella/ec2-service.properties")
+@Import({LocalConfig.class, CloudConfig.class})
 public class CinderellaConfig {
 
     private static final Logger log = LoggerFactory.getLogger(CinderellaConfig.class);
 
+
+    public static final String AWS_PREFIX_KEY = "aws_key_";
+    public static final String VCD_USERATORG_KEY = "vcd_useratorg";
+    public static final String VCD_PASSWORD_KEY = "vcd_password";
+    public static final String VCD_ENDPOINT_KEY = "vcd_endpoint";
+    public static final String VCD_NETWORK_KEY = "vcd_network";
+
+    // todo: parameterize this for other env's
     private static final String HOST_PORT = "http://localhost:8080";
-
-    @Value("${endpoint}")
-    private String endpoint;
-
-    @Value("${useratorg}")
-    private String useratorg;
-
-    @Value("${password}")
-    private String password;
 
     @Autowired
     public Environment env;
@@ -102,8 +101,7 @@ public class CinderellaConfig {
     }
 
     private SupportedVersions vCloudApiSupportedVersions() {
-        SupportedVersions supportedVersions = restTemplateVcloud().getForObject(endpoint + "/versions", SupportedVersions.class);
-        return supportedVersions;
+        return restTemplateVcloud().getForObject(env.getProperty(VCD_ENDPOINT_KEY) + "/versions", SupportedVersions.class);
     }
 
     public RestTemplate restTemplateVcloud() {
@@ -136,6 +134,8 @@ public class CinderellaConfig {
         overrides.setProperty(Constants.PROPERTY_TRUST_ALL_CERTS, "true");
         overrides.setProperty(Constants.PROPERTY_RELAX_HOSTNAME, "true");
 
+        String endpoint = env.getProperty(VCD_ENDPOINT_KEY);
+
         log.info(">>> vCD Endpoint: " + endpoint);
 
         // dynamically set api version
@@ -147,7 +147,7 @@ public class CinderellaConfig {
                 .newBuilder("vcloud-director")
                 .endpoint(endpoint)
                 .apiVersion(latestVCloudApiVersion)
-                .credentials(useratorg, password)
+                .credentials(env.getProperty(VCD_USERATORG_KEY), env.getProperty(VCD_PASSWORD_KEY))
                 .modules(
                         ImmutableSet.<Module>builder()
                                 .add(new SLF4JLoggingModule())

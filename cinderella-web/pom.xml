@@ -16,6 +16,7 @@
 
     <properties>
         <cglib.version>2.2.2</cglib.version>
+        <cloudfoundry.runtime.version>0.8.1</cloudfoundry.runtime.version>
         <cxf.version>2.6.2</cxf.version>
         <log4j.version>1.2.17</log4j.version>
         <jetty.version>8.1.5.v20120716</jetty.version>
@@ -24,6 +25,12 @@
     </properties>
 
     <dependencies>
+
+        <dependency>
+            <groupId>org.cloudfoundry</groupId>
+            <artifactId>cloudfoundry-runtime</artifactId>
+            <version>${cloudfoundry.runtime.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>commons-codec</groupId>
@@ -184,6 +191,11 @@
             <id>jclouds-cin-snapshots</id>
             <url>http://repository-cinderella.forge.cloudbees.com/snapshot/</url>
             <snapshots/>
+        </repository>
+        <repository>
+            <id>org.springframework.maven.milestone</id>
+            <name>Spring Framework Maven Milestone Repository</name>
+            <url>http://maven.springframework.org/milestone</url>
         </repository>
     </repositories>
     <pluginRepositories>

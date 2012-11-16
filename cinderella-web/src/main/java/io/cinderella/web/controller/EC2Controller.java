@@ -37,6 +37,18 @@ public class EC2Controller {
     @Autowired
     private CinderellaService cinderellaService;
 
+    @RequestMapping(params = "Action=DescribeAddresses")
+    @ResponseBody
+    public DescribeAddressesResponse describeAddresses(EC2Request ec2Request,
+                                                       @EC2FilterSet FilterSetType filterSet) throws EC2ServiceException {
+
+        DescribeAddresses describeAddresses = new DescribeAddresses()
+                .withFilterSet(filterSet);
+
+        return cinderellaService.describeAddresses(describeAddresses);
+    }
+
+
     @RequestMapping(params = "Action=DescribeKeyPairs")
     @ResponseBody
     public DescribeKeyPairsResponse describeKeyPairs(EC2Request ec2Request,
@@ -153,6 +165,17 @@ public class EC2Controller {
                 .withInstancesSet(instanceIdSetType);
 
         return cinderellaService.stopInstances(stopInstances);
+    }
+
+    @RequestMapping(params = "Action=TerminateInstances")
+    @ResponseBody
+    public TerminateInstancesResponse terminateInstances(EC2Request ec2Request,
+                                                         @EC2InstanceIdSet InstanceIdSetType instanceIdSetType) throws Exception {
+
+        TerminateInstances terminateInstances = new TerminateInstances()
+                .withInstancesSet(instanceIdSetType);
+
+        return cinderellaService.terminateInstances(terminateInstances);
     }
 
     @RequestMapping(params = "Action=RunInstances")
