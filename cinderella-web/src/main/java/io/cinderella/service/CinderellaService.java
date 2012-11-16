@@ -70,6 +70,13 @@ public interface CinderellaService {
 
     /**
      *
+     * @param deleteKeyPair
+     * @return
+     */
+    DeleteKeyPairResponse deleteKeyPair(DeleteKeyPair deleteKeyPair);
+
+    /**
+     *
      * @param describeKeyPairs
      * @return
      */

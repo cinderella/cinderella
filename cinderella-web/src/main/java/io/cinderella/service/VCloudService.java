@@ -1,5 +1,6 @@
 package io.cinderella.service;
 
+import com.amazon.ec2.*;
 import io.cinderella.domain.*;
 import org.jclouds.vcloud.director.v1_5.domain.VApp;
 import org.jclouds.vcloud.director.v1_5.domain.Vdc;
@@ -36,7 +37,9 @@ public interface VCloudService {
 
     RebootInstancesResponseVCloud rebootVms(RebootInstancesRequestVCloud vCloudRequest);
 
-    CreateKeyPairResponseVCloud createKeyPair(CreateKeyPairRequestVCloud vCloudRequest);
+    CreateKeyPairResponse createKeyPair(CreateKeyPair vCloudRequest);
 
-    DescribeKeyPairsResponseVCloud describeKeyPairs(DescribeKeyPairsRequestVCloud vCloudRequest);
+    DescribeKeyPairsResponse describeKeyPairs(DescribeKeyPairs vCloudRequest);
+
+    DeleteKeyPairResponse deleteKeyPair(DeleteKeyPair vCloudRequest);
 }

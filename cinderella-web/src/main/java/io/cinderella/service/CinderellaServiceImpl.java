@@ -6,6 +6,8 @@ import io.cinderella.exception.EC2ServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.UUID;
+
 import static io.cinderella.exception.EC2ServiceException.ClientError.InvalidAMIID_Malformed;
 import static io.cinderella.exception.EC2ServiceException.ClientError.InvalidInstanceID_Malformed;
 import static io.cinderella.exception.EC2ServiceException.ClientError.Unsupported;
@@ -181,10 +183,27 @@ public class CinderellaServiceImpl implements CinderellaService {
     public CreateKeyPairResponse createKeyPair(CreateKeyPair createKeyPair) {
         try {
 
-            CreateKeyPairRequestVCloud vCloudRequest = mappingService.getCreateKeyPairRequest(createKeyPair);
-            CreateKeyPairResponseVCloud vCloudResponse = vCloudService.createKeyPair(vCloudRequest);
-            return mappingService.getCreateKeyPairResponse(vCloudResponse);
+//            CreateKeyPairRequestVCloud vCloudRequest = mappingService.getCreateKeyPairRequest(createKeyPair);
+            return vCloudService.createKeyPair(createKeyPair);
+//            return mappingService.getCreateKeyPairResponse(vCloudResponse);
 
+        } catch (EC2ServiceException e) {
+            log.error("EC2 CreateKeyPair - ", e);
+            throw e;
+        } catch (Exception e) {
+            log.error("EC2 CreateKeyPair - ", e);
+            throw new EC2ServiceException(InternalError, e.getMessage() != null ? e.getMessage()
+                    : "An unexpected error occurred.");
+        }
+    }
+
+    @Override
+    public DeleteKeyPairResponse deleteKeyPair(DeleteKeyPair deleteKeyPair) {
+        try {
+            return vCloudService.deleteKeyPair(deleteKeyPair);
+        } catch (EC2ServiceException e) {
+            log.error("EC2 CreateKeyPair - ", e);
+            throw e;
         } catch (Exception e) {
             log.error("EC2 CreateKeyPair - ", e);
             throw new EC2ServiceException(InternalError, e.getMessage() != null ? e.getMessage()
@@ -196,9 +215,10 @@ public class CinderellaServiceImpl implements CinderellaService {
     public DescribeKeyPairsResponse describeKeyPairs(DescribeKeyPairs describeKeyPairs) {
         try {
 
-            DescribeKeyPairsRequestVCloud vCloudRequest = mappingService.getDescribeKeyPairsRequest(describeKeyPairs);
-            DescribeKeyPairsResponseVCloud vCloudResponse = vCloudService.describeKeyPairs(vCloudRequest);
-            return mappingService.getDescribeKeyPairsResponse(vCloudResponse);
+//            DescribeKeyPairs vCloudRequest = mappingService.getDescribeKeyPairsRequest(describeKeyPairs);
+            return vCloudService.describeKeyPairs(describeKeyPairs);
+//            return mappingService.getDescribeKeyPairsResponse(vCloudResponse);
+
 
         } catch (Exception e) {
             log.error("EC2 DescribeKeyPairs - ", e);

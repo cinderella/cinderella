@@ -57,6 +57,17 @@ public class EC2Controller {
         return cinderellaService.createKeyPair(new CreateKeyPair().withKeyName(keyName));
     }
 
+    @RequestMapping(params = "Action=DeleteKeyPair")
+    @ResponseBody
+    public DeleteKeyPairResponse deleteKeyPair(EC2Request ec2Request,
+                                                @RequestParam(value = "KeyName") String keyName) {
+
+        DeleteKeyPair deleteKeyPair = new DeleteKeyPair()
+                .withKeyName(keyName);
+
+        return cinderellaService.deleteKeyPair(deleteKeyPair);
+    }
+
     @RequestMapping(params = "Action=DescribeAvailabilityZones")
     @ResponseBody
     public DescribeAvailabilityZonesResponse describeAvailabilityZones(EC2Request ec2Request,

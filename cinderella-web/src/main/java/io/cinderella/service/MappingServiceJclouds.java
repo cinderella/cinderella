@@ -418,6 +418,7 @@ public class MappingServiceJclouds implements MappingService {
                 .withReturn(vCloudResponse.isSuccess());
     }
 
+/*
     @Override
     public CreateKeyPairResponse getCreateKeyPairResponse(CreateKeyPairResponseVCloud vCloudResponse) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
@@ -427,15 +428,23 @@ public class MappingServiceJclouds implements MappingService {
     public CreateKeyPairRequestVCloud getCreateKeyPairRequest(CreateKeyPair createKeyPair) {
         return new CreateKeyPairRequestVCloud(createKeyPair.getKeyName());
     }
+*/
 
+/*
     @Override
     public DescribeKeyPairsRequestVCloud getDescribeKeyPairsRequest(DescribeKeyPairs describeKeyPairs) {
         return new DescribeKeyPairsRequestVCloud();
     }
+*/
 
+/*
     @Override
     public DescribeKeyPairsResponse getDescribeKeyPairsResponse(DescribeKeyPairsResponseVCloud vCloudResponse) {
+        return new DescribeKeyPairsResponse()
+                .withRequestId(UUID.randomUUID().toString())
+                .withKeySet(vCloudResponse.)
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
+*/
 
 }

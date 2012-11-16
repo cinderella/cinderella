@@ -1,7 +1,9 @@
 package io.cinderella.service;
 
+import com.amazon.ec2.*;
 import com.google.common.base.*;
 import com.google.common.collect.*;
+import com.google.gson.reflect.TypeToken;
 import io.cinderella.domain.*;
 import io.cinderella.exception.EC2ServiceException;
 import io.cinderella.util.MappingUtils;
@@ -34,8 +36,8 @@ import javax.inject.Inject;
 import java.util.*;
 
 import static com.google.common.base.Predicates.and;
-import static com.google.common.collect.Iterables.find;
-import static com.google.common.collect.Iterables.getFirst;
+import static com.google.common.collect.Iterables.*;
+import static io.cinderella.exception.EC2ServiceException.ClientError.InvalidKeyPair_Duplicate;
 import static org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType.*;
 import static org.jclouds.vcloud.director.v1_5.predicates.LinkPredicates.relEquals;
 import static org.jclouds.vcloud.director.v1_5.predicates.ReferencePredicates.nameEquals;
@@ -53,8 +55,6 @@ public class VCloudServiceJclouds implements VCloudService {
 
     @Inject
     protected Json json;
-
-    public static final String MEDIA = "media";
 
     private static final String KEY_PAIR_CONTAINER = "keypairs";
 
@@ -354,36 +354,82 @@ public class VCloudServiceJclouds implements VCloudService {
     }
 
     @Override
-    public CreateKeyPairResponseVCloud createKeyPair(CreateKeyPairRequestVCloud vCloudRequest) {
+    public CreateKeyPairResponse createKeyPair(CreateKeyPair vCloudRequest) {
 
-        String keyPairName = vCloudRequest.getKeyPairName();
-
+        String keyPairName = vCloudRequest.getKeyName();
 
         Vdc currentVDC = getVDC();
-        Media keyPairsContainer = findOrCreateKeyPairContainerInVDCNamed(currentVDC, keyPairName);
-        String keypairValue = mediaApi.getMetadataApi(keyPairsContainer.getId()).get(keyPairName);
+        Map<String, String> sshKey = findOrCreateKeyPairContainerInVDCNamed(currentVDC, keyPairName);
 
-        CreateKeyPairResponseVCloud response = new CreateKeyPairResponseVCloud();
-        response.setKeyName(keyPairName);
-        response.setKeyMaterial(keypairValue);
-
-        return response;
+        return new CreateKeyPairResponse()
+                .withRequestId(UUID.randomUUID().toString())
+                .withKeyName(keyPairName)
+                .withKeyFingerprint(sshKey.get("keyFingerprint"))
+                .withKeyMaterial(sshKey.get("private"));
     }
 
     @Override
-    public DescribeKeyPairsResponseVCloud describeKeyPairs(DescribeKeyPairsRequestVCloud vCloudRequest) {
+    public DeleteKeyPairResponse deleteKeyPair(final DeleteKeyPair vCloudRequest) {
 
+        Media keyPairsContainer = null;
+        Optional<Media> optionalKeyPairsContainer = null;
 
-        Metadata metadata = mediaApi.getMetadataApi(KEY_PAIR_CONTAINER).get();
+        optionalKeyPairsContainer = findAllEmptyMediaInOrg().first();
 
-        System.out.println(metadata);
+        if (optionalKeyPairsContainer.isPresent()) {
+            keyPairsContainer = optionalKeyPairsContainer.get();
+        } else {
+            return null;
+        }
+
+        mediaApi.getMetadataApi(keyPairsContainer.getId()).remove(vCloudRequest.getKeyName());
+
+        return new DeleteKeyPairResponse()
+                .withRequestId(UUID.randomUUID().toString())
+                .withReturn(true);
+    }
+
+    @Override
+    public DescribeKeyPairsResponse describeKeyPairs(final DescribeKeyPairs vCloudRequest) {
+
+        Media keyPairsContainer = null;
+        Optional<Media> optionalKeyPairsContainer = null;
+
+        optionalKeyPairsContainer = FluentIterable
+                .from(findAllEmptyMediaInOrg().toImmutableList())
+                .filter(new Predicate<Media>() {
+                    @Override
+                    public boolean apply(Media input) {
+                        return (null == vCloudRequest.getKeySet().getItems() || (Iterables.isEmpty(vCloudRequest.getKeySet().getItems())
+                                || Iterables.getOnlyElement(vCloudRequest.getKeySet().getItems()).getKeyName() != null));
+                    }
+                }).first();
+
+        if (optionalKeyPairsContainer.isPresent()) {
+            keyPairsContainer = optionalKeyPairsContainer.get();
+        } else {
+            return null;
+        }
 
         // todo parse response or use query api instead?
 
-        return null;
+        Map<String, String> sshKey;
+        DescribeKeyPairsResponseInfoType items = new DescribeKeyPairsResponseInfoType();
+        for (MetadataEntry entry : mediaApi.getMetadataApi(keyPairsContainer.getId()).get().getMetadataEntries()) {
+            sshKey = json.fromJson(entry.getValue(), new TypeToken<Map<String, String>>(){}.getType());
+            items
+                .withNewItems()
+                    .withKeyName(sshKey.get("keyName"))
+                    .withKeyFingerprint(sshKey.get("keyFingerprint"));
+        }
+
+
+        return new DescribeKeyPairsResponse()
+                .withRequestId(UUID.randomUUID().toString())
+                .withKeySet(items);
     }
 
-    private Media findOrCreateKeyPairContainerInVDCNamed(Vdc currentVDC,
+    private Map<String, String> findOrCreateKeyPairContainerInVDCNamed(Vdc currentVDC,
                                                          final String keyPairName) {
         Media keyPairsContainer = null;
 
@@ -392,22 +438,41 @@ public class VCloudServiceJclouds implements VCloudService {
 
             @Override
             public boolean apply(Media input) {
-                return mediaApi.getMetadataApi(input.getId()).get(
-                        keyPairName) != null;
+                return KEY_PAIR_CONTAINER.equals(input.getName());
             }
         });
 
-        if (optionalKeyPairsContainer.isPresent())
-            keyPairsContainer = optionalKeyPairsContainer.get();
+        Map<String, String> sshKeys;
 
-        if (keyPairsContainer == null) {
-            keyPairsContainer = uploadKeyPairInVCD(currentVDC,
+        if (optionalKeyPairsContainer.isPresent()) {
+            keyPairsContainer = optionalKeyPairsContainer.get();
+            if (mediaApi.getMetadataApi(keyPairsContainer.getId()).get(keyPairName) != null) {
+                throw new EC2ServiceException(InvalidKeyPair_Duplicate, String.format("The keypair '%s' already exists.", keyPairName));
+
+            }
+            sshKeys = SshKeys.generate();
+            ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+            builder
+                .putAll(sshKeys)
+                .put("keyFingerprint", SshKeys.sha1PrivateKey(sshKeys.get("private")));
+            sshKeys = builder.build();
+
+            setKeyPairOnkeyPairsContainer(keyPairsContainer, keyPairName, sshKeyToJson(keyPairName, sshKeys));
+        } else {
+            sshKeys = uploadKeyPairInVCD(currentVDC,
                     KEY_PAIR_CONTAINER, keyPairName);
+
+            ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+            builder
+                .putAll(sshKeys)
+                .put("keyFingerprint", SshKeys.sha1PrivateKey(sshKeys.get("private")));
+            sshKeys = builder.build();
+
         }
-        return keyPairsContainer;
+        return sshKeys;
     }
 
-    private Media uploadKeyPairInVCD(Vdc currentVDC,
+    private Map<String, String> uploadKeyPairInVCD(Vdc currentVDC,
                                      String keyPairsContainerName, String keyPairName) {
         Media keyPairsContainer = addEmptyMediaInVDC(currentVDC,
                 keyPairsContainerName);
@@ -423,9 +488,12 @@ public class VCloudServiceJclouds implements VCloudService {
         uploadApi.upload(uploadLink.getHref(), Payloads.newByteArrayPayload(iso));
 
 //        Checks.checkMediaFor(VCloudDirectorMediaType.MEDIA, keyPairsContainer);
-        setKeyPairOnkeyPairsContainer(keyPairsContainer, keyPairName, generateKeyPair(keyPairName));
+        Map<String, String> sshKeys = SshKeys.generate();
+        sshKeys.put("keyFingerprint", SshKeys.sha1PrivateKey(sshKeys.get("private")));
 
-        return keyPairsContainer;
+        setKeyPairOnkeyPairsContainer(keyPairsContainer, keyPairName, sshKeyToJson(keyPairName, sshKeys));
+
+        return sshKeys;
     }
 
     private Media addEmptyMediaInVDC(Vdc currentVDC, String keyPairName) {
@@ -443,17 +511,14 @@ public class VCloudServiceJclouds implements VCloudService {
     private void setKeyPairOnkeyPairsContainer(Media media, String keyPairName,
                                                String keyPair) {
 
-        /*Task setKeyPair = */mediaApi.getMetadataApi(media.getId()).put(keyPairName, keyPair);
+        Task setKeyPair = mediaApi.getMetadataApi(media.getId()).put(keyPairName, keyPair);
 
-//        Checks.checkTask(setKeyPair);
-        /*assertTrue(retryTaskSuccess.apply(setKeyPair),
-                String.format(TASK_COMPLETE_TIMELY, "setKeyPair"));*/
+        Predicate<Task> retryTaskSuccess = new RetryablePredicate<Task>(new TaskSuccess(vCloudDirectorApi.getTaskApi()), 100 * 1000L);
+
+        retryTaskSuccess.apply(setKeyPair);
     }
 
-    private String generateKeyPair(String keyPairName) {
-
-        Map<String, String> sshKey = SshKeys.generate();
-
+    private String sshKeyToJson (String keyPairName, Map<String, String> sshKey) {
         Map<String, String> key = Maps.newHashMap();
         key.put("keyName", keyPairName);
         key.put("keyFingerprint", SshKeys.sha1PrivateKey(sshKey.get("private")));

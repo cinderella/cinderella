@@ -42,6 +42,7 @@ public interface MappingService {
     RebootInstancesResponse getRebootInstancesResponse(RebootInstancesResponseVCloud vCloudResponse);
 
 
+/*
     CreateKeyPairResponse getCreateKeyPairResponse(CreateKeyPairResponseVCloud vCloudResponse);
 
     CreateKeyPairRequestVCloud getCreateKeyPairRequest(CreateKeyPair createKeyPair);
@@ -49,4 +50,5 @@ public interface MappingService {
     DescribeKeyPairsRequestVCloud getDescribeKeyPairsRequest(DescribeKeyPairs describeKeyPairs);
 
     DescribeKeyPairsResponse getDescribeKeyPairsResponse(DescribeKeyPairsResponseVCloud vCloudResponse);
+*/
 }

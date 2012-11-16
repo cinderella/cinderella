@@ -56,6 +56,7 @@ public class WebConfig extends WebMvcConfigurerAdapter {
         argumentResolvers.add(new EC2InstanceSetArgumentResolver());
         argumentResolvers.add(new EC2RebootInstancesInfoArgumentResolver());
         argumentResolvers.add(new EC2RegionSetArgumentResolver());
+        argumentResolvers.add(new EC2KeyPairNameSetArgumentResolver());
     }
 
     @Bean
