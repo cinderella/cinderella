@@ -72,7 +72,7 @@ public class CinderellaConfig {
 
     @Bean
     public VCloudService vCloudService() {
-        return new VCloudServiceJclouds(vCloudDirectorApi());
+        return new VCloudServiceJclouds(vCloudDirectorApi(), vCloudDirectorApi15());
     }
 
     @Bean
@@ -126,6 +126,45 @@ public class CinderellaConfig {
 
         return marshaller;
     }
+
+   /**
+    * Horrible hack to gain access to 1.5-specific stuff
+    */
+   @Bean
+   public VCloudDirectorApi vCloudDirectorApi15() {
+
+      Properties overrides = new Properties();
+      overrides.setProperty(Constants.PROPERTY_TRUST_ALL_CERTS, "true");
+      overrides.setProperty(Constants.PROPERTY_RELAX_HOSTNAME, "true");
+
+      String endpoint = env.getProperty(VCD_ENDPOINT_KEY);
+
+      log.info(">>> vCD Endpoint: " + endpoint);
+
+      // hardcode api version
+      String latestVCloudApiVersion = "1.5";
+      log.info(">>> Targeting vCD API Version: " + latestVCloudApiVersion);
+
+      ContextBuilder builder = ContextBuilder
+            .newBuilder("vcloud-director")
+            .endpoint(endpoint)
+            .apiVersion(latestVCloudApiVersion)
+            .credentials(env.getProperty(VCD_USERATORG_KEY), env.getProperty(VCD_PASSWORD_KEY))
+            .modules(
+                  ImmutableSet.<Module>builder()
+                        .add(new SLF4JLoggingModule())
+                        .add(new EnterpriseConfigurationModule())
+                        .build()
+            )
+            .overrides(overrides);
+
+      VCloudDirectorContext context = VCloudDirectorContext.class.cast(builder.build());
+
+      context.utils().injector().injectMembers(this);
+      VCloudDirectorApi vCloudDirectorApi = context.getApi();
+
+      return (vCloudDirectorApi != null ? vCloudDirectorApi : null);
+   }
 
     @Bean
     public VCloudDirectorApi vCloudDirectorApi() {

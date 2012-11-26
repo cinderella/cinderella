@@ -479,13 +479,15 @@ public class MappingServiceJclouds implements MappingService {
 
     @Override
     public DescribeAddressesRequestVCloud getDescribeAddressesRequest(DescribeAddresses describeAddresses) {
+       // todo
         return new DescribeAddressesRequestVCloud();
     }
 
     @Override
     public DescribeAddressesResponse getDescribeAddressesResponse(DescribeAddressesResponseVCloud vCloudResponse) {
         // todo
-        return null;
+        return new DescribeAddressesResponse()
+              .withRequestId(UUID.randomUUID().toString());
     }
 
 }

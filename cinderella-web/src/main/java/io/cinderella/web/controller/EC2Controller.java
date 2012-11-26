@@ -51,9 +51,11 @@ public class EC2Controller {
    @RequestMapping(params = "Action=DescribeAddresses")
    @ResponseBody
    public DescribeAddressesResponse describeAddresses(EC2Request ec2Request,
+                                                      @EC2PublicIpSet DescribeAddressesInfoType describeAddressesInfoType,
                                                       @EC2FilterSet FilterSetType filterSet) throws EC2ServiceException {
 
       DescribeAddresses describeAddresses = new DescribeAddresses()
+            .withPublicIpsSet(describeAddressesInfoType)
             .withFilterSet(filterSet);
 
       return cinderellaService.describeAddresses(describeAddresses);

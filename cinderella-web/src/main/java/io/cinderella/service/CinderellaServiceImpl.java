@@ -262,8 +262,8 @@ public class CinderellaServiceImpl implements CinderellaService {
         try {
 
             DescribeAddressesRequestVCloud vCloudRequest = mappingService.getDescribeAddressesRequest(describeAddresses);
-            DescribeAddressesResponseVCloud vCloudResponse = vCloudService.describeAddresses(vCloudRequest);
-            return mappingService.getDescribeAddressesResponse(vCloudResponse);
+            return vCloudService.describeAddresses(vCloudRequest);
+//            return mappingService.getDescribeAddressesResponse(vCloudResponse);
 
         } catch (Exception e) {
             log.error("EC2 DescribeKeyPairs - ", e);

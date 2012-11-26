@@ -45,5 +45,5 @@ public interface VCloudService {
 
     TerminateInstancesResponseVCloud terminateInstances(TerminateInstancesRequestVCloud vCloudRequest);
 
-    DescribeAddressesResponseVCloud describeAddresses(DescribeAddressesRequestVCloud vCloudRequest);
+   DescribeAddressesResponse describeAddresses(DescribeAddressesRequestVCloud vCloudRequest);
 }
