@@ -32,200 +32,211 @@ import java.util.UUID;
 @RequestMapping(value = {"/api", "/api/regions/{region}"}, produces = "text/xml;charset=UTF-8")
 public class EC2Controller {
 
-    private static final Logger log = LoggerFactory.getLogger(EC2Controller.class);
+   private static final Logger log = LoggerFactory.getLogger(EC2Controller.class);
 
-    @Autowired
-    private CinderellaService cinderellaService;
+   @Autowired
+   private CinderellaService cinderellaService;
 
-    @RequestMapping(params = "Action=DescribeAddresses")
-    @ResponseBody
-    public DescribeAddressesResponse describeAddresses(EC2Request ec2Request,
-                                                       @EC2FilterSet FilterSetType filterSet) throws EC2ServiceException {
+   @RequestMapping(params = "Action=DeregisterImage")
+   @ResponseBody
+   public DeregisterImageResponse deregisterImage(EC2Request ec2Request,
+                                                  @RequestParam(value = "ImageId") String imageId) throws EC2ServiceException {
 
-        DescribeAddresses describeAddresses = new DescribeAddresses()
-                .withFilterSet(filterSet);
+      // todo: for now, just fake this
 
-        return cinderellaService.describeAddresses(describeAddresses);
-    }
+      return new DeregisterImageResponse().withRequestId(UUID.randomUUID().toString()).withReturn(true);
+   }
 
 
-    @RequestMapping(params = "Action=DescribeKeyPairs")
-    @ResponseBody
-    public DescribeKeyPairsResponse describeKeyPairs(EC2Request ec2Request,
-                                                     @EC2KeyNameSet DescribeKeyPairsInfoType describeKeyPairsInfoType,
-                                                     @EC2FilterSet FilterSetType filterSet) throws EC2ServiceException {
+   @RequestMapping(params = "Action=DescribeAddresses")
+   @ResponseBody
+   public DescribeAddressesResponse describeAddresses(EC2Request ec2Request,
+                                                      @EC2FilterSet FilterSetType filterSet) throws EC2ServiceException {
 
-        DescribeKeyPairs describeKeyPairs = new DescribeKeyPairs()
-                .withFilterSet(filterSet)
-                .withKeySet(describeKeyPairsInfoType);
+      DescribeAddresses describeAddresses = new DescribeAddresses()
+            .withFilterSet(filterSet);
 
-        return cinderellaService.describeKeyPairs(describeKeyPairs);
-    }
+      return cinderellaService.describeAddresses(describeAddresses);
+   }
 
-    @RequestMapping(params = "Action=CreateKeyPair")
-    @ResponseBody
-    public CreateKeyPairResponse createKeyPair(EC2Request ec2Request,
-                                               @RequestParam(value = "KeyName") String keyName) throws EC2ServiceException {
-        return cinderellaService.createKeyPair(new CreateKeyPair().withKeyName(keyName));
-    }
 
-    @RequestMapping(params = "Action=DeleteKeyPair")
-    @ResponseBody
-    public DeleteKeyPairResponse deleteKeyPair(EC2Request ec2Request,
-                                                @RequestParam(value = "KeyName") String keyName) {
+   @RequestMapping(params = "Action=DescribeKeyPairs")
+   @ResponseBody
+   public DescribeKeyPairsResponse describeKeyPairs(EC2Request ec2Request,
+                                                    @EC2KeyNameSet DescribeKeyPairsInfoType describeKeyPairsInfoType,
+                                                    @EC2FilterSet FilterSetType filterSet) throws EC2ServiceException {
 
-        DeleteKeyPair deleteKeyPair = new DeleteKeyPair()
-                .withKeyName(keyName);
+      DescribeKeyPairs describeKeyPairs = new DescribeKeyPairs()
+            .withFilterSet(filterSet)
+            .withKeySet(describeKeyPairsInfoType);
 
-        return cinderellaService.deleteKeyPair(deleteKeyPair);
-    }
+      return cinderellaService.describeKeyPairs(describeKeyPairs);
+   }
 
-    @RequestMapping(params = "Action=DescribeAvailabilityZones")
-    @ResponseBody
-    public DescribeAvailabilityZonesResponse describeAvailabilityZones(EC2Request ec2Request,
-                                                                       @EC2FilterSet FilterSetType filterSet) throws EC2ServiceException {
-        DescribeAvailabilityZones describeAvailabilityZones = new DescribeAvailabilityZones()
-                .withFilterSet(filterSet);
-        return cinderellaService.describeAvailabilityZones(describeAvailabilityZones);
-    }
+   @RequestMapping(params = "Action=CreateKeyPair")
+   @ResponseBody
+   public CreateKeyPairResponse createKeyPair(EC2Request ec2Request,
+                                              @RequestParam(value = "KeyName") String keyName) throws EC2ServiceException {
+      return cinderellaService.createKeyPair(new CreateKeyPair().withKeyName(keyName));
+   }
 
-    @RequestMapping(params = "Action=DescribeRegions")
-    @ResponseBody
-    public DescribeRegionsResponse describeRegions(EC2Request ec2Request,
-                                                   @EC2RegionSet DescribeRegionsSetType regionSet,
-                                                   @EC2FilterSet FilterSetType filterSet) throws EC2ServiceException {
+   @RequestMapping(params = "Action=DeleteKeyPair")
+   @ResponseBody
+   public DeleteKeyPairResponse deleteKeyPair(EC2Request ec2Request,
+                                              @RequestParam(value = "KeyName") String keyName) {
 
-        DescribeRegions describeRegions = new DescribeRegions()
-                .withRegionSet(regionSet)
-                .withFilterSet(filterSet);
+      DeleteKeyPair deleteKeyPair = new DeleteKeyPair()
+            .withKeyName(keyName);
 
-        return cinderellaService.describeRegions(describeRegions);
-    }
+      return cinderellaService.deleteKeyPair(deleteKeyPair);
+   }
 
-    @RequestMapping(params = "Action=DescribeImages")
-    @ResponseBody
-    public DescribeImagesResponse describeImages(EC2Request ec2Request,
-                                                 @EC2ImageSet DescribeImagesInfoType imageSet,
-                                                 @EC2FilterSet FilterSetType filterSet) throws EC2ServiceException {
+   @RequestMapping(params = "Action=DescribeAvailabilityZones")
+   @ResponseBody
+   public DescribeAvailabilityZonesResponse describeAvailabilityZones(EC2Request ec2Request,
+                                                                      @EC2FilterSet FilterSetType filterSet) throws EC2ServiceException {
+      DescribeAvailabilityZones describeAvailabilityZones = new DescribeAvailabilityZones()
+            .withFilterSet(filterSet);
+      return cinderellaService.describeAvailabilityZones(describeAvailabilityZones);
+   }
 
-        DescribeImages describeImages = new DescribeImages()
-                .withImagesSet(imageSet)
-                .withFilterSet(filterSet);
+   @RequestMapping(params = "Action=DescribeRegions")
+   @ResponseBody
+   public DescribeRegionsResponse describeRegions(EC2Request ec2Request,
+                                                  @EC2RegionSet DescribeRegionsSetType regionSet,
+                                                  @EC2FilterSet FilterSetType filterSet) throws EC2ServiceException {
 
-        return cinderellaService.describeImages(describeImages);
-    }
+      DescribeRegions describeRegions = new DescribeRegions()
+            .withRegionSet(regionSet)
+            .withFilterSet(filterSet);
 
-    @RequestMapping(params = "Action=DescribeInstances")
-    @ResponseBody
-    public DescribeInstancesResponse describeInstances(EC2Request ec2Request,
-                                                       @EC2DescribeInstancesInfo DescribeInstancesInfoType describeInstancesInfoType,
-                                                       @EC2FilterSet FilterSetType filterSet) throws Exception {
+      return cinderellaService.describeRegions(describeRegions);
+   }
 
-        DescribeInstances describeInstances = new DescribeInstances()
-                .withInstancesSet(describeInstancesInfoType)
-                .withFilterSet(filterSet);
+   @RequestMapping(params = "Action=DescribeImages")
+   @ResponseBody
+   public DescribeImagesResponse describeImages(EC2Request ec2Request,
+                                                @EC2ImageSet DescribeImagesInfoType imageSet,
+                                                @EC2FilterSet FilterSetType filterSet) throws EC2ServiceException {
 
-        return cinderellaService.describeInstances(describeInstances);
-    }
+      DescribeImages describeImages = new DescribeImages()
+            .withImagesSet(imageSet)
+            .withFilterSet(filterSet);
 
-    @RequestMapping(params = "Action=DescribeSecurityGroups")
-    @ResponseBody
-    public DescribeSecurityGroupsResponse describeSecurityGroups(EC2Request ec2Request) throws Exception {
-        return cinderellaService.describeSecurityGroups(new DescribeSecurityGroups());
-    }
+      return cinderellaService.describeImages(describeImages);
+   }
 
-    @RequestMapping(params = "Action=RebootInstances")
-    @ResponseBody
-    public RebootInstancesResponse rebootInstances(EC2Request ec2Request,
-                                                   @EC2RebootInstancesInfo RebootInstancesInfoType rebootInstancesInfoType) throws Exception {
+   @RequestMapping(params = "Action=DescribeInstances")
+   @ResponseBody
+   public DescribeInstancesResponse describeInstances(EC2Request ec2Request,
+                                                      @EC2DescribeInstancesInfo DescribeInstancesInfoType describeInstancesInfoType,
+                                                      @EC2FilterSet FilterSetType filterSet) throws Exception {
 
-        RebootInstances rebootInstances = new RebootInstances()
-                .withInstancesSet(rebootInstancesInfoType);
+      DescribeInstances describeInstances = new DescribeInstances()
+            .withInstancesSet(describeInstancesInfoType)
+            .withFilterSet(filterSet);
 
-        return cinderellaService.rebootInstances(rebootInstances);
-    }
+      return cinderellaService.describeInstances(describeInstances);
+   }
 
-    @RequestMapping(params = "Action=StartInstances")
-    @ResponseBody
-    public StartInstancesResponse startInstances(EC2Request ec2Request,
-                                                 @EC2InstanceIdSet InstanceIdSetType instanceIdSetType) throws Exception {
+   @RequestMapping(params = "Action=DescribeSecurityGroups")
+   @ResponseBody
+   public DescribeSecurityGroupsResponse describeSecurityGroups(EC2Request ec2Request) throws Exception {
+      return cinderellaService.describeSecurityGroups(new DescribeSecurityGroups());
+   }
 
-        StartInstances startInstances = new StartInstances()
-                .withInstancesSet(instanceIdSetType);
+   @RequestMapping(params = "Action=RebootInstances")
+   @ResponseBody
+   public RebootInstancesResponse rebootInstances(EC2Request ec2Request,
+                                                  @EC2RebootInstancesInfo RebootInstancesInfoType rebootInstancesInfoType) throws Exception {
 
-        return cinderellaService.startInstances(startInstances);
-    }
+      RebootInstances rebootInstances = new RebootInstances()
+            .withInstancesSet(rebootInstancesInfoType);
 
-    @RequestMapping(params = "Action=StopInstances")
-    @ResponseBody
-    public StopInstancesResponse stopInstances(EC2Request ec2Request,
-                                               @EC2InstanceIdSet InstanceIdSetType instanceIdSetType) throws Exception {
+      return cinderellaService.rebootInstances(rebootInstances);
+   }
 
-        StopInstances stopInstances = new StopInstances()
-                .withInstancesSet(instanceIdSetType);
+   @RequestMapping(params = "Action=StartInstances")
+   @ResponseBody
+   public StartInstancesResponse startInstances(EC2Request ec2Request,
+                                                @EC2InstanceIdSet InstanceIdSetType instanceIdSetType) throws Exception {
 
-        return cinderellaService.stopInstances(stopInstances);
-    }
+      StartInstances startInstances = new StartInstances()
+            .withInstancesSet(instanceIdSetType);
 
-    @RequestMapping(params = "Action=TerminateInstances")
-    @ResponseBody
-    public TerminateInstancesResponse terminateInstances(EC2Request ec2Request,
-                                                         @EC2InstanceIdSet InstanceIdSetType instanceIdSetType) throws Exception {
+      return cinderellaService.startInstances(startInstances);
+   }
 
-        TerminateInstances terminateInstances = new TerminateInstances()
-                .withInstancesSet(instanceIdSetType);
+   @RequestMapping(params = "Action=StopInstances")
+   @ResponseBody
+   public StopInstancesResponse stopInstances(EC2Request ec2Request,
+                                              @EC2InstanceIdSet InstanceIdSetType instanceIdSetType) throws Exception {
 
-        return cinderellaService.terminateInstances(terminateInstances);
-    }
+      StopInstances stopInstances = new StopInstances()
+            .withInstancesSet(instanceIdSetType);
 
-    @RequestMapping(params = "Action=RunInstances")
-    @ResponseBody
-    public RunInstancesResponse runInstances(EC2Request ec2Request,
-                                             @RequestParam(value = "ImageId") String imageId,
-                                             @RequestParam(value = "MinCount") int minCount,
-                                             @RequestParam(value = "MaxCount") int maxCount) throws Exception {
+      return cinderellaService.stopInstances(stopInstances);
+   }
 
-        RunInstances runInstances = new RunInstances()
-                .withImageId(imageId)
-                .withMinCount(minCount)
-                .withMaxCount(maxCount);
+   @RequestMapping(params = "Action=TerminateInstances")
+   @ResponseBody
+   public TerminateInstancesResponse terminateInstances(EC2Request ec2Request,
+                                                        @EC2InstanceIdSet InstanceIdSetType instanceIdSetType) throws Exception {
 
-        return cinderellaService.runInstances(runInstances);
-    }
+      TerminateInstances terminateInstances = new TerminateInstances()
+            .withInstancesSet(instanceIdSetType);
 
-    @ExceptionHandler(EC2ServiceException.class)
-    @ResponseBody
-    public EC2ErrorResponse handleEC2ServiceException(EC2ServiceException ex,
-                                                      HttpServletResponse response) {
-        response.setStatus(ex.getHttpErrorCode());
-        return getErrorResponse(ex.getErrorCode(), ex.getMessage());
-    }
+      return cinderellaService.terminateInstances(terminateInstances);
+   }
 
-    @ExceptionHandler(PermissionDeniedException.class)
-    @ResponseBody
-    public EC2ErrorResponse handlePermissionDeniedException(PermissionDeniedException ex,
-                                                            HttpServletResponse response) {
-        response.setStatus(HttpStatus.UNAUTHORIZED.value());
-        return getErrorResponse(HttpStatus.UNAUTHORIZED.getReasonPhrase(), ex.getMessage());
-    }
+   @RequestMapping(params = "Action=RunInstances")
+   @ResponseBody
+   public RunInstancesResponse runInstances(EC2Request ec2Request,
+                                            @RequestParam(value = "ImageId") String imageId,
+                                            @RequestParam(value = "MinCount") int minCount,
+                                            @RequestParam(value = "MaxCount") int maxCount) throws Exception {
 
-    @ExceptionHandler(Exception.class)
-    @ResponseBody
-    public EC2ErrorResponse handleException(Exception ex,
-                                            HttpServletResponse response) {
-        response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-        return getErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), ex.getMessage());
-    }
+      RunInstances runInstances = new RunInstances()
+            .withImageId(imageId)
+            .withMinCount(minCount)
+            .withMaxCount(maxCount);
 
-    private EC2ErrorResponse getErrorResponse(String code, String message) {
-        EC2ErrorResponse errorResponse = new EC2ErrorResponse();
-        errorResponse.setRequestId(UUID.randomUUID().toString());
+      return cinderellaService.runInstances(runInstances);
+   }
 
-        EC2Error error = new EC2Error();
-        error.setCode(code);
-        error.setMessage(message);
-        errorResponse.addError(error);
+   @ExceptionHandler(EC2ServiceException.class)
+   @ResponseBody
+   public EC2ErrorResponse handleEC2ServiceException(EC2ServiceException ex,
+                                                     HttpServletResponse response) {
+      response.setStatus(ex.getHttpErrorCode());
+      return getErrorResponse(ex.getErrorCode(), ex.getMessage());
+   }
 
-        return errorResponse;
-    }
+   @ExceptionHandler(PermissionDeniedException.class)
+   @ResponseBody
+   public EC2ErrorResponse handlePermissionDeniedException(PermissionDeniedException ex,
+                                                           HttpServletResponse response) {
+      response.setStatus(HttpStatus.UNAUTHORIZED.value());
+      return getErrorResponse(HttpStatus.UNAUTHORIZED.getReasonPhrase(), ex.getMessage());
+   }
+
+   @ExceptionHandler(Exception.class)
+   @ResponseBody
+   public EC2ErrorResponse handleException(Exception ex,
+                                           HttpServletResponse response) {
+      response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+      return getErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), ex.getMessage());
+   }
+
+   private EC2ErrorResponse getErrorResponse(String code, String message) {
+      EC2ErrorResponse errorResponse = new EC2ErrorResponse();
+      errorResponse.setRequestId(UUID.randomUUID().toString());
+
+      EC2Error error = new EC2Error();
+      error.setCode(code);
+      error.setMessage(message);
+      errorResponse.addError(error);
+
+      return errorResponse;
+   }
 }
