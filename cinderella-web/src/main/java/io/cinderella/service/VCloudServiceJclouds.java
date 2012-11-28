@@ -1114,6 +1114,7 @@ public class VCloudServiceJclouds implements VCloudService {
       return response.getBody();
    }
 
+/*
     @Override
     public DescribeVolumes describeVolumes(DescribeVolumes describeVolumes) {
         Vdc vdc = getVDC();
@@ -1134,4 +1135,5 @@ public class VCloudServiceJclouds implements VCloudService {
         }
         return null;
     }
+*/
 }

@@ -272,6 +272,7 @@ public class CinderellaServiceImpl implements CinderellaService {
         }
     }
 
+/*
     @Override
     public DescribeVolumes describeVolumes(DescribeVolumes describeVolumes) {
         try {
@@ -283,6 +284,7 @@ public class CinderellaServiceImpl implements CinderellaService {
                     : "An unexpected error occurred.");
         }
     }
+*/
 
     @Override
     public CreateVolumeResponse createVolume(CreateVolume createVolume) {

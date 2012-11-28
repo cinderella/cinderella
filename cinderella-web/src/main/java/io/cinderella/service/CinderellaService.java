@@ -120,7 +120,7 @@ public interface CinderellaService {
      * @param describeVolumes
      * @return
      */
-    DescribeVolumes describeVolumes(DescribeVolumes describeVolumes);
+//    DescribeVolumes describeVolumes(DescribeVolumes describeVolumes);
 
 
 
