@@ -80,6 +80,7 @@ import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -264,7 +265,7 @@ public class VCloudServiceJclouds implements VCloudService {
 
       // get reference to configured vdc network
       String vcdNetwork = env.getProperty(CinderellaConfig.VCD_NETWORK_KEY);
-      final Reference parentNetwork = FluentIterable.from(getVDC().getAvailableNetworks())
+      final Reference parentNetwork = FluentIterable.from(vdc.getAvailableNetworks())
             .filter(ReferencePredicates.<Reference>nameEquals(vcdNetwork))
             .first()
             .get();
@@ -287,9 +288,12 @@ public class VCloudServiceJclouds implements VCloudService {
                                     .parentNetwork(parentNetwork)
                                     .fenceMode(Network.FenceMode.BRIDGED)
                                     .build()
-                        ).isDeployed(true)
+                        )
+                        .isDeployed(true)
                         .build()
-            )).build();
+            ))
+            .build();
+
 
       InstantiationParams instantiationParams = InstantiationParams.builder()
             .sections(ImmutableSet.of(networkConfigSection))
@@ -298,9 +302,9 @@ public class VCloudServiceJclouds implements VCloudService {
       InstantiateVAppTemplateParams instantiateVAppTemplateParams = InstantiateVAppTemplateParams.builder()
             .name(name("cinderella-"))
             .deploy()
-            .powerOn()
-//                .notDeploy()
-//                .notPowerOn()
+//            .powerOn()
+            .notDeploy()
+            .notPowerOn()
             .description("Created by Cinderella")
             .instantiationParams(instantiationParams)
             .source(vAppTemplate.getHref())
@@ -315,67 +319,69 @@ public class VCloudServiceJclouds implements VCloudService {
 
       // todo if successful, get running VMs and populate response
 
+      // reconfigure network for each vm
+      if (instantiationSuccess) {
+
+         log.info("successfully instantiated vApp");
+
+         VApp vapp = vAppApi.get(instantiatedVApp.getHref());
+         List<Vm> vms = vapp.getChildren().getVms();
+
+         for (Vm vm : vms) {
+
+            NetworkConnectionSection oldSection = vmApi.getNetworkConnectionSection(vm.getHref());
+
+            NetworkConnectionSection newNetworkConnectionSection = oldSection.toBuilder()
+                  .primaryNetworkConnectionIndex(0)
+                  .networkConnections(ImmutableSet.of(NetworkConnection.builder()
+                        .network(parentNetwork.getName())
+                        .networkConnectionIndex(0)
+                        .ipAddressAllocationMode(NetworkConnection.IpAddressAllocationMode.POOL)
+                        .isConnected(true)
+                        .build()))
+                  .build();
+
+            Task editNetworkConnectionSectionTask = vmApi.editNetworkConnectionSection(vm.getHref(), newNetworkConnectionSection);
+            boolean updateVmNetworkSuccess = retryTaskSuccessLong.apply(editNetworkConnectionSectionTask);
+            if (updateVmNetworkSuccess) {
+               log.info("successfully updated " + vm.getId() + " network config");
+            }
+         }
+
+         // powerOn
+         Task powerOnTask = vAppApi.powerOn(instantiatedVApp.getHref());
+         boolean powerOnSuccess = retryTaskSuccessLong.apply(powerOnTask);
+         if (powerOnSuccess) {
+            log.info("successfully powered on vApp");
+         }
+      }
+
+
       return response;
    }
-
-        /*VAppNetworkConfiguration vAppNetworkConfiguration = getVAppNetworkConfig(instantiatedVApp);
-        NetworkConnection networkConnection = NetworkConnection.builder()
-                .network(vAppNetworkConfiguration.getNetworkName())
-                .ipAddressAllocationMode(NetworkConnection.IpAddressAllocationMode.DHCP)
-                .build();
-
-        NetworkConnectionSection networkConnectionSection = NetworkConnectionSection.builder()
-                .info("networkInfo")
-                .primaryNetworkConnectionIndex(0)
-                .networkConnection(networkConnection)
-                .build();
-
-        // adding the network connection section to the instantiation params of the vapp.
-        InstantiationParams vmInstantiationParams = InstantiationParams.builder()
-                .sections(ImmutableSet.of(networkConnectionSection))
-                .build();*/
-
-
-        /*if (instantiationSuccess) {
-
-            VApp vapp = vAppApi.get(instantiatedVApp.getHref());
-            List<Vm> vms = vapp.getChildren().getVms();
-
-            for (Vm vm : vms) {
-
-                NetworkConnectionSection oldSection = vmApi
-                        .getNetworkConnectionSection(vm.getHref());
-
-                NetworkConnection newNetworkConnection = NetworkConnection.builder()
-                        .network(parentNetwork.getName())
-                        .networkConnectionIndex(1)
-                        .ipAddressAllocationMode(NetworkConnection.IpAddressAllocationMode.DHCP)
-                        .build();
-
-                NetworkConnectionSection newSection = oldSection.toBuilder()
-                        .networkConnection(newNetworkConnection).build();
-
-                Task editNetworkConnectionSectionTask = vmApi.editNetworkConnectionSection(vm.getHref(), newSection);
-
-                boolean updateVmNetworkSuccess = retryTaskSuccessLong.apply(editNetworkConnectionSectionTask);
-
-                System.out.println(updateVmNetworkSuccess);
-            }*/
-
-
-            /*
-            Set<Vm> vms = getAvailableVMsFromVAppTemplate(vAppTemplate);
-
-            // get the first vm to be added to vApp
-            Vm vm = Iterables.get(vms, 0);
-
-            RecomposeVAppParams params = addRecomposeParams(instantiatedVApp, toAddVm);
-
-            // The method under test
-            Task recomposeVApp = vAppApi.recompose(instantiatedVApp.getId(), params);
-            boolean recomposeSuccess = retryTaskSuccessLong.apply(recomposeVApp);
-            System.out.println(recomposeSuccess);*/
-//        }
+   
+   /*
+   <?xml version="1.0" encoding="UTF-8"?>
+<NetworkConnectionSection xmlns="http://www.vmware.com/vcloud/v1.5" xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" type="application/vnd.vmware.vcloud.networkConnectionSection+xml" href="https://blbeta.bluelock.com/api/vApp/vm-dea05479-d7c1-4710-ba1a-a1a18cd0d455/networkConnectionSection/" ovf:required="false" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schemas.dmtf.org/ovf/envelope/1 http://schemas.dmtf.org/ovf/envelope/1/dsp8023_1.1.0.xsd http://www.vmware.com/vcloud/v1.5 http://blbeta.bluelock.com/api/v1.5/schema/master.xsd">"
+    <ovf:Info>Specifies the available VM network connections</ovf:Info>"
+    <PrimaryNetworkConnectionIndex>1</PrimaryNetworkConnectionIndex>"
+    <NetworkConnection network="Routed01-Cloudsoft" needsCustomization="false">"
+        <NetworkConnectionIndex>0</NetworkConnectionIndex>"
+        <IpAddress>192.168.10.2</IpAddress>"
+        <IsConnected>true</IsConnected>"
+        <MACAddress>00:50:56:0a:02:13</MACAddress>"
+        <IpAddressAllocationMode>POOL</IpAddressAllocationMode>"
+    </NetworkConnection>"
+    <NetworkConnection network="internet01-Cloudsoft" needsCustomization="false">"
+        <NetworkConnectionIndex>1</NetworkConnectionIndex>"
+        <IpAddress>173.240.104.172</IpAddress>"
+        <IsConnected>true</IsConnected>"
+        <MACAddress>00:50:56:0a:02:14</MACAddress>"
+        <IpAddressAllocationMode>POOL</IpAddressAllocationMode>"
+    </NetworkConnection>"
+    <Link rel="edit" type="application/vnd.vmware.vcloud.networkConnectionSection+xml" href="https://blbeta.bluelock.com/api/vApp/vm-dea05479-d7c1-4710-ba1a-a1a18cd0d455/networkConnectionSection/"/>"
+</NetworkConnectionSection>
+    */
 
 
    @Override

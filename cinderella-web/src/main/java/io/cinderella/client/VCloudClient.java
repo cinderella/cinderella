@@ -5,6 +5,8 @@ import io.cinderella.CinderellaConfig;
 import io.cinderella.domain.DescribeAddressesRequestVCloud;
 import io.cinderella.service.VCloudService;
 import com.vmware.vcloud.api.rest.schema.AllocatedIpAddressesType;
+import org.jclouds.vcloud.director.v1_5.domain.query.QueryResultRecords;
+import org.jclouds.vcloud.director.v1_5.features.QueryApi;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 
 /**
@@ -23,12 +25,12 @@ public class VCloudClient {
 
       VCloudService vCloudService = applicationContext.getBean(VCloudService.class);
 
-      DescribeAddressesResponse response = vCloudService.describeAddresses(new DescribeAddressesRequestVCloud());
+//      DescribeAddressesResponse response = vCloudService.describeAddresses(new DescribeAddressesRequestVCloud());
 
 
-//      QueryApi queryApi = vCloudService.getVCloudDirectorApi().getQueryApi();
-//      QueryResultRecords qrs = queryApi.vAppTemplatesQueryAll();
-//      System.out.println(qrs);
+      QueryApi queryApi = vCloudService.getVCloudDirectorApi().getQueryApi();
+      QueryResultRecords qrs = queryApi.vAppTemplatesQueryAll();
+      System.out.println(qrs);
 
 
 //        DescribeInstancesRequestVCloud request = new DescribeInstancesRequestVCloud();
