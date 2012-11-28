@@ -359,29 +359,6 @@ public class VCloudServiceJclouds implements VCloudService {
 
       return response;
    }
-   
-   /*
-   <?xml version="1.0" encoding="UTF-8"?>
-<NetworkConnectionSection xmlns="http://www.vmware.com/vcloud/v1.5" xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" type="application/vnd.vmware.vcloud.networkConnectionSection+xml" href="https://blbeta.bluelock.com/api/vApp/vm-dea05479-d7c1-4710-ba1a-a1a18cd0d455/networkConnectionSection/" ovf:required="false" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schemas.dmtf.org/ovf/envelope/1 http://schemas.dmtf.org/ovf/envelope/1/dsp8023_1.1.0.xsd http://www.vmware.com/vcloud/v1.5 http://blbeta.bluelock.com/api/v1.5/schema/master.xsd">"
-    <ovf:Info>Specifies the available VM network connections</ovf:Info>"
-    <PrimaryNetworkConnectionIndex>1</PrimaryNetworkConnectionIndex>"
-    <NetworkConnection network="Routed01-Cloudsoft" needsCustomization="false">"
-        <NetworkConnectionIndex>0</NetworkConnectionIndex>"
-        <IpAddress>192.168.10.2</IpAddress>"
-        <IsConnected>true</IsConnected>"
-        <MACAddress>00:50:56:0a:02:13</MACAddress>"
-        <IpAddressAllocationMode>POOL</IpAddressAllocationMode>"
-    </NetworkConnection>"
-    <NetworkConnection network="internet01-Cloudsoft" needsCustomization="false">"
-        <NetworkConnectionIndex>1</NetworkConnectionIndex>"
-        <IpAddress>173.240.104.172</IpAddress>"
-        <IsConnected>true</IsConnected>"
-        <MACAddress>00:50:56:0a:02:14</MACAddress>"
-        <IpAddressAllocationMode>POOL</IpAddressAllocationMode>"
-    </NetworkConnection>"
-    <Link rel="edit" type="application/vnd.vmware.vcloud.networkConnectionSection+xml" href="https://blbeta.bluelock.com/api/vApp/vm-dea05479-d7c1-4710-ba1a-a1a18cd0d455/networkConnectionSection/"/>"
-</NetworkConnectionSection>
-    */
 
 
    @Override
@@ -1120,7 +1097,7 @@ public class VCloudServiceJclouds implements VCloudService {
       return response.getBody();
    }
 
-    @Override
+    /*@Override
     public DescribeVolumes describeVolumes(DescribeVolumes describeVolumes) {
         Vdc vdc = getVDC();
         ImmutableSet<Disk> disks = FluentIterable
@@ -1139,5 +1116,5 @@ public class VCloudServiceJclouds implements VCloudService {
 
         }
         return null;
-    }
+    }*/
 }

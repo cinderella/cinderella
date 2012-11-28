@@ -49,6 +49,6 @@ public interface VCloudService {
 
     AllocatedIpAddressesType getAllocatedIpAddresses(String networkId);
 
-    DescribeVolumes describeVolumes(DescribeVolumes describeVolumes);
+//    DescribeVolumes describeVolumes(DescribeVolumes describeVolumes);
 
 }

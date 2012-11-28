@@ -272,7 +272,7 @@ public class CinderellaServiceImpl implements CinderellaService {
         }
     }
 
-    @Override
+    /*@Override
     public DescribeVolumes describeVolumes(DescribeVolumes describeVolumes) {
         try {
             return vCloudService.describeVolumes(describeVolumes);
@@ -282,7 +282,7 @@ public class CinderellaServiceImpl implements CinderellaService {
             throw new EC2ServiceException(InternalError, e.getMessage() != null ? e.getMessage()
                     : "An unexpected error occurred.");
         }
-    }
+    }*/
 
     @Override
     public CreateVolumeResponse createVolume(CreateVolume createVolume) {
