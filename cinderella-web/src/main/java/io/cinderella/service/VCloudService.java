@@ -2,7 +2,7 @@ package io.cinderella.service;
 
 import com.amazon.ec2.*;
 import io.cinderella.domain.*;
-import org.jclouds.vcloud.director.v1_5.domain.VApp;
+import com.vmware.vcloud.api.rest.schema.AllocatedIpAddressesType;
 import org.jclouds.vcloud.director.v1_5.domain.Vdc;
 import org.jclouds.vcloud.director.v1_5.domain.org.Org;
 import org.jclouds.vcloud.director.v1_5.user.VCloudDirectorApi;
@@ -46,4 +46,6 @@ public interface VCloudService {
     TerminateInstancesResponseVCloud terminateInstances(TerminateInstancesRequestVCloud vCloudRequest);
 
    DescribeAddressesResponse describeAddresses(DescribeAddressesRequestVCloud vCloudRequest);
+
+   AllocatedIpAddressesType getAllocatedIpAddresses(String networkId);
 }

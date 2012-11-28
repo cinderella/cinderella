@@ -1,10 +1,10 @@
 package io.cinderella.client;
 
+import com.amazon.ec2.DescribeAddressesResponse;
 import io.cinderella.CinderellaConfig;
-import io.cinderella.domain.DescribeInstancesRequestVCloud;
+import io.cinderella.domain.DescribeAddressesRequestVCloud;
 import io.cinderella.service.VCloudService;
-import org.jclouds.vcloud.director.v1_5.domain.query.QueryResultRecords;
-import org.jclouds.vcloud.director.v1_5.features.QueryApi;
+import com.vmware.vcloud.api.rest.schema.AllocatedIpAddressesType;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 
 /**
@@ -15,17 +15,20 @@ import org.springframework.web.context.support.AnnotationConfigWebApplicationCon
  */
 public class VCloudClient {
 
-    public static void main(String[] args) {
-        final AnnotationConfigWebApplicationContext applicationContext = new AnnotationConfigWebApplicationContext();
-        applicationContext.register(CinderellaConfig.class);
-        applicationContext.refresh();
-        applicationContext.registerShutdownHook();
+   public static void main(String[] args) {
+      final AnnotationConfigWebApplicationContext applicationContext = new AnnotationConfigWebApplicationContext();
+      applicationContext.register(CinderellaConfig.class);
+      applicationContext.refresh();
+      applicationContext.registerShutdownHook();
 
-        VCloudService vCloudService = applicationContext.getBean(VCloudService.class);
+      VCloudService vCloudService = applicationContext.getBean(VCloudService.class);
 
-        QueryApi queryApi = vCloudService.getVCloudDirectorApi().getQueryApi();
-        QueryResultRecords qrs = queryApi.vAppTemplatesQueryAll();
-        System.out.println(qrs);
+      DescribeAddressesResponse response = vCloudService.describeAddresses(new DescribeAddressesRequestVCloud());
+
+
+//      QueryApi queryApi = vCloudService.getVCloudDirectorApi().getQueryApi();
+//      QueryResultRecords qrs = queryApi.vAppTemplatesQueryAll();
+//      System.out.println(qrs);
 
 
 //        DescribeInstancesRequestVCloud request = new DescribeInstancesRequestVCloud();
@@ -44,8 +47,8 @@ public class VCloudClient {
 //        System.out.println(vApp);
 
 
-        System.exit(0);
-    }
+      System.exit(0);
+   }
 
 
 }

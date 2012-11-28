@@ -1,14 +1,6 @@
 package io.cinderella.service;
 
-import com.amazon.ec2.CreateKeyPair;
-import com.amazon.ec2.CreateKeyPairResponse;
-import com.amazon.ec2.DeleteKeyPair;
-import com.amazon.ec2.DeleteKeyPairResponse;
-import com.amazon.ec2.DescribeAddressesResponse;
-import com.amazon.ec2.DescribeAddressesResponseInfoType;
-import com.amazon.ec2.DescribeKeyPairs;
-import com.amazon.ec2.DescribeKeyPairsResponse;
-import com.amazon.ec2.DescribeKeyPairsResponseInfoType;
+import com.amazon.ec2.*;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
@@ -23,10 +15,14 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.net.InetAddresses;
 import com.google.gson.reflect.TypeToken;
+import com.vmware.vcloud.api.rest.schema.AllocatedIpAddressType;
+import com.vmware.vcloud.api.rest.schema.AllocatedIpAddressesType;
+import com.vmware.vcloud.api.rest.schema.LinkType;
 import io.cinderella.CinderellaConfig;
 import io.cinderella.domain.*;
 import io.cinderella.exception.EC2ServiceException;
 import io.cinderella.util.MappingUtils;
+import org.apache.commons.codec.binary.Base64;
 import org.jclouds.crypto.SshKeys;
 import org.jclouds.io.Payloads;
 import org.jclouds.json.Json;
@@ -66,9 +62,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.ClientHttpRequest;
+import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.web.client.RequestCallback;
+import org.springframework.web.client.ResponseExtractor;
+import org.springframework.web.client.RestTemplate;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.net.InetAddress;
+import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -117,6 +126,9 @@ public class VCloudServiceJclouds implements VCloudService {
    private Predicate<Task> retryTaskSuccessLong;
 
    @Autowired
+   private RestTemplate restTemplate;
+
+   @Autowired
    Environment env;
 
    @Inject
@@ -124,7 +136,8 @@ public class VCloudServiceJclouds implements VCloudService {
       retryTaskSuccessLong = new RetryablePredicate<Task>(taskSuccess, LONG_TASK_TIMEOUT_SECONDS * 1000L);
    }
 
-   public VCloudServiceJclouds(VCloudDirectorApi vCloudDirectorApi, VCloudDirectorApi vCloudDirectorApi15) {
+   public VCloudServiceJclouds(VCloudDirectorApi vCloudDirectorApi,
+                               VCloudDirectorApi vCloudDirectorApi15) {
       this.vCloudDirectorApi = vCloudDirectorApi;
       this.vAppApi = this.vCloudDirectorApi.getVAppApi();
       this.vmApi = this.vCloudDirectorApi.getVmApi();
@@ -527,6 +540,8 @@ public class VCloudServiceJclouds implements VCloudService {
    @Override
    public DescribeAddressesResponse describeAddresses(DescribeAddressesRequestVCloud vCloudRequest) {
 
+      // todo handle filters, etc.
+
       Vdc vdc = getVDC();
 
       Set<Reference> availableNetworkRefs = vdc.getAvailableNetworks();
@@ -547,6 +562,25 @@ public class VCloudServiceJclouds implements VCloudService {
       DescribeAddressesResponseInfoType describeAddressesResponseInfoType = new DescribeAddressesResponseInfoType();
 
       Network network = networkApi15.get(parentNetwork.getHref());
+
+      // use GET API-URL/network/id/allocatedAddresses to augment response with instanceId
+
+      String networkIdUrn = network.getId();
+      String networkId = networkIdUrn.substring(networkIdUrn.lastIndexOf(":") + 1);
+
+      AllocatedIpAddressesType allocatedIpAddressesType = getAllocatedIpAddresses(networkId);
+
+      // create a map key'd on ip, value is vm href
+      Map<String, String> allocatedIpMap = new HashMap<String, String>();
+      for (AllocatedIpAddressType allocIpAddress : allocatedIpAddressesType.getIpAddress()) {
+         for (LinkType link : allocIpAddress.getLink()) {
+            if (Link.Rel.DOWN.value().equals(link.getRel()) && VCloudDirectorMediaType.VM.equals(link.getType())) {
+               allocatedIpMap.put(allocIpAddress.getIpAddress(), link.getHref());
+            }
+         }
+      }
+
+
       NetworkConfiguration networkConfig = network.getConfiguration();
       Set<IpRange> ipRanges = networkConfig.getIpScope().getIpRanges().getIpRanges();
       for (IpRange ipRange : ipRanges) {
@@ -557,39 +591,23 @@ public class VCloudServiceJclouds implements VCloudService {
 
          int endAsInt = InetAddresses.coerceToInteger(endAddress);
 
-         while(InetAddresses.coerceToInteger(currentAddress) <= endAsInt) {
-            describeAddressesResponseInfoType.withNewItems()
-                  .withPublicIp(currentAddress.getHostAddress())
+         while (InetAddresses.coerceToInteger(currentAddress) <= endAsInt) {
+            String ip = currentAddress.getHostAddress();
+            DescribeAddressesResponseItemType describeAddressesResponseItemType = describeAddressesResponseInfoType.withNewItems()
+                  .withPublicIp(ip)
                   .withDomain("standard");
+            if (allocatedIpMap.containsKey(ip)) {
+
+               // convert vm href to AWS instanceId
+               String vmHref = allocatedIpMap.get(ip);
+               String instanceId = "i-" + vmHref.substring(vmHref.lastIndexOf("/") + 3).replace("-", "");
+               describeAddressesResponseItemType.setInstanceId(instanceId);
+            }
             currentAddress = InetAddresses.increment(currentAddress);
          }
       }
 
       response.withAddressesSet(describeAddressesResponseInfoType);
-
-      // todo use GET API-URL/network/id/allocatedAddresses to augment
-
-
-      /*
-      AWS response
-
-<DescribeAddressesResponse xmlns="http://ec2.amazonaws.com/doc/2012-10-01/">
-   <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
-   <addressesSet>
-      <item>
-         <publicIp>192.0.2.1</publicIp>
-         <domain>standard</domain>
-         <instanceId>i-f15ebb98</instanceId>
-      </item>
-      <item>
-         <publicIp>198.51.100.2</publicIp>
-         <domain>standard</domain>
-         <instanceId/>
-      </item>
-   </addressesSet>
-</DescribeAddressesResponse>
-       */
-
 
       return response;
    }
@@ -1053,5 +1071,46 @@ public class VCloudServiceJclouds implements VCloudService {
       return Iterables.any(resource.getLinks(), LinkPredicates.relEquals(rel));
    }
 
+   @Override
+   public AllocatedIpAddressesType getAllocatedIpAddresses(String networkId) {
 
+      String endpoint = env.getProperty(CinderellaConfig.VCD_ENDPOINT_KEY);
+
+      String loginUrl = endpoint + "/sessions";
+
+      String vCloudAuthToken = restTemplate.execute(loginUrl, HttpMethod.POST, new RequestCallback() {
+               @Override
+               public void doWithRequest(ClientHttpRequest request) throws IOException {
+                  HttpHeaders headers = request.getHeaders();
+
+                  String auth = env.getProperty(CinderellaConfig.VCD_USERATORG_KEY) + ":" + env.getProperty(CinderellaConfig.VCD_PASSWORD_KEY);
+                  byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(Charset.forName("UTF-8")));
+                  String authHeader = "Basic " + new String(encodedAuth);
+
+                  headers.set("Authorization", authHeader);
+                  headers.setAccept(Collections.singletonList(MediaType.valueOf("application/*+xml;version=5.1")));
+               }
+            }, new ResponseExtractor<String>() {
+               @Override
+               public String extractData(ClientHttpResponse response) throws IOException {
+                  return response.getHeaders().get("x-vcloud-authorization").get(0);
+               }
+            }
+      );
+
+      HttpHeaders vCloudHeaders = new HttpHeaders();
+      vCloudHeaders.add("x-vcloud-authorization", vCloudAuthToken);
+      vCloudHeaders.setAccept(Collections.singletonList(MediaType.valueOf("application/*+xml;version=5.1")));
+
+      String url = endpoint + "/network/{id}/allocatedAddresses";
+      ResponseEntity<AllocatedIpAddressesType> response = restTemplate.exchange(
+            url,
+            HttpMethod.GET,
+            new HttpEntity<String>(vCloudHeaders),
+            AllocatedIpAddressesType.class,
+            networkId
+      );
+
+      return response.getBody();
+   }
 }
