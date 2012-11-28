@@ -1113,4 +1113,25 @@ public class VCloudServiceJclouds implements VCloudService {
 
       return response.getBody();
    }
+
+    @Override
+    public DescribeVolumes describeVolumes(DescribeVolumes describeVolumes) {
+        Vdc vdc = getVDC();
+        ImmutableSet<Disk> disks = FluentIterable
+                .from(vdc.getResourceEntities())
+                .filter(ReferencePredicates.<Reference>typeEquals(DISK))
+                .transform(new Function<Reference, Disk>() {
+                    @Override
+                    public Disk apply(Reference input) {
+                        // TODO
+                        return null;
+                    }
+                })
+                .toImmutableSet();
+
+        for (Disk disk : disks) {
+
+        }
+        return null;
+    }
 }

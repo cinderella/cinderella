@@ -271,4 +271,31 @@ public class CinderellaServiceImpl implements CinderellaService {
                     : "An unexpected error occurred.");
         }
     }
+
+    @Override
+    public DescribeVolumes describeVolumes(DescribeVolumes describeVolumes) {
+        try {
+            return vCloudService.describeVolumes(describeVolumes);
+
+        } catch (Exception e) {
+            log.error("EC2 DescribeVolumes - ", e);
+            throw new EC2ServiceException(InternalError, e.getMessage() != null ? e.getMessage()
+                    : "An unexpected error occurred.");
+        }
+    }
+
+    @Override
+    public CreateVolumeResponse createVolume(CreateVolume createVolume) {
+        return null;
+    }
+
+    @Override
+    public AttachVolumeResponse attachVolume(AttachVolume attachVolume) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public DetachVolumeResponse detachVolume(DetachVolume detachVolume) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
 }

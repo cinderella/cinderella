@@ -104,4 +104,40 @@ public interface CinderellaService {
      * @return
      */
     DescribeAddressesResponse describeAddresses(DescribeAddresses describeAddresses);
+
+
+    /**
+     *
+     * @param createVolume
+     * @return
+     */
+    CreateVolumeResponse createVolume(CreateVolume createVolume);
+
+
+
+    /**
+     *
+     * @param describeVolumes
+     * @return
+     */
+    DescribeVolumes describeVolumes(DescribeVolumes describeVolumes);
+
+
+
+    /**
+     *
+     * @param attachVolume
+     * @return
+     */
+    AttachVolumeResponse attachVolume(AttachVolume attachVolume);
+
+
+
+    /**
+     *
+     * @param detachVolume
+     * @return
+     */
+    DetachVolumeResponse detachVolume(DetachVolume detachVolume);
+
 }

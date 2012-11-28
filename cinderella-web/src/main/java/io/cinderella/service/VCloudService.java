@@ -45,7 +45,10 @@ public interface VCloudService {
 
     TerminateInstancesResponseVCloud terminateInstances(TerminateInstancesRequestVCloud vCloudRequest);
 
-   DescribeAddressesResponse describeAddresses(DescribeAddressesRequestVCloud vCloudRequest);
+    DescribeAddressesResponse describeAddresses(DescribeAddressesRequestVCloud vCloudRequest);
 
-   AllocatedIpAddressesType getAllocatedIpAddresses(String networkId);
+    AllocatedIpAddressesType getAllocatedIpAddresses(String networkId);
+
+    DescribeVolumes describeVolumes(DescribeVolumes describeVolumes);
+
 }
