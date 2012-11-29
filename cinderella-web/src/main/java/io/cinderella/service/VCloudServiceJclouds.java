@@ -968,7 +968,7 @@ public class VCloudServiceJclouds implements VCloudService {
    @Override
    public DescribeImagesResponseVCloud getVmsInVAppTemplatesInOrg(final DescribeImagesRequestVCloud describeImagesRequestVCloud) {
 
-      ImmutableSet<Vm> vms = FluentIterable.from(describeImagesRequestVCloud.getOrg().getLinks()).filter(typeEquals(CATALOG))
+      ImmutableSet<VAppTemplate> vms = FluentIterable.from(describeImagesRequestVCloud.getOrg().getLinks()).filter(typeEquals(CATALOG))
             .transform(new Function<Link, Catalog>() {
                @Override
                public Catalog apply(Link in) {
@@ -995,6 +995,7 @@ public class VCloudServiceJclouds implements VCloudService {
                   return vCloudDirectorApi.getVAppTemplateApi().get(in.getEntity().getHref());
                }
             }).filter(Predicates.notNull()) // if no access, a template might end up null
+/*
             .transformAndConcat(new Function<VAppTemplate, Iterable<Vm>>() {
                @Override
                public Iterable<Vm> apply(VAppTemplate in) {
@@ -1007,6 +1008,7 @@ public class VCloudServiceJclouds implements VCloudService {
                         || Iterables.contains(describeImagesRequestVCloud.getVmIds(), MappingUtils.vmUrnToImageId(in.getId())));
                }
             })
+*/
             .toImmutableSet();
 
       DescribeImagesResponseVCloud response = new DescribeImagesResponseVCloud();
@@ -1119,4 +1121,5 @@ public class VCloudServiceJclouds implements VCloudService {
         }
         return null;
     }
+    */
 }

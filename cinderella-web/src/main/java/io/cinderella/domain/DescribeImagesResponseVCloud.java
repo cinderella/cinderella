@@ -1,6 +1,7 @@
 package io.cinderella.domain;
 
 import com.google.common.collect.ImmutableSet;
+import org.jclouds.vcloud.director.v1_5.domain.VAppTemplate;
 import org.jclouds.vcloud.director.v1_5.domain.Vm;
 
 /**
@@ -9,14 +10,14 @@ import org.jclouds.vcloud.director.v1_5.domain.Vm;
  */
 public class DescribeImagesResponseVCloud {
 
-    private ImmutableSet<Vm> vms;
+    private ImmutableSet<VAppTemplate> vms;
     private String imageOwnerId;
 
-    public ImmutableSet<Vm> getVms() {
+    public ImmutableSet<VAppTemplate> getVms() {
         return vms;
     }
 
-    public void setVms(ImmutableSet<Vm> vms) {
+    public void setVms(ImmutableSet<VAppTemplate> vms) {
         this.vms = vms;
     }
 

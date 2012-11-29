@@ -8,11 +8,14 @@ import io.cinderella.domain.*;
 import io.cinderella.util.MappingUtils;
 import org.jclouds.util.InetAddresses2;
 import org.jclouds.vcloud.director.v1_5.domain.VApp;
+import org.jclouds.vcloud.director.v1_5.domain.VAppTemplate;
 import org.jclouds.vcloud.director.v1_5.domain.Vdc;
 import org.jclouds.vcloud.director.v1_5.domain.Vm;
 import org.jclouds.vcloud.director.v1_5.domain.network.NetworkConnection;
 import org.jclouds.vcloud.director.v1_5.domain.org.Org;
 import org.jclouds.vcloud.director.v1_5.domain.section.OperatingSystemSection;
+import org.jclouds.vcloud.director.v1_5.features.VAppApi;
+import org.jclouds.vcloud.director.v1_5.features.VAppTemplateApi;
 import org.jclouds.vcloud.director.v1_5.features.VmApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,9 +77,9 @@ public class MappingServiceJclouds implements MappingService {
         DescribeImagesResponseInfoType imageResponse = new DescribeImagesResponseInfoType();
         String imageOwnerId = describeImagesResponseVCloud.getImageOwnerId();
 
-        final VmApi vmApi = vCloudService.getVCloudDirectorApi().getVmApi();
+        final VAppTemplateApi vmApi = vCloudService.getVCloudDirectorApi().getVAppTemplateApi();
 
-        for (Vm vm : describeImagesResponseVCloud.getVms()) {
+        for (VAppTemplate vm : describeImagesResponseVCloud.getVms()) {
 
             ResourceTagSetType resourceTagSet = new ResourceTagSetType();
 
