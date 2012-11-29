@@ -13,41 +13,41 @@ import org.jclouds.vcloud.director.v1_5.user.VCloudDirectorApi;
  */
 public interface VCloudService {
 
-    DescribeImagesResponseVCloud getVmsInVAppTemplatesInOrg(DescribeImagesRequestVCloud describeImagesRequestVCloud);
+   DescribeImagesResponseVCloud getVmsInVAppTemplatesInOrg(DescribeImagesRequestVCloud describeImagesRequestVCloud);
 
-    DescribeInstancesResponseVCloud getVmsInVAppsInVdc(DescribeInstancesRequestVCloud describeInstancesRequestVCloud);
+   DescribeInstancesResponseVCloud getVmsInVAppsInVdc(DescribeInstancesRequestVCloud describeInstancesRequestVCloud);
 
-    String getVdcName();
+   String getVdcName();
 
-    Org getOrg(String vdcName);
+   Org getOrg(String vdcName);
 
-    Vdc getVDC(String vdcName);
+   Vdc getVDC(String vdcName);
 
-    VCloudDirectorApi getVCloudDirectorApi();
+   VCloudDirectorApi getVCloudDirectorApi();
 
-    DescribeRegionsResponseVCloud describeRegions(DescribeRegionsRequestVCloud describeRegionsRequestVCloud) throws Exception;
+   DescribeRegionsResponseVCloud describeRegions(DescribeRegionsRequestVCloud describeRegionsRequestVCloud) throws Exception;
 
-    DescribeAvailabilityZonesResponseVCloud describeAvailabilityZones(DescribeAvailabilityZonesRequestVCloud vCloudRequest);
+   DescribeAvailabilityZonesResponseVCloud describeAvailabilityZones(DescribeAvailabilityZonesRequestVCloud vCloudRequest);
 
-    StopInstancesResponseVCloud shutdownVms(StopInstancesRequestVCloud vCloudRequest);
+   StopInstancesResponseVCloud shutdownVms(StopInstancesRequestVCloud vCloudRequest);
 
-    StartInstancesResponseVCloud startVms(StartInstancesRequestVCloud vCloudRequest);
+   StartInstancesResponseVCloud startVms(StartInstancesRequestVCloud vCloudRequest);
 
-    RunInstancesResponseVCloud runInstances(RunInstancesRequestVCloud vCloudRequest);
+   RunInstancesResponseVCloud runInstances(RunInstancesRequestVCloud vCloudRequest);
 
-    RebootInstancesResponseVCloud rebootVms(RebootInstancesRequestVCloud vCloudRequest);
+   RebootInstancesResponseVCloud rebootVms(RebootInstancesRequestVCloud vCloudRequest);
 
-    CreateKeyPairResponse createKeyPair(CreateKeyPair vCloudRequest);
+   CreateKeyPairResponse createKeyPair(CreateKeyPair vCloudRequest);
 
-    DescribeKeyPairsResponse describeKeyPairs(DescribeKeyPairs vCloudRequest);
+   DescribeKeyPairsResponse describeKeyPairs(DescribeKeyPairs vCloudRequest);
 
-    DeleteKeyPairResponse deleteKeyPair(DeleteKeyPair vCloudRequest);
+   DeleteKeyPairResponse deleteKeyPair(DeleteKeyPair vCloudRequest);
 
-    TerminateInstancesResponseVCloud terminateInstances(TerminateInstancesRequestVCloud vCloudRequest);
+   TerminateInstancesResponseVCloud terminateInstances(TerminateInstancesRequestVCloud vCloudRequest);
 
-    DescribeAddressesResponse describeAddresses(DescribeAddressesRequestVCloud vCloudRequest);
+   DescribeAddressesResponse describeAddresses(DescribeAddressesRequestVCloud vCloudRequest);
 
-    AllocatedIpAddressesType getAllocatedIpAddresses(String networkId);
+   AllocatedIpAddressesType getAllocatedIpAddresses(String networkId);
 
 //    DescribeVolumes describeVolumes(DescribeVolumes describeVolumes);
 

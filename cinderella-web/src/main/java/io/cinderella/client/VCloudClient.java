@@ -5,9 +5,15 @@ import io.cinderella.CinderellaConfig;
 import io.cinderella.domain.DescribeAddressesRequestVCloud;
 import io.cinderella.service.VCloudService;
 import com.vmware.vcloud.api.rest.schema.AllocatedIpAddressesType;
+import org.jclouds.util.InetAddresses2;
+import org.jclouds.vcloud.director.v1_5.compute.util.VCloudDirectorComputeUtils;
+import org.jclouds.vcloud.director.v1_5.domain.VApp;
 import org.jclouds.vcloud.director.v1_5.domain.query.QueryResultRecords;
 import org.jclouds.vcloud.director.v1_5.features.QueryApi;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
+
+import java.net.URI;
+import java.util.Set;
 
 /**
  * Just a throw away class for testing vCloud requests
@@ -27,10 +33,24 @@ public class VCloudClient {
 
 //      DescribeAddressesResponse response = vCloudService.describeAddresses(new DescribeAddressesRequestVCloud());
 
+      /*VApp vapp = vCloudService.getVCloudDirectorApi().getVAppApi().get(URI.create("https://blbeta.bluelock.com/api/vApp/vapp-ab0072cb-ef98-48a6-a11d-05b392ced640"));
 
-      QueryApi queryApi = vCloudService.getVCloudDirectorApi().getQueryApi();
-      QueryResultRecords qrs = queryApi.vAppTemplatesQueryAll();
-      System.out.println(qrs);
+      // cheating here since we're currently only supporting 1 vm per vapp
+      Set<String> ips = VCloudDirectorComputeUtils.getIpsFromVm(vapp.getChildren().getVms().get(0));
+
+      String publicIpAddress = null;
+      for(String ip : ips) {
+         if (!InetAddresses2.isPrivateIPAddress(ip)) {
+            publicIpAddress = ip;
+         }
+      }
+
+      System.out.println(ips);*/
+
+
+//      QueryApi queryApi = vCloudService.getVCloudDirectorApi().getQueryApi();
+//      QueryResultRecords qrs = queryApi.vAppTemplatesQueryAll();
+//      System.out.println(qrs);
 
 
 //        DescribeInstancesRequestVCloud request = new DescribeInstancesRequestVCloud();

@@ -27,7 +27,9 @@ import org.jclouds.crypto.SshKeys;
 import org.jclouds.io.Payloads;
 import org.jclouds.json.Json;
 import org.jclouds.predicates.RetryablePredicate;
+import org.jclouds.util.InetAddresses2;
 import org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType;
+import org.jclouds.vcloud.director.v1_5.compute.util.VCloudDirectorComputeUtils;
 import org.jclouds.vcloud.director.v1_5.domain.*;
 import org.jclouds.vcloud.director.v1_5.domain.network.IpRange;
 import org.jclouds.vcloud.director.v1_5.domain.network.Network;
@@ -246,8 +248,6 @@ public class VCloudServiceJclouds implements VCloudService {
    @Override
    public RunInstancesResponseVCloud runInstances(RunInstancesRequestVCloud vCloudRequest) {
 
-      RunInstancesResponseVCloud response = new RunInstancesResponseVCloud();
-
       String vAppTemplateId = vCloudRequest.getvAppTemplateId();
       log.info("RunInstances vAppTemplateId: " + vAppTemplateId);
 
@@ -319,7 +319,7 @@ public class VCloudServiceJclouds implements VCloudService {
 
       boolean instantiationSuccess = retryTaskSuccessLong.apply(instantiationTask);
 
-      // todo if successful, get running VMs and populate response
+      // todo use jclouds predicates for extra checking rather than relying on vcloud responses
 
       // reconfigure network for each vm
       if (instantiationSuccess) {
@@ -358,6 +358,26 @@ public class VCloudServiceJclouds implements VCloudService {
          }
       }
 
+      // get public IP address
+      VApp vapp = vAppApi.get(instantiatedVApp.getHref());
+
+      // cheating here since we're currently only supporting 1 vm per vapp
+      Set<String> ips = VCloudDirectorComputeUtils.getIpsFromVm(vapp.getChildren().getVms().get(0));
+
+      String publicIpAddress = null;
+      for(String ip : ips) {
+         if (!InetAddresses2.isPrivateIPAddress(ip)) {
+            publicIpAddress = ip;
+         }
+      }
+      log.info("public ip: " + publicIpAddress);
+
+      // todo install ssh key
+
+
+      // todo populate response
+      RunInstancesResponseVCloud response = new RunInstancesResponseVCloud();
+      response.setvAppId(vapp.getId());
 
       return response;
    }
