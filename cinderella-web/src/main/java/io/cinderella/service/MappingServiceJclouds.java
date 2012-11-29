@@ -390,8 +390,7 @@ public class MappingServiceJclouds implements MappingService {
    }
 
    @Override
-   public RunInstancesResponse getRunInstancesResponse(RunInstancesResponseVCloud vCloudResponse,
-                                                       DescribeInstancesResponse describeInstancesResponse) {
+   public RunInstancesResponse getRunInstancesResponse(DescribeInstancesResponse describeInstancesResponse) {
 
       return new RunInstancesResponse()
             .withRequestId(UUID.randomUUID().toString())
