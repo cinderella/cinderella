@@ -24,6 +24,7 @@ import io.cinderella.domain.*;
 import io.cinderella.exception.EC2ServiceException;
 import io.cinderella.util.MappingUtils;
 import org.apache.commons.codec.binary.Base64;
+import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.domain.ExecResponse;
 import org.jclouds.crypto.SshKeys;
 import org.jclouds.domain.LoginCredentials;
@@ -87,7 +88,16 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.text.SimpleDateFormat;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
 
 import static com.google.common.base.Predicates.and;
 import static com.google.common.collect.Iterables.find;
@@ -298,12 +308,20 @@ public class VCloudServiceJclouds implements VCloudService {
             .networkConfigs(ImmutableSet.copyOf(vAppNetworkConfigurations))
             .build();
 
+
+      /*GuestCustomizationSection guestCustomizationSection = GuestCustomizationSection
+            .builder()
+            .enabled(true)
+            .customizationScript("")
+            .*/
+
+
       InstantiationParams instantiationParams = InstantiationParams.builder()
             .sections(ImmutableSet.of(networkConfigSection))
             .build();
 
       InstantiateVAppTemplateParams instantiateVAppTemplateParams = InstantiateVAppTemplateParams.builder()
-            .name(name("cinderella-"))
+            .name(name("cinderella-" + vCloudDirectorApi.getCurrentSession().getUser()))
             .deploy()
             .notDeploy()
             .notPowerOn()
@@ -365,12 +383,16 @@ public class VCloudServiceJclouds implements VCloudService {
       Set<String> ips = VCloudDirectorComputeUtils.getIpsFromVm(vapp.getChildren().getVms().get(0));
 
       String publicIpAddress = null;
-      for(String ip : ips) {
+      for (String ip : ips) {
          if (!InetAddresses2.isPrivateIPAddress(ip)) {
             publicIpAddress = ip;
          }
       }
       log.info("public ip: " + publicIpAddress);
+
+      // todo poll to verify vapp/vm is up
+
+
 
       // todo install ssh key
       instantiatedVApp = vAppApi.get(instantiatedVApp.getId());
@@ -421,13 +443,12 @@ public class VCloudServiceJclouds implements VCloudService {
 
 
 
-      // todo populate response
+      // populate response
       RunInstancesResponseVCloud response = new RunInstancesResponseVCloud();
       response.setvAppId(vapp.getId());
 
       return response;
    }
-
 
    @Override
    public RebootInstancesResponseVCloud rebootVms(RebootInstancesRequestVCloud vCloudRequest) {
@@ -813,85 +834,6 @@ public class VCloudServiceJclouds implements VCloudService {
             });
    }
 
-   /** Create the recompose vapp params. */
-   private RecomposeVAppParams addRecomposeParams(VApp vApp, Vm vm) {
-
-      // creating an item element. this item will contain the vm which should be added to the vapp.
-      Reference reference = Reference.builder().name(name("vm-")).href(vm.getHref()).type(vm.getType()).build();
-      SourcedCompositionItemParam vmItem = SourcedCompositionItemParam.builder().source(reference).build();
-
-      InstantiationParams vmInstantiationParams = null;
-
-      Set<NetworkAssignment> networkAssignments = Sets.newLinkedHashSet();
-
-      // if the vm contains a network connection and the vApp does not contain any configured
-      // network
-      if (vmHasNetworkConnectionConfigured(vm)) {
-         if (!vAppHasNetworkConfigured(vApp)) {
-            // add a new network connection section for the vm.
-            NetworkConnectionSection networkConnectionSection = NetworkConnectionSection.builder()
-                  .info("Empty network configuration parameters").build();
-            // adding the network connection section to the instantiation params of the vapp.
-            vmInstantiationParams = InstantiationParams.builder().sections(ImmutableSet.of(networkConnectionSection))
-                  .build();
-         }
-
-         // if the vm already contains a network connection section and if the vapp contains a
-         // configured network -> vm could be mapped to that network.
-         else {
-            Set<VAppNetworkConfiguration> vAppNetworkConfigurations = listVappNetworkConfigurations(vApp);
-            for (VAppNetworkConfiguration vAppNetworkConfiguration : vAppNetworkConfigurations) {
-               NetworkAssignment networkAssignment = NetworkAssignment.builder()
-                     .innerNetwork(vAppNetworkConfiguration.getNetworkName())
-                     .containerNetwork(vAppNetworkConfiguration.getNetworkName())
-                     .build();
-               networkAssignments.add(networkAssignment);
-            }
-         }
-      }
-
-      // if the vm does not contain any network connection sections and if the
-      // vapp contains a network configuration. we should add the vm to this
-      // vapp network
-      else {
-         if (vAppHasNetworkConfigured(vApp)) {
-            VAppNetworkConfiguration vAppNetworkConfiguration = getVAppNetworkConfig(vApp);
-            NetworkConnection networkConnection = NetworkConnection.builder()
-                  .network(vAppNetworkConfiguration.getNetworkName())
-                  .ipAddressAllocationMode(NetworkConnection.IpAddressAllocationMode.DHCP)
-                  .build();
-
-            NetworkConnectionSection networkConnectionSection = NetworkConnectionSection.builder().info("networkInfo")
-                  .primaryNetworkConnectionIndex(0)
-                  .networkConnection(networkConnection)
-                  .build();
-
-            // adding the network connection section to the instantiation params of the vapp.
-            vmInstantiationParams = InstantiationParams.builder()
-                  .sections(ImmutableSet.of(networkConnectionSection))
-                  .build();
-         }
-      }
-
-      if (vmInstantiationParams != null) {
-         vmItem = SourcedCompositionItemParam.builder()
-               .fromSourcedCompositionItemParam(vmItem)
-               .instantiationParams(vmInstantiationParams)
-               .build();
-      }
-
-      if (networkAssignments != null) {
-         vmItem = SourcedCompositionItemParam.builder()
-               .fromSourcedCompositionItemParam(vmItem)
-               .networkAssignment(networkAssignments)
-               .build();
-      }
-
-      return RecomposeVAppParams.builder().name(name("recompose-"))
-            // adding the vm item.
-            .sourcedItems(ImmutableList.of(vmItem)).build();
-   }
-
    protected VAppNetworkConfiguration getVAppNetworkConfig(VApp vApp) {
       Set<VAppNetworkConfiguration> vAppNetworkConfigs = vAppApi.getNetworkConfigSection(vApp.getId()).getNetworkConfigs();
       return Iterables.tryFind(vAppNetworkConfigs, Predicates.notNull()).orNull();
@@ -930,9 +872,11 @@ public class VCloudServiceJclouds implements VCloudService {
       }));
    }
 
+   private static final SimpleDateFormat sdf = new SimpleDateFormat("-yyyyMMdd-HHmm");
 
    private static String name(String prefix) {
-      return prefix + Integer.toString(random.nextInt(Integer.MAX_VALUE));
+      String fmtDate = sdf.format(new Date());
+      return prefix + fmtDate;
    }
 
    private Map<String, ResourceEntity.Status> getVmStatusMap(Iterable<String> vmUrns) {
@@ -1079,7 +1023,7 @@ public class VCloudServiceJclouds implements VCloudService {
 
       DescribeImagesResponseVCloud response = new DescribeImagesResponseVCloud();
       response.setVms(vms);
-      response.setImageOwnerId(getVCloudDirectorApi().getCurrentSession().getUser());
+      response.setImageOwnerId(vCloudDirectorApi.getCurrentSession().getUser());
 
       return response;
    }
