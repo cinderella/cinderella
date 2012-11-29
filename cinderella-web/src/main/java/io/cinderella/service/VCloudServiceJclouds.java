@@ -272,26 +272,29 @@ public class VCloudServiceJclouds implements VCloudService {
 
       // get network name from vAppTemplate
       NetworkConfigSection templateNetworkConfigSection = vAppTemplateApi.getNetworkConfigSection(vAppTemplateId);
-      VAppNetworkConfiguration vAppNetworkConfiguration
-            = templateNetworkConfigSection.getNetworkConfigs().iterator().next();
-      String templateNetworkName = vAppNetworkConfiguration.getNetworkName();
+
+      Set<VAppNetworkConfiguration> vAppNetworkConfigurations = new HashSet<VAppNetworkConfiguration>();
+      for (VAppNetworkConfiguration templateVAppNetworkConfig : templateNetworkConfigSection.getNetworkConfigs()) {
+         vAppNetworkConfigurations.add(
+               VAppNetworkConfiguration.builder()
+                     .networkName(templateVAppNetworkConfig.getNetworkName())
+                     .configuration(
+                           NetworkConfiguration.builder()
+                                 .parentNetwork(parentNetwork)
+                                 .fenceMode(Network.FenceMode.BRIDGED)
+                                 .build()
+                     )
+                     .isDeployed(true)
+                     .build()
+         );
+      }
+
 
       // build network config used to instantiate vApp
       NetworkConfigSection networkConfigSection = NetworkConfigSection
             .builder()
             .info("Configuration parameters for logical networks")
-            .networkConfigs(ImmutableSet.of(
-                  VAppNetworkConfiguration.builder()
-                        .networkName(templateNetworkName)
-                        .configuration(
-                              NetworkConfiguration.builder()
-                                    .parentNetwork(parentNetwork)
-                                    .fenceMode(Network.FenceMode.BRIDGED)
-                                    .build()
-                        )
-                        .isDeployed(true)
-                        .build()
-            ))
+            .networkConfigs(ImmutableSet.copyOf(vAppNetworkConfigurations))
             .build();
 
 
@@ -302,7 +305,6 @@ public class VCloudServiceJclouds implements VCloudService {
       InstantiateVAppTemplateParams instantiateVAppTemplateParams = InstantiateVAppTemplateParams.builder()
             .name(name("cinderella-"))
             .deploy()
-//            .powerOn()
             .notDeploy()
             .notPowerOn()
             .description("Created by Cinderella")
