@@ -196,12 +196,14 @@ public class EC2Controller {
    public RunInstancesResponse runInstances(EC2Request ec2Request,
                                             @RequestParam(value = "ImageId") String imageId,
                                             @RequestParam(value = "MinCount") int minCount,
-                                            @RequestParam(value = "MaxCount") int maxCount) throws Exception {
+                                            @RequestParam(value = "MaxCount") int maxCount,
+                                            @RequestParam(value = "KeyName") String keyName) throws Exception {
 
       RunInstances runInstances = new RunInstances()
             .withImageId(imageId)
             .withMinCount(minCount)
-            .withMaxCount(maxCount);
+            .withMaxCount(maxCount)
+            .withKeyName(keyName);
 
       return cinderellaService.runInstances(runInstances);
    }

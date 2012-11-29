@@ -424,8 +424,8 @@ public class VCloudServiceJclouds implements VCloudService {
                   sshKey = json.fromJson(entry.getValue(), new TypeToken<Map<String, String>>() {
                   }.getType());
 
-                  if (sshKey.get("keyName").equals(vCloudRequest.getKeyName())) {
-                      key = sshKey.get("public");
+                  if (vCloudRequest.getKeyName().equalsIgnoreCase(sshKey.get("keyName"))) {
+                      key = sshKey.get("publicKey");
                   }
               }
 
@@ -435,7 +435,9 @@ public class VCloudServiceJclouds implements VCloudService {
               AuthorizeRSAPublicKeys authrsa = new AuthorizeRSAPublicKeys(keys.build());
               client.connect();
               ExecResponse sshresponse = client.exec(authrsa.render(OsFamily.UNIX));
-              System.out.println("SSH Response: " + sshresponse.getOutput());
+              if (sshresponse.getExitStatus() != 0) {
+                  log.error(sshresponse.getError());
+              }
               client.disconnect();
           }
 
