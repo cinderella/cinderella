@@ -14,7 +14,6 @@ import org.jclouds.vcloud.director.v1_5.domain.Vm;
 import org.jclouds.vcloud.director.v1_5.domain.network.NetworkConnection;
 import org.jclouds.vcloud.director.v1_5.domain.org.Org;
 import org.jclouds.vcloud.director.v1_5.domain.section.OperatingSystemSection;
-import org.jclouds.vcloud.director.v1_5.features.VAppApi;
 import org.jclouds.vcloud.director.v1_5.features.VAppTemplateApi;
 import org.jclouds.vcloud.director.v1_5.features.VmApi;
 import org.slf4j.Logger;
@@ -79,11 +78,12 @@ public class MappingServiceJclouds implements MappingService {
 
         final VAppTemplateApi vmApi = vCloudService.getVCloudDirectorApi().getVAppTemplateApi();
 
-        for (VAppTemplate vm : describeImagesResponseVCloud.getVms()) {
+        for (VAppTemplate vAppTemplate : describeImagesResponseVCloud.getVms()) {
 
             ResourceTagSetType resourceTagSet = new ResourceTagSetType();
+            String vAppTemplateId = vAppTemplate.getId();
 
-            for (Map.Entry<String, String> resourceTag : vmApi.getMetadataApi(vm.getId()).get().entrySet()) {
+            for (Map.Entry<String, String> resourceTag : vmApi.getMetadataApi(vAppTemplateId).get().entrySet()) {
                 resourceTagSet
                         .withNewItems()
                         .withKey(resourceTag.getKey())
@@ -92,11 +92,11 @@ public class MappingServiceJclouds implements MappingService {
 
             imageResponse
                     .withNewItems()
-                    .withImageId(MappingUtils.vmUrnToImageId(vm.getId()))
+                    .withImageId(MappingUtils.vAppTemplateUrnToImageId(vAppTemplateId))
                     .withImageOwnerId(imageOwnerId)
-                    .withImageLocation(imageOwnerId + "/" + MappingUtils.vmUrnToImageId(vm.getId()))
-                    .withName(vm.getName())
-                    .withDescription(vm.getDescription())
+                    .withImageLocation(imageOwnerId + "/" + MappingUtils.vAppTemplateUrnToImageId(vAppTemplateId))
+                    .withName(vAppTemplate.getName())
+                    .withDescription(vAppTemplate.getDescription())
                     .withImageState("available")
                     .withImageType("machine")
                     .withTagSet(resourceTagSet);
