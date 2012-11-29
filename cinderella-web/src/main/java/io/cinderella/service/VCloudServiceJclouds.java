@@ -13,6 +13,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.net.HostAndPort;
 import com.google.common.net.InetAddresses;
 import com.google.gson.reflect.TypeToken;
 import com.vmware.vcloud.api.rest.schema.AllocatedIpAddressType;
@@ -23,11 +24,18 @@ import io.cinderella.domain.*;
 import io.cinderella.exception.EC2ServiceException;
 import io.cinderella.util.MappingUtils;
 import org.apache.commons.codec.binary.Base64;
+import org.jclouds.compute.domain.ExecResponse;
 import org.jclouds.crypto.SshKeys;
+import org.jclouds.domain.LoginCredentials;
+import org.jclouds.http.handlers.BackoffLimitedRetryHandler;
 import org.jclouds.io.Payloads;
 import org.jclouds.json.Json;
 import org.jclouds.predicates.RetryablePredicate;
 import org.jclouds.util.InetAddresses2;
+import org.jclouds.scriptbuilder.domain.OsFamily;
+import org.jclouds.scriptbuilder.statements.ssh.AuthorizeRSAPublicKeys;
+import org.jclouds.ssh.SshClient;
+import org.jclouds.sshj.SshjSshClient;
 import org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType;
 import org.jclouds.vcloud.director.v1_5.compute.util.VCloudDirectorComputeUtils;
 import org.jclouds.vcloud.director.v1_5.domain.*;
@@ -79,14 +87,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.charset.Charset;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static com.google.common.base.Predicates.and;
 import static com.google.common.collect.Iterables.find;
@@ -297,7 +298,6 @@ public class VCloudServiceJclouds implements VCloudService {
             .networkConfigs(ImmutableSet.copyOf(vAppNetworkConfigurations))
             .build();
 
-
       InstantiationParams instantiationParams = InstantiationParams.builder()
             .sections(ImmutableSet.of(networkConfigSection))
             .build();
@@ -373,6 +373,52 @@ public class VCloudServiceJclouds implements VCloudService {
       log.info("public ip: " + publicIpAddress);
 
       // todo install ssh key
+      instantiatedVApp = vAppApi.get(instantiatedVApp.getId());
+      if (instantiationSuccess && (null != vCloudRequest.getKeyName() && vCloudRequest.getKeyName().length() > 0)) {
+          Vm vm = Iterables.getFirst(instantiatedVApp.getChildren().getVms(), null);
+          LoginCredentials creds = LoginCredentials.builder(VCloudDirectorComputeUtils.getCredentialsFrom(vm))
+                  .identity("root")
+                  .build();
+          NetworkConnectionSection nets = vmApi.getNetworkConnectionSection(vm.getId());
+          String ipaddress = null;
+          for (NetworkConnection net : nets.getNetworkConnections()) {
+              ipaddress = net.getIpAddress();
+          }
+          System.out.println("Credentials: " + creds.getUser()  + " : " +  creds.getPassword() + " : " + creds.getOptionalPrivateKey().or("NONE"));
+
+          Media keyPairsContainer = null;
+          Optional<Media> optionalKeyPairsContainer = null;
+
+          optionalKeyPairsContainer = FluentIterable
+                .from(findAllEmptyMediaInOrg().toImmutableList())
+                .first();
+
+          if (optionalKeyPairsContainer.isPresent()) {
+              String key = null;
+              keyPairsContainer = optionalKeyPairsContainer.get();
+              vCloudRequest.getKeyName();
+              Map<String, String> sshKey;
+              for (MetadataEntry entry : mediaApi.getMetadataApi(keyPairsContainer.getId()).get().getMetadataEntries()) {
+                  sshKey = json.fromJson(entry.getValue(), new TypeToken<Map<String, String>>() {
+                  }.getType());
+
+                  if (sshKey.get("keyName").equals(vCloudRequest.getKeyName())) {
+                      key = sshKey.get("public");
+                  }
+              }
+
+              SshClient client = new SshjSshClient(BackoffLimitedRetryHandler.INSTANCE, HostAndPort.fromParts(ipaddress, 22), creds, 30000);
+              ImmutableList.Builder<String> keys= ImmutableList.builder();
+              keys.add(key);
+              AuthorizeRSAPublicKeys authrsa = new AuthorizeRSAPublicKeys(keys.build());
+              client.connect();
+              ExecResponse sshresponse = client.exec(authrsa.render(OsFamily.UNIX));
+              System.out.println("SSH Response: " + sshresponse.getOutput());
+              client.disconnect();
+          }
+
+       }
+
 
 
       // todo populate response

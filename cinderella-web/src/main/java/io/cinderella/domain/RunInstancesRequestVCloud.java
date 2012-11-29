@@ -9,6 +9,7 @@ public class RunInstancesRequestVCloud {
     private String vAppTemplateId;
     private int minCount;
     private int maxCount;
+    private String keyName;
 
     public String getvAppTemplateId() {
         return vAppTemplateId;
@@ -32,5 +33,13 @@ public class RunInstancesRequestVCloud {
 
     public void setMaxCount(int maxCount) {
         this.maxCount = maxCount;
+    }
+
+    public String getKeyName() {
+        return keyName;
+    }
+
+    public void setKeyName(String keyName) {
+        this.keyName = keyName;
     }
 }

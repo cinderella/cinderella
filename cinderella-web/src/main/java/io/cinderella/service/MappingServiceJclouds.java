@@ -385,6 +385,7 @@ public class MappingServiceJclouds implements MappingService {
       request.setvAppTemplateId(MappingUtils.imageIdToVAppUrn(runInstances.getImageId()));
       request.setMinCount(runInstances.getMinCount());
       request.setMaxCount(runInstances.getMaxCount());
+      request.setKeyName(runInstances.getKeyName());
 
       return request;
    }
