@@ -444,10 +444,9 @@ public class VCloudServiceJclouds implements VCloudService {
        }
 
 
-
       // populate response
       RunInstancesResponseVCloud response = new RunInstancesResponseVCloud();
-      response.setvAppId(vapp.getId());
+      response.setVmId(vapp.getChildren().getVms().get(0).getId());
 
       return response;
    }
@@ -1036,6 +1035,7 @@ public class VCloudServiceJclouds implements VCloudService {
 
       Vdc vdc = describeInstancesRequestVCloud.getVdc();
 
+
       ImmutableSet<Vm> vms = FluentIterable.from(vdc.getResourceEntities()).filter(typeEquals(VAPP))
             .transform(new Function<Reference, VApp>() {
                @Override
@@ -1054,8 +1054,8 @@ public class VCloudServiceJclouds implements VCloudService {
             }).filter(new Predicate<Vm>() {
                @Override
                public boolean apply(Vm in) {
-                  return (Iterables.isEmpty(describeInstancesRequestVCloud.getVmIds())
-                        || Iterables.contains(describeInstancesRequestVCloud.getVmIds(), MappingUtils.vmUrnToInstanceId(in.getId())));
+                  Iterable<String> vmIds = describeInstancesRequestVCloud.getVmIds();
+                  return (Iterables.isEmpty(vmIds) || Iterables.contains(vmIds, MappingUtils.vmUrnToInstanceId(in.getId())));
                }
             }).toImmutableSet();
 

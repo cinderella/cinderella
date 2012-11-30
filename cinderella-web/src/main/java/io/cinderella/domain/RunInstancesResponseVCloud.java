@@ -6,13 +6,13 @@ package io.cinderella.domain;
  */
 public class RunInstancesResponseVCloud {
 
-   private String vAppId;
+   private String vmId;
 
-   public String getvAppId() {
-      return vAppId;
+   public String getVmId() {
+      return vmId;
    }
 
-   public void setvAppId(String vAppId) {
-      this.vAppId = vAppId;
+   public void setVmId(String vmId) {
+      this.vmId = vmId;
    }
 }

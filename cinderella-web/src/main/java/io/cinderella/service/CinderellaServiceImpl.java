@@ -237,7 +237,7 @@ public class CinderellaServiceImpl implements CinderellaService {
 
          DescribeInstancesInfoType describeInstancesInfoType = new DescribeInstancesInfoType()
                .withItems(new DescribeInstancesItemType()
-                     .withInstanceId(MappingUtils.vAppUrnToInstanceId(vCloudResponse.getvAppId())));
+                     .withInstanceId(MappingUtils.vmUrnToInstanceId(vCloudResponse.getVmId())));
 
          DescribeInstancesResponse describeInstancesResponse = describeInstances(
                new DescribeInstances()
