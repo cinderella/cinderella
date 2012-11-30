@@ -1007,20 +1007,13 @@ public class VCloudServiceJclouds implements VCloudService {
                   return vCloudDirectorApi.getVAppTemplateApi().get(in.getEntity().getHref());
                }
             }).filter(Predicates.notNull()) // if no access, a template might end up null
-/*
-            .transformAndConcat(new Function<VAppTemplate, Iterable<Vm>>() {
-               @Override
-               public Iterable<Vm> apply(VAppTemplate in) {
-                  return in.getChildren();
-               }
-            }).filter(new Predicate<Vm>() {
-               @Override
-               public boolean apply(Vm in) {
-                  return (Iterables.isEmpty(describeImagesRequestVCloud.getVmIds())
-                        || Iterables.contains(describeImagesRequestVCloud.getVmIds(), MappingUtils.vmUrnToImageId(in.getId())));
-               }
+            .filter(new Predicate<VAppTemplate>() {
+                  @Override
+                  public boolean apply(VAppTemplate in) {
+                      return (Iterables.isEmpty(describeImagesRequestVCloud.getVmIds())
+                              || Iterables.contains(describeImagesRequestVCloud.getVmIds(), MappingUtils.vAppTemplateUrnToImageId(in.getId())));
+                  }
             })
-*/
             .toImmutableSet();
 
       DescribeImagesResponseVCloud response = new DescribeImagesResponseVCloud();
