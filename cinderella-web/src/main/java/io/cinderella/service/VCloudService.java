@@ -1,8 +1,10 @@
 package io.cinderella.service;
 
 import com.amazon.ec2.*;
+import com.google.common.collect.FluentIterable;
 import io.cinderella.domain.*;
 import com.vmware.vcloud.api.rest.schema.AllocatedIpAddressesType;
+import org.jclouds.vcloud.director.v1_5.domain.Media;
 import org.jclouds.vcloud.director.v1_5.domain.Vdc;
 import org.jclouds.vcloud.director.v1_5.domain.org.Org;
 import org.jclouds.vcloud.director.v1_5.user.VCloudDirectorApi;
@@ -48,6 +50,8 @@ public interface VCloudService {
    DescribeAddressesResponse describeAddresses(DescribeAddressesRequestVCloud vCloudRequest);
 
    AllocatedIpAddressesType getAllocatedIpAddresses(String networkId);
+
+   FluentIterable<Media> findAllEmptyMediaInOrg();
 
 //    DescribeVolumes describeVolumes(DescribeVolumes describeVolumes);
 

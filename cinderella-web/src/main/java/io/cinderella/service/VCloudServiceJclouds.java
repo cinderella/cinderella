@@ -815,6 +815,7 @@ public class VCloudServiceJclouds implements VCloudService {
       return uploadLink;
    }
 
+   @Override
    public FluentIterable<Media> findAllEmptyMediaInOrg() {
       Vdc vdc = getVDC();
       return FluentIterable
@@ -1007,11 +1008,11 @@ public class VCloudServiceJclouds implements VCloudService {
                }
             }).filter(Predicates.notNull()) // if no access, a template might end up null
             .filter(new Predicate<VAppTemplate>() {
-                  @Override
-                  public boolean apply(VAppTemplate in) {
-                      return (Iterables.isEmpty(describeImagesRequestVCloud.getVmIds())
-                              || Iterables.contains(describeImagesRequestVCloud.getVmIds(), MappingUtils.vAppTemplateUrnToImageId(in.getId())));
-                  }
+               @Override
+               public boolean apply(VAppTemplate in) {
+                  return (Iterables.isEmpty(describeImagesRequestVCloud.getVmIds())
+                        || Iterables.contains(describeImagesRequestVCloud.getVmIds(), MappingUtils.vAppTemplateUrnToImageId(in.getId())));
+               }
             })
             .toImmutableSet();
 
