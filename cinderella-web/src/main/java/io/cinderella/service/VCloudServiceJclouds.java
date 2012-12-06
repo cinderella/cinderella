@@ -777,9 +777,8 @@ public class VCloudServiceJclouds implements VCloudService {
 
       Task setKeyPair = mediaApi.getMetadataApi(media.getId()).put(keyPairName, keyPair);
 
-      Predicate<Task> retryTaskSuccess = new RetryablePredicate<Task>(new TaskSuccess(vCloudDirectorApi.getTaskApi()), 100 * 1000L);
+      taskDoneEventually(setKeyPair);
 
-      retryTaskSuccess.apply(setKeyPair);
    }
 
    private String sshKeyToJson(String keyPairName, Map<String, String> sshKey) {
@@ -1106,6 +1105,47 @@ public class VCloudServiceJclouds implements VCloudService {
 
       return response.getBody();
    }
+
+    @Override
+    public CreateSecurityGroupResponse createSecurityGroup(CreateSecurityGroup vCloudRequest) {
+        return new CreateSecurityGroupResponse()
+              .withRequestId(UUID.randomUUID().toString())
+              .withGroupId("sg-dummy")
+              .withReturn(true);
+    }
+
+    @Override
+    public DeleteSecurityGroupResponse deleteSecurityGroup(DeleteSecurityGroup vCloudRequest) {
+        return new DeleteSecurityGroupResponse()
+                .withRequestId(UUID.randomUUID().toString())
+                .withReturn(true);
+    }
+
+    @Override
+    public DescribeSecurityGroupsResponse describeSecurityGroups(DescribeSecurityGroups vCloudRequest) {
+        DescribeSecurityGroupsResponse describeSecurityGroupsResponse =  new DescribeSecurityGroupsResponse();
+        describeSecurityGroupsResponse
+              .withRequestId(UUID.randomUUID().toString());
+
+        for (DescribeSecurityGroupsSetItemType group : vCloudRequest.getSecurityGroupSet().getItems()) {
+            describeSecurityGroupsResponse
+                .withSecurityGroupInfo()
+                .withNewItems()
+                    .withGroupId("sg-52e5c93a")
+                    .withOwnerId("asfdsadf")
+                    .withGroupName(group.getGroupName());
+        }
+
+        return describeSecurityGroupsResponse;
+    }
+
+    @Override
+    public AuthorizeSecurityGroupIngressResponse authorizeSecurityGroupIngress(AuthorizeSecurityGroupIngress authorizeSecurityGroupIngress) {
+        return new AuthorizeSecurityGroupIngressResponse()
+                .withRequestId(UUID.randomUUID().toString())
+                .withReturn(true);
+    }
+
 
     /*@Override
     public DescribeVolumes describeVolumes(DescribeVolumes describeVolumes) {

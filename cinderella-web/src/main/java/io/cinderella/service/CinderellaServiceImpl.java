@@ -158,29 +158,6 @@ public class CinderellaServiceImpl implements CinderellaService {
    }
 
    @Override
-   public DescribeSecurityGroupsResponse describeSecurityGroups(DescribeSecurityGroups describeSecurityGroups) {
-      throw new EC2ServiceException(Unsupported, "This operation is not available");
-      /*
-       * try { EC2DescribeSecurityGroupsResponse groupSet = new EC2DescribeSecurityGroupsResponse();
-       *
-       * List<CloudStackSecurityGroup> groups = getApi().listSecurityGroups(null, null, null, true,
-       * null, null, null); if (groups != null && groups.size() > 0) for (CloudStackSecurityGroup
-       * group : groups) { boolean matched = false; if (interestedGroups.length > 0) { for (String
-       * groupName :interestedGroups) { if (groupName.equalsIgnoreCase(group.getName())) { matched =
-       * true; break; } } } else { matched = true; } if (!matched) continue; EC2SecurityGroup
-       * ec2Group = new EC2SecurityGroup(); // not sure if we should set both account and account
-       * name to accountname ec2Group.setAccount(group.getAccountName());
-       * ec2Group.setAccountName(group.getAccountName()); ec2Group.setName(group.getName());
-       * ec2Group.setDescription(group.getDescription()); ec2Group.setDomainId(group.getDomainId());
-       * ec2Group.setId(group.getId().toString()); toPermission(ec2Group, group);
-       *
-       * groupSet.addGroup(ec2Group); } return groupSet; } catch(Exception e) { logger.error(
-       * "List Security Groups - ", e); throw new EC2ServiceException(ServerError.InternalError,
-       * e.getMessage()); }
-       */
-   }
-
-   @Override
    public CreateKeyPairResponse createKeyPair(CreateKeyPair createKeyPair) {
       try {
 
@@ -228,7 +205,63 @@ public class CinderellaServiceImpl implements CinderellaService {
       }
    }
 
-   @Override
+    @Override
+    public CreateSecurityGroupResponse createSecurityGroup(CreateSecurityGroup createSecurityGroup) {
+        try {
+           return vCloudService.createSecurityGroup(createSecurityGroup);
+        } catch (EC2ServiceException e) {
+           log.error("EC2 CreateSecurityGroup - ", e);
+           throw e;
+        } catch (Exception e) {
+           log.error("EC2 CreateSecurityGroup - ", e);
+           throw new EC2ServiceException(InternalError, e.getMessage() != null ? e.getMessage()
+                 : "An unexpected error occurred.");
+        }
+    }
+
+    @Override
+    public DeleteSecurityGroupResponse deleteSecurityGroup(DeleteSecurityGroup deleteSecurityGroup) {
+        try {
+           return vCloudService.deleteSecurityGroup(deleteSecurityGroup);
+        } catch (EC2ServiceException e) {
+           log.error("EC2 DeleteSecurityGroup - ", e);
+           throw e;
+        } catch (Exception e) {
+           log.error("EC2 DeleteSecurityGroup - ", e);
+           throw new EC2ServiceException(InternalError, e.getMessage() != null ? e.getMessage()
+                 : "An unexpected error occurred.");
+        }
+    }
+
+    @Override
+    public DescribeSecurityGroupsResponse describeSecurityGroups(DescribeSecurityGroups describeSecurityGroups) {
+        try {
+           return vCloudService.describeSecurityGroups(describeSecurityGroups);
+        } catch (EC2ServiceException e) {
+           log.error("EC2 DescribeSecurityGroup - ", e);
+           throw e;
+        } catch (Exception e) {
+           log.error("EC2 DescribeSecurityGroup - ", e);
+           throw new EC2ServiceException(InternalError, e.getMessage() != null ? e.getMessage()
+                 : "An unexpected error occurred.");
+        }
+    }
+
+    @Override
+    public AuthorizeSecurityGroupIngressResponse authorizeSecurityGroupIngress(AuthorizeSecurityGroupIngress authorizeSecurityGroupIngress) {
+        try {
+           return vCloudService.authorizeSecurityGroupIngress(authorizeSecurityGroupIngress);
+        } catch (EC2ServiceException e) {
+           log.error("EC2 DescribeSecurityGroup - ", e);
+           throw e;
+        } catch (Exception e) {
+           log.error("EC2 DescribeSecurityGroup - ", e);
+           throw new EC2ServiceException(InternalError, e.getMessage() != null ? e.getMessage()
+                 : "An unexpected error occurred.");
+        }
+    }
+
+    @Override
    public RunInstancesResponse runInstances(RunInstances runInstances) {
       try {
 

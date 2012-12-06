@@ -55,4 +55,11 @@ public interface VCloudService {
 
 //    DescribeVolumes describeVolumes(DescribeVolumes describeVolumes);
 
+   CreateSecurityGroupResponse createSecurityGroup(CreateSecurityGroup vCloudRequest);
+
+   DeleteSecurityGroupResponse deleteSecurityGroup(DeleteSecurityGroup vCloudRequest);
+
+   DescribeSecurityGroupsResponse describeSecurityGroups(DescribeSecurityGroups vCloudRequest);
+
+    AuthorizeSecurityGroupIngressResponse authorizeSecurityGroupIngress(AuthorizeSecurityGroupIngress authorizeSecurityGroupIngress);
 }

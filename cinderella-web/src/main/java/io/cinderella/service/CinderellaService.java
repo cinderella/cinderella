@@ -55,13 +55,6 @@ public interface CinderellaService {
 
 
     /**
-     * @param describeSecurityGroups
-     * @return
-     */
-    DescribeSecurityGroupsResponse describeSecurityGroups(DescribeSecurityGroups describeSecurityGroups);
-
-
-    /**
      *
      * @param createKeyPair
      * @return
@@ -81,6 +74,27 @@ public interface CinderellaService {
      * @return
      */
     DescribeKeyPairsResponse describeKeyPairs(DescribeKeyPairs describeKeyPairs);
+
+    /**
+     *
+     * @param createSecurityGroup
+     * @return
+     */
+    CreateSecurityGroupResponse createSecurityGroup(CreateSecurityGroup createSecurityGroup);
+
+    /**
+     *
+     * @param deleteSecurityGroup
+     * @return
+     */
+    DeleteSecurityGroupResponse deleteSecurityGroup(DeleteSecurityGroup deleteSecurityGroup);
+
+    /**
+     *
+     * @param describeSecurityGroups
+     * @return
+     */
+    DescribeSecurityGroupsResponse describeSecurityGroups(DescribeSecurityGroups describeSecurityGroups);
 
     /**
      *
@@ -140,4 +154,10 @@ public interface CinderellaService {
      */
     DetachVolumeResponse detachVolume(DetachVolume detachVolume);
 
+    /**
+     *
+     * @param authorizeSecurityGroupIngress
+     * @return
+     */
+    AuthorizeSecurityGroupIngressResponse authorizeSecurityGroupIngress(AuthorizeSecurityGroupIngress authorizeSecurityGroupIngress);
 }

@@ -93,6 +93,60 @@ public class EC2Controller {
       return cinderellaService.deleteKeyPair(deleteKeyPair);
    }
 
+   @RequestMapping(params = "Action=DescribeSecurityGroups")
+   @ResponseBody
+   public DescribeSecurityGroupsResponse describeSecurityGroups(EC2Request ec2Request,
+                                                    @EC2GroupNameSet DescribeSecurityGroupsSetType describeSecurityGroupsIdSetItemType,
+                                                    @EC2FilterSet FilterSetType filterSet) throws EC2ServiceException {
+
+      DescribeSecurityGroups describeSecurityGroups = new DescribeSecurityGroups()
+            .withFilterSet(filterSet)
+            .withSecurityGroupSet(describeSecurityGroupsIdSetItemType);
+
+      return cinderellaService.describeSecurityGroups(describeSecurityGroups);
+   }
+
+   @RequestMapping(params = "Action=CreateSecurityGroup")
+   @ResponseBody
+   public CreateSecurityGroupResponse createSecurityGroup(EC2Request ec2Request,
+                                              @RequestParam(value = "GroupName") String groupName) throws EC2ServiceException {
+      return cinderellaService.createSecurityGroup(new CreateSecurityGroup().withGroupName(groupName));
+   }
+
+   @RequestMapping(params = "Action=DeleteSecurityGroup")
+   @ResponseBody
+   public DeleteSecurityGroupResponse deleteSecurityGroup(EC2Request ec2Request,
+                                              @RequestParam(value = "GroupName") String keyName) {
+
+      DeleteSecurityGroup deleteSecurityGroup = new DeleteSecurityGroup()
+            .withGroupName(keyName);
+
+      return cinderellaService.deleteSecurityGroup(deleteSecurityGroup);
+   }
+
+    @RequestMapping(params = "Action=AuthorizeSecurityGroupIngress")
+    @ResponseBody
+    public AuthorizeSecurityGroupIngressResponse authorizeSecurityGroupIngress(EC2Request ec2Request,
+                                             @RequestParam(value = "CidrIp") String cidrIp,
+                                             @RequestParam(value = "FromPort") int fromPort,
+                                             @RequestParam(value = "GroupName") String groupName,
+                                             @RequestParam(value = "IpProtocol") String ipProtocol) throws Exception {
+
+//        CidrIp=0.0.0.0%2F0&FromPort=22&GroupName=jclouds%23mygroup&IpProtocol=tcp
+       AuthorizeSecurityGroupIngress authorizeSecurityGroupIngress = new AuthorizeSecurityGroupIngress();
+       authorizeSecurityGroupIngress
+           .withGroupName(groupName)
+           .withIpPermissions()
+               .withNewItems()
+                    .withFromPort(fromPort)
+                    .withIpProtocol(ipProtocol)
+                    .withIpRanges()
+                    .withNewItems()
+                        .withCidrIp(cidrIp);
+
+       return cinderellaService.authorizeSecurityGroupIngress(authorizeSecurityGroupIngress);
+    }
+
    @RequestMapping(params = "Action=DescribeAvailabilityZones")
    @ResponseBody
    public DescribeAvailabilityZonesResponse describeAvailabilityZones(EC2Request ec2Request,
@@ -139,12 +193,6 @@ public class EC2Controller {
             .withFilterSet(filterSet);
 
       return cinderellaService.describeInstances(describeInstances);
-   }
-
-   @RequestMapping(params = "Action=DescribeSecurityGroups")
-   @ResponseBody
-   public DescribeSecurityGroupsResponse describeSecurityGroups(EC2Request ec2Request) throws Exception {
-      return cinderellaService.describeSecurityGroups(new DescribeSecurityGroups());
    }
 
    @RequestMapping(params = "Action=RebootInstances")
