@@ -127,10 +127,10 @@ public class EC2Controller {
     @RequestMapping(params = "Action=AuthorizeSecurityGroupIngress")
     @ResponseBody
     public AuthorizeSecurityGroupIngressResponse authorizeSecurityGroupIngress(EC2Request ec2Request,
-                                             @RequestParam(value = "CidrIp") String cidrIp,
-                                             @RequestParam(value = "FromPort") int fromPort,
+                                             @RequestParam(value = "CidrIp", required = false) String cidrIp,
+                                             @RequestParam(value = "FromPort", required = false) Integer fromPort,
                                              @RequestParam(value = "GroupName") String groupName,
-                                             @RequestParam(value = "IpProtocol") String ipProtocol) throws Exception {
+                                             @RequestParam(value = "IpProtocol", required = false) String ipProtocol) throws Exception {
 
 //        CidrIp=0.0.0.0%2F0&FromPort=22&GroupName=jclouds%23mygroup&IpProtocol=tcp
        AuthorizeSecurityGroupIngress authorizeSecurityGroupIngress = new AuthorizeSecurityGroupIngress();
