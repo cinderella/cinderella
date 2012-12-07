@@ -12,7 +12,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.common.net.HostAndPort;
 import com.google.common.net.InetAddresses;
 import com.google.gson.reflect.TypeToken;
@@ -24,7 +23,6 @@ import io.cinderella.domain.*;
 import io.cinderella.exception.EC2ServiceException;
 import io.cinderella.util.MappingUtils;
 import org.apache.commons.codec.binary.Base64;
-import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.domain.ExecResponse;
 import org.jclouds.crypto.SshKeys;
 import org.jclouds.domain.LoginCredentials;
@@ -32,32 +30,28 @@ import org.jclouds.http.handlers.BackoffLimitedRetryHandler;
 import org.jclouds.io.Payloads;
 import org.jclouds.json.Json;
 import org.jclouds.predicates.RetryablePredicate;
-import org.jclouds.util.InetAddresses2;
 import org.jclouds.scriptbuilder.domain.OsFamily;
 import org.jclouds.scriptbuilder.statements.ssh.AuthorizeRSAPublicKeys;
 import org.jclouds.ssh.SshClient;
 import org.jclouds.sshj.SshjSshClient;
+import org.jclouds.util.InetAddresses2;
 import org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType;
 import org.jclouds.vcloud.director.v1_5.compute.util.VCloudDirectorComputeUtils;
 import org.jclouds.vcloud.director.v1_5.domain.*;
 import org.jclouds.vcloud.director.v1_5.domain.network.IpRange;
 import org.jclouds.vcloud.director.v1_5.domain.network.Network;
-import org.jclouds.vcloud.director.v1_5.domain.network.NetworkAssignment;
 import org.jclouds.vcloud.director.v1_5.domain.network.NetworkConfiguration;
 import org.jclouds.vcloud.director.v1_5.domain.network.NetworkConnection;
 import org.jclouds.vcloud.director.v1_5.domain.network.VAppNetworkConfiguration;
 import org.jclouds.vcloud.director.v1_5.domain.org.Org;
 import org.jclouds.vcloud.director.v1_5.domain.params.InstantiateVAppTemplateParams;
 import org.jclouds.vcloud.director.v1_5.domain.params.InstantiationParams;
-import org.jclouds.vcloud.director.v1_5.domain.params.RecomposeVAppParams;
-import org.jclouds.vcloud.director.v1_5.domain.params.SourcedCompositionItemParam;
 import org.jclouds.vcloud.director.v1_5.domain.params.UndeployVAppParams;
 import org.jclouds.vcloud.director.v1_5.domain.section.GuestCustomizationSection;
 import org.jclouds.vcloud.director.v1_5.domain.section.NetworkConfigSection;
 import org.jclouds.vcloud.director.v1_5.domain.section.NetworkConnectionSection;
 import org.jclouds.vcloud.director.v1_5.features.MediaApi;
 import org.jclouds.vcloud.director.v1_5.features.NetworkApi;
-import org.jclouds.vcloud.director.v1_5.features.QueryApi;
 import org.jclouds.vcloud.director.v1_5.features.TaskApi;
 import org.jclouds.vcloud.director.v1_5.features.UploadApi;
 import org.jclouds.vcloud.director.v1_5.features.VAppApi;
@@ -88,9 +82,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.charset.Charset;
-import java.text.SimpleDateFormat;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -123,14 +115,10 @@ public class VCloudServiceJclouds implements VCloudService {
 
    private static final String KEY_PAIR_CONTAINER = "keypairs";
 
-   private static final Random random = new Random();
-
    private VCloudDirectorApi vCloudDirectorApi;
    private VAppApi vAppApi;
    private VmApi vmApi;
-   private QueryApi queryApi;
    private MediaApi mediaApi;
-   private NetworkApi networkApi;
    private NetworkApi networkApi15;
    private TaskApi taskApi;
    private UploadApi uploadApi;
@@ -155,9 +143,7 @@ public class VCloudServiceJclouds implements VCloudService {
       this.vCloudDirectorApi = vCloudDirectorApi;
       this.vAppApi = this.vCloudDirectorApi.getVAppApi();
       this.vmApi = this.vCloudDirectorApi.getVmApi();
-      this.queryApi = this.vCloudDirectorApi.getQueryApi();
       this.mediaApi = this.vCloudDirectorApi.getMediaApi();
-      this.networkApi = this.getVCloudDirectorApi().getNetworkApi();
       this.taskApi = this.getVCloudDirectorApi().getTaskApi();
       this.uploadApi = this.vCloudDirectorApi.getUploadApi();
       this.vAppTemplateApi = this.getVCloudDirectorApi().getVAppTemplateApi();
@@ -873,11 +859,10 @@ public class VCloudServiceJclouds implements VCloudService {
       }));
    }
 
-   private static final SimpleDateFormat sdf = new SimpleDateFormat("-yyyyMMdd-HHmm");
+   private static final Random random = new Random();
 
    private static String name(String prefix) {
-      String fmtDate = sdf.format(new Date());
-      return prefix + fmtDate;
+      return prefix + Integer.toString(random.nextInt(Integer.MAX_VALUE));
    }
 
    private Map<String, ResourceEntity.Status> getVmStatusMap(Iterable<String> vmUrns) {

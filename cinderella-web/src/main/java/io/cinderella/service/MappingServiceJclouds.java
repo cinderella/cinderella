@@ -99,6 +99,7 @@ public class MappingServiceJclouds implements MappingService {
                .withDescription(vAppTemplate.getDescription())
                .withImageState("available")
                .withImageType("machine")
+               .withIsPublic(true)
                .withTagSet(resourceTagSet);
 
          // ec2Image.setOsTypeId(temp.getOsTypeId().toString());
