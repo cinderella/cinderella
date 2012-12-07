@@ -308,7 +308,6 @@ public class VCloudServiceJclouds implements VCloudService {
 
       InstantiateVAppTemplateParams instantiateVAppTemplateParams = InstantiateVAppTemplateParams.builder()
             .name(name("cinderella-" + vCloudDirectorApi.getCurrentSession().getUser()))
-            .deploy()
             .notDeploy()
             .notPowerOn()
             .description("Created by Cinderella")
