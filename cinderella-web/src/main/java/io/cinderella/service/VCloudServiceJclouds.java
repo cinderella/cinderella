@@ -29,7 +29,9 @@ import org.jclouds.domain.LoginCredentials;
 import org.jclouds.http.handlers.BackoffLimitedRetryHandler;
 import org.jclouds.io.Payloads;
 import org.jclouds.json.Json;
+import org.jclouds.predicates.InetSocketAddressConnect;
 import org.jclouds.predicates.RetryablePredicate;
+import org.jclouds.predicates.SocketOpen;
 import org.jclouds.scriptbuilder.domain.OsFamily;
 import org.jclouds.scriptbuilder.statements.ssh.AuthorizeRSAPublicKeys;
 import org.jclouds.ssh.SshClient;
@@ -90,6 +92,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Predicates.and;
 import static com.google.common.collect.Iterables.find;
@@ -377,11 +380,12 @@ public class VCloudServiceJclouds implements VCloudService {
 
       // todo poll to verify vapp/vm is up
 
+       SocketOpen socketTester = new InetSocketAddressConnect();
+       RetryablePredicate<HostAndPort> sshTester = new RetryablePredicate<HostAndPort>(socketTester, 120, 5, TimeUnit.SECONDS);
+       boolean isUp = sshTester.apply(HostAndPort.fromParts(publicIpAddress, 22));
 
-
-      // todo install ssh key
-      instantiatedVApp = vAppApi.get(instantiatedVApp.getId());
-      if (instantiationSuccess && (null != vCloudRequest.getKeyName() && vCloudRequest.getKeyName().length() > 0)) {
+       instantiatedVApp = vAppApi.get(instantiatedVApp.getId());
+      if (isUp && instantiationSuccess && (null != vCloudRequest.getKeyName() && vCloudRequest.getKeyName().length() > 0)) {
           Vm vm = Iterables.getFirst(instantiatedVApp.getChildren().getVms(), null);
           LoginCredentials creds = LoginCredentials.builder(VCloudDirectorComputeUtils.getCredentialsFrom(vm))
                   .identity("root")
@@ -391,7 +395,6 @@ public class VCloudServiceJclouds implements VCloudService {
           for (NetworkConnection net : nets.getNetworkConnections()) {
               ipaddress = net.getIpAddress();
           }
-          System.out.println("Credentials: " + creds.getUser()  + " : " +  creds.getPassword() + " : " + creds.getOptionalPrivateKey().or("NONE"));
 
           Media keyPairsContainer = null;
           Optional<Media> optionalKeyPairsContainer = null;
