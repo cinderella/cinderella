@@ -2,15 +2,15 @@ package io.cinderella.service;
 
 import com.amazon.ec2.*;
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import io.cinderella.domain.*;
 import io.cinderella.util.MappingUtils;
 import org.jclouds.util.InetAddresses2;
-import org.jclouds.vcloud.director.v1_5.domain.VApp;
-import org.jclouds.vcloud.director.v1_5.domain.VAppTemplate;
-import org.jclouds.vcloud.director.v1_5.domain.Vdc;
-import org.jclouds.vcloud.director.v1_5.domain.Vm;
+import org.jclouds.vcloud.director.v1_5.domain.*;
 import org.jclouds.vcloud.director.v1_5.domain.network.NetworkConnection;
 import org.jclouds.vcloud.director.v1_5.domain.org.Org;
 import org.jclouds.vcloud.director.v1_5.domain.section.OperatingSystemSection;
@@ -25,7 +25,9 @@ import java.util.*;
 
 import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.Iterables.tryFind;
+import static org.jclouds.vcloud.director.v1_5.VCloudDirectorMediaType.VAPP;
 import static org.jclouds.vcloud.director.v1_5.compute.util.VCloudDirectorComputeUtils.getIpsFromVm;
+import static org.jclouds.vcloud.director.v1_5.predicates.ReferencePredicates.typeEquals;
 
 /**
  * @author shane
@@ -210,6 +212,75 @@ public class MappingServiceJclouds implements MappingService {
       return describeInstancesResponse;
    }
 
+/*   @Override
+   public RunInstancesResponse getRunInstancesResponse(RunInstancesResponseVCloud runInstancesResponseVCloud) {
+
+      DescribeInstancesResponse describeInstancesResponse = new DescribeInstancesResponse();
+      describeInstancesResponse.setRequestId(UUID.randomUUID().toString());
+
+      String currentUser = vCloudService.getVCloudDirectorApi().getCurrentSession().getUser();
+
+      ReservationInfoType resInfoType = new ReservationInfoType();
+
+      resInfoType.setInstancesSet(new RunningInstancesSetType());
+      resInfoType.setOwnerId(currentUser);
+      resInfoType.setRequesterId(currentUser);
+      resInfoType.setReservationId("r-reservationId");
+
+      ReservationSetType reservationSetType = new ReservationSetType();
+      reservationSetType.getItems().add(resInfoType);
+      describeInstancesResponse.setReservationSet(reservationSetType);
+
+      ImmutableSet<Vm> vms = describeInstancesResponseVCloud.getVms();
+      List<RunningInstancesItemType> instances = resInfoType.getInstancesSet().getItems();
+
+      VmApi vmApi = vCloudService.getVCloudDirectorApi().getVmApi();
+
+      for (Vm vm : vms) {
+         String vmId = vm.getId();
+         log.info(vmId);
+         Set<String> addresses = getIpsFromVm(vm);
+         OperatingSystemSection operatingSystemSection = vmApi.getOperatingSystemSection(vmId);
+
+         RunningInstancesItemType instance = new RunningInstancesItemType();
+         instance.withAmiLaunchIndex("0")
+               .withBlockDeviceMapping(new InstanceBlockDeviceMappingResponseType())
+               .withDnsName(vm.getName())
+               .withEbsOptimized(Boolean.TRUE)
+               .withHypervisor("vsphere")
+               .withImageId(MappingUtils.vmUrnToImageId(vmId))
+               .withInstanceId(MappingUtils.vmUrnToInstanceId(vmId))
+               .withInstanceState(MappingUtils.vCloudStatusToEc2Status(vm.getStatus()))
+               .withInstanceType("m1.small") // todo munge VirtualHardwareSection::items
+               .withIpAddress(tryFind(addresses, not(InetAddresses2.IsPrivateIPAddress.INSTANCE)).orNull())
+               .withPlacement(new PlacementResponseType().withAvailabilityZone(vm.getName() + "a"))
+               .withPrivateIpAddress(tryFind(addresses, InetAddresses2.IsPrivateIPAddress.INSTANCE).orNull())
+               .withVirtualizationType("paravirtual")
+               .withMonitoring(new InstanceMonitoringStateType().withState("disabled"))
+               .withArchitecture(operatingSystemSection.getOsType());
+
+
+         // networking
+         Set<NetworkConnection> networkConnections = vmApi.getNetworkConnectionSection(vmId).getNetworkConnections();
+         for (NetworkConnection networkConnection : networkConnections) {
+            instance.withNetworkInterfaceSet(new InstanceNetworkInterfaceSetType()
+                  .withItems(new InstanceNetworkInterfaceSetItemType()
+                        .withNetworkInterfaceId(networkConnection.getNetwork())
+                        .withPrivateIpAddress(networkConnection.getIpAddress())
+                  ));
+         }
+         Set<Map.Entry<String, String>> vmMeta = vmApi.getMetadataApi(vmId).get().entrySet();
+         for (Map.Entry<String, String> resourceTag : vmMeta) {
+            instance.withTagSet(new ResourceTagSetType()
+                  .withItems(new ResourceTagSetItemType()
+                        .withKey(resourceTag.getKey())
+                        .withValue(resourceTag.getValue())));
+         }
+         instances.add(instance);
+      }
+
+      return runInstancesResponse;
+   }*/
 
    @Override
    public DescribeRegionsRequestVCloud getDescribeRegionsRequest(DescribeRegions describeRegions) {
@@ -392,14 +463,80 @@ public class MappingServiceJclouds implements MappingService {
    }
 
    @Override
-   public RunInstancesResponse getRunInstancesResponse(DescribeInstancesResponse describeInstancesResponse) {
+   public RunInstancesResponse getRunInstancesResponse(final RunInstancesRequestVCloud runInstancesRequest, final RunInstancesResponseVCloud runInstancesResponse) {
+       RunInstancesResponse response = new RunInstancesResponse();
 
-      return new RunInstancesResponse()
-            .withRequestId(UUID.randomUUID().toString())
-            .withOwnerId(vCloudService.getVCloudDirectorApi().getCurrentSession().getUser())
-            .withInstancesSet(new RunningInstancesSetType().withItems(
-                  describeInstancesResponse.getReservationSet().getItems().get(0).getInstancesSet().getItems())
-            );
+       response
+            .withReservationId("r-" + UUID.randomUUID().toString())
+            .withOwnerId(vCloudService.getVCloudDirectorApi().getCurrentSession().getUser());
+//            .withInstancesSet();
+//                .withItems(describeInstancesResponse.getReservationSet().getItems().get(0).getInstancesSet().getItems());
+
+       String region = vCloudService.getVdcName();
+       Vdc vdc = vCloudService.getVDC(region);
+
+       ImmutableSet<Vm> vms = FluentIterable.from(vdc.getResourceEntities()).filter(typeEquals(VAPP))
+               .transform(new Function<Reference, VApp>() {
+                   @Override
+                   public VApp apply(Reference in) {
+                       return vCloudService.getVCloudDirectorApi().getVAppApi().get(in.getHref());
+                   }
+               }).filter(Predicates.notNull()) // if no access, a vApp might end up null
+               .transformAndConcat(new Function<VApp, Iterable<Vm>>() {
+                   @Override
+                   public Iterable<Vm> apply(VApp in) {
+                       if (null != in.getChildren() && null != in.getChildren().getVms()) {
+                           return in.getChildren().getVms();
+                       }
+                       return ImmutableSet.of();
+                   }
+               }).filter(new Predicate<Vm>() {
+                   @Override
+                   public boolean apply(Vm in) {
+                       return in.getId().equals(runInstancesResponse.getVmId());
+                   }
+               }).toImmutableSet();
+
+       VmApi vmApi = vCloudService.getVCloudDirectorApi().getVmApi();
+
+       Vm newvm = Iterables.getOnlyElement(vms);
+
+       String vmId = newvm.getId();
+       log.info(vmId);
+       Set<String> addresses = getIpsFromVm(newvm);
+       OperatingSystemSection operatingSystemSection = vmApi.getOperatingSystemSection(vmId);
+
+       ResourceTagSetType tags = new ResourceTagSetType();
+       Set<Map.Entry<String, String>> vmMeta = vmApi.getMetadataApi(vmId).get().entrySet();
+       for (Map.Entry<String, String> resourceTag : vmMeta) {
+           tags
+                   .withNewItems()
+                   .withKey(resourceTag.getKey())
+                   .withValue(resourceTag.getValue());
+       }
+
+       response
+           .withInstancesSet()
+               .withNewItems()
+                   .withAmiLaunchIndex("0")
+                   .withTagSet(tags)
+                   .withKeyName(runInstancesRequest.getKeyName())
+                   .withBlockDeviceMapping(new InstanceBlockDeviceMappingResponseType())
+                   .withDnsName(newvm.getName())
+                   .withEbsOptimized(Boolean.TRUE)
+                   .withHypervisor("vsphere")
+                   .withImageId(MappingUtils.vAppTemplateUrnToImageId(runInstancesRequest.getvAppTemplateId()))
+                   .withInstanceId(MappingUtils.vmUrnToInstanceId(vmId))
+                   .withInstanceState(MappingUtils.vCloudStatusToEc2Status(newvm.getStatus()))
+                   .withInstanceType("m1.small") // todo munge VirtualHardwareSection::items
+                   .withIpAddress(tryFind(addresses, not(InetAddresses2.IsPrivateIPAddress.INSTANCE)).orNull())
+                   .withPlacement(new PlacementResponseType().withAvailabilityZone(vdc.getName() + "a"))
+                   .withPrivateIpAddress(tryFind(addresses, InetAddresses2.IsPrivateIPAddress.INSTANCE).orNull())
+                   .withVirtualizationType("paravirtual")
+                   .withMonitoring(new InstanceMonitoringStateType().withState("disabled"))
+                   .withArchitecture(operatingSystemSection.getOsType());
+
+       return response;
    }
 
    @Override

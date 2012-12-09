@@ -268,15 +268,22 @@ public class CinderellaServiceImpl implements CinderellaService {
          RunInstancesRequestVCloud vCloudRequest = mappingService.getRunInstancesRequest(runInstances);
          RunInstancesResponseVCloud vCloudResponse = vCloudService.runInstances(vCloudRequest);
 
-         DescribeInstancesInfoType describeInstancesInfoType = new DescribeInstancesInfoType()
-               .withItems(new DescribeInstancesItemType()
-                     .withInstanceId(MappingUtils.vmUrnToInstanceId(vCloudResponse.getVmId())));
+         DescribeInstancesInfoType describeInstancesInfoType = new DescribeInstancesInfoType();
+         describeInstancesInfoType
+                 .withNewItems()
+                     .withInstanceId(MappingUtils.vmUrnToInstanceId(vCloudResponse.getVmId()));
 
-         DescribeInstancesResponse describeInstancesResponse = describeInstances(
-               new DescribeInstances()
-                     .withInstancesSet(describeInstancesInfoType));
+//         DescribeInstancesResponse describeInstancesResponse = describeInstances(
+//               new DescribeInstances()
+//                     .withInstancesSet(describeInstancesInfoType));
 
-         return mappingService.getRunInstancesResponse(describeInstancesResponse);
+         RunInstancesResponse response = mappingService.getRunInstancesResponse(vCloudRequest, vCloudResponse);
+         response
+            .withGroupSet()
+                .withNewItems()
+                    .withGroupId("jclouds-mygroup");
+
+          return response;
 
       } catch (Exception e) {
          log.error("EC2 RunInstances - ", e);
